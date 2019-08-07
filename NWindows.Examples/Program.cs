@@ -8,7 +8,7 @@ namespace NWindows.Examples
         static void Main(string[] args)
         {
             var app = new Application();
-            app.Run();
+            app.Run(new Window());
         }
     }
 }

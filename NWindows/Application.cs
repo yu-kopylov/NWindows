@@ -4,10 +4,10 @@ namespace NWindows
 {
     public class Application
     {
-        public void Run()
+        public void Run(Window window)
         {
             var app = new X11Application();
-            app.Run();
+            app.Run(window);
         }
     }
 }

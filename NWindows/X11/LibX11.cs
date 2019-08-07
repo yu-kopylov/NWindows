@@ -1,17 +1,17 @@
-using System;
-using System.Runtime.InteropServices;
-using Bool = System.Int32;
-using Status = System.Int32;
-using Colormap = System.UInt64;
-using Cursor = System.UInt64;
-using Pixmap = System.UInt64;
-using VisualID = System.UInt64;
-using Window = System.UInt64;
-using DisplayPtr = System.IntPtr;
-using VisualPtr = System.IntPtr;
-
 namespace NWindows.X11
 {
+    using System;
+    using System.Runtime.InteropServices;
+    using Bool = System.Int32;
+    using Status = System.Int32;
+    using Colormap = System.UInt64;
+    using Cursor = System.UInt64;
+    using Pixmap = System.UInt64;
+    using VisualID = System.UInt64;
+    using DisplayPtr = System.IntPtr;
+    using VisualPtr = System.IntPtr;
+    using Window = System.UInt64;
+
     internal static class LibX11
     {
         [DllImport("libX11.so.6")]
@@ -64,6 +64,9 @@ namespace NWindows.X11
 
         [DllImport("libX11.so.6")]
         public static extern int XFlush(DisplayPtr display);
+
+        [DllImport("libX11.so.6")]
+        public static extern int XNextEvent(DisplayPtr display, out XEvent event_return);
     }
 
     internal enum VisualClass
@@ -174,5 +177,64 @@ namespace NWindows.X11
         PropertyChangeMask = 1L << 22,
         ColormapChangeMask = 1L << 23,
         OwnerGrabButtonMask = 1L << 24
+    }
+
+    internal enum XEventType
+    {
+        KeyPress = 2,
+        KeyRelease = 3,
+        ButtonPress = 4,
+        ButtonRelease = 5,
+        MotionNotify = 6,
+        EnterNotify = 7,
+        LeaveNotify = 8,
+        FocusIn = 9,
+        FocusOut = 10,
+        KeymapNotify = 11,
+        Expose = 12,
+        GraphicsExpose = 13,
+        NoExpose = 14,
+        VisibilityNotify = 15,
+        CreateNotify = 16,
+        DestroyNotify = 17,
+        UnmapNotify = 18,
+        MapNotify = 19,
+        MapRequest = 20,
+        ReparentNotify = 21,
+        ConfigureNotify = 22,
+        ConfigureRequest = 23,
+        GravityNotify = 24,
+        ResizeRequest = 25,
+        CirculateNotify = 26,
+        CirculateRequest = 27,
+        PropertyNotify = 28,
+        SelectionClear = 29,
+        SelectionRequest = 30,
+        SelectionNotify = 31,
+        ColormapNotify = 32,
+        ClientMessage = 33,
+        MappingNotify = 34,
+        GenericEvent = 35
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 24 * 8)]
+    internal struct XEvent
+    {
+        // todo: should event size be 96 or 192 (24*4 or 24 *8)
+        [FieldOffset(0)] public readonly XEventType type;
+        [FieldOffset(0)] public readonly XExposeEvent ExposeEvent;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XExposeEvent
+    {
+        public readonly int type;
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window window;
+        public readonly int x, y;
+        public readonly int width, height;
+        public readonly int count; /* if non-zero, at least this many more */
     }
 }

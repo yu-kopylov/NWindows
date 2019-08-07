@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 
 namespace NWindows.X11
@@ -8,11 +9,12 @@ namespace NWindows.X11
         private IntPtr display;
         private int defaultScreen;
         private ulong defaultRootWindow;
+        private IntPtr pictFormatPtr;
         private XRenderPictFormat pictFormat;
         private XVisualInfo visualInfo;
         private ulong colormap;
 
-        public void Run()
+        public void Run(Window window)
         {
             display = LibX11.XOpenDisplay(null);
             if (display == IntPtr.Zero)
@@ -23,7 +25,8 @@ namespace NWindows.X11
             defaultScreen = LibX11.XDefaultScreen(display);
             defaultRootWindow = LibX11.XDefaultRootWindow(display);
 
-            IntPtr pictFormatPtr = LibXRender.XRenderFindStandardFormat(display, StandardPictFormat.PictStandardARGB32);
+            //todo: is is safe to keep pictFormatPtr after reading it into XRenderPictFormat
+            pictFormatPtr = LibXRender.XRenderFindStandardFormat(display, StandardPictFormat.PictStandardARGB32);
 
             if (pictFormatPtr == IntPtr.Zero)
             {
@@ -58,7 +61,7 @@ namespace NWindows.X11
             attr.event_mask = XEventMask.ExposureMask;
             attr.colormap = colormap;
 
-            ulong window = LibX11.XCreateWindow
+            ulong windowId = LibX11.XCreateWindow
             (
                 display,
                 defaultRootWindow,
@@ -74,10 +77,24 @@ namespace NWindows.X11
                 ref attr
             );
 
-            LibX11.XMapWindow(display, window);
+            LibX11.XMapWindow(display, windowId);
             LibX11.XFlush(display);
 
-            System.Console.ReadLine();
+            window.NativeWindow = new X11Window(display, pictFormatPtr, windowId);
+
+            XEvent evt;
+            while (true)
+            {
+                LibX11.XNextEvent(display, out evt);
+                if (evt.type == XEventType.Expose)
+                {
+                    var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
+                    window.Paint(rect);
+                }
+            }
+            
+            //todo: close window
+            //todo: free colormap?
 
             LibX11.XCloseDisplay(display);
         }
