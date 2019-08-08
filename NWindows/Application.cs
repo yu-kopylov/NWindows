@@ -1,3 +1,5 @@
+using System;
+using NWindows.Win32;
 using NWindows.X11;
 
 namespace NWindows
@@ -6,8 +8,20 @@ namespace NWindows
     {
         public void Run(Window window)
         {
-            var app = new X11Application();
-            app.Run(window);
+            if (X11Application.IsAvailable())
+            {
+                var app = new X11Application();
+                app.Run(window);
+            }
+            else if (Win32Application.IsAvailable())
+            {
+                var app = new Win32Application();
+                app.Run(window);
+            }
+            else
+            {
+                throw new InvalidOperationException("Cannot determine suitable API.");
+            }
         }
     }
 }

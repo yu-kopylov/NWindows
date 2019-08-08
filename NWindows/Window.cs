@@ -6,6 +6,9 @@ namespace NWindows
     {
         internal INativeWindow NativeWindow { get; set; }
 
+        // todo: setter should update title of existing window
+        public string Title { get; set; }
+
         public virtual void Paint(Rectangle area)
         {
             using (ICanvas canvas = CreateCanvas())

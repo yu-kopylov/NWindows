@@ -14,6 +14,25 @@ namespace NWindows.X11
         private XVisualInfo visualInfo;
         private ulong colormap;
 
+        public static bool IsAvailable()
+        {
+            try
+            {
+                IntPtr display = LibX11.XOpenDisplay(null);
+                if (display == IntPtr.Zero)
+                {
+                    return false;
+                }
+
+                LibX11.XCloseDisplay(display);
+                return true;
+            }
+            catch (DllNotFoundException)
+            {
+                return false;
+            }
+        }
+
         public void Run(Window window)
         {
             display = LibX11.XOpenDisplay(null);
