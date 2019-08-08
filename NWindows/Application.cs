@@ -20,7 +20,7 @@ namespace NWindows
             }
             else
             {
-                throw new InvalidOperationException("Cannot determine suitable API.");
+                throw new InvalidOperationException("Cannot determine a suitable API.");
             }
         }
     }

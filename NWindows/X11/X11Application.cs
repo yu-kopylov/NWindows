@@ -31,6 +31,10 @@ namespace NWindows.X11
             {
                 return false;
             }
+            catch (EntryPointNotFoundException)
+            {
+                return false;
+            }
         }
 
         public void Run(Window window)
@@ -111,7 +115,7 @@ namespace NWindows.X11
                     window.Paint(rect);
                 }
             }
-            
+
             //todo: close window
             //todo: free colormap?
 

@@ -19,6 +19,10 @@ namespace NWindows.Win32
             {
                 return false;
             }
+            catch (EntryPointNotFoundException)
+            {
+                return false;
+            }
         }
 
         public void Run(Window window)
