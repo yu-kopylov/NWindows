@@ -5,16 +5,19 @@
     using ATOM = System.UInt16;
     using BOOL = System.Int32;
     using BYTE = System.Byte;
+    using COLORREF = System.UInt32;
     using DWORD = System.UInt32;
     using LONG = System.Int32;
     using UINT = System.UInt32;
     using HBRUSH = System.IntPtr;
     using HCURSOR = System.IntPtr;
     using HDC = System.IntPtr;
+    using HGDIOBJ = System.IntPtr;
     using HICON = System.IntPtr;
     using HINSTANCE = System.IntPtr;
     using HMENU = System.IntPtr;
     using HMODULE = System.IntPtr;
+    using HPEN = System.IntPtr;
     using HWND = System.IntPtr;
     using LPARAM = System.IntPtr;
     using LPVOID = System.IntPtr;
@@ -87,6 +90,27 @@
 
         [DllImport("User32.dll")]
         public static extern int FillRect(HDC hDC, ref RECT lprc, HBRUSH hbr);
+    }
+
+    internal static class Gdi32API
+    {
+        [DllImport("Gdi32.dll")]
+        public static extern HBRUSH CreateSolidBrush(COLORREF color);
+
+        [DllImport("Gdi32.dll")]
+        public static extern HPEN CreatePen(GdiPenStyle iStyle, int cWidth, COLORREF color);
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL DeleteObject(HGDIOBJ ho);
+
+        [DllImport("Gdi32.dll")]
+        public static extern HGDIOBJ GetStockObject(GdiStockObjectType i);
+
+        [DllImport("Gdi32.dll")]
+        public static extern HGDIOBJ SelectObject(HDC hdc, HGDIOBJ h);
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL Rectangle(HDC hdc, int left, int top, int right, int bottom);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -178,5 +202,23 @@
         public LONG top;
         public LONG right;
         public LONG bottom;
+    }
+
+    internal enum GdiPenStyle
+    {
+        PS_SOLID = 0,
+        PS_DASH = 1,
+        PS_DOT = 2,
+        PS_DASHDOT = 3,
+        PS_DASHDOTDOT = 4,
+        PS_NULL = 5,
+        PS_INSIDEFRAME = 6
+    }
+
+    internal enum GdiStockObjectType
+    {
+        WHITE_PEN = 6,
+        BLACK_PEN = 7,
+        NULL_PEN = 8
     }
 }

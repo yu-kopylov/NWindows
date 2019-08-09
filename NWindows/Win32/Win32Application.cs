@@ -111,9 +111,23 @@ namespace NWindows.Win32
                 try
                 {
                     // todo: window.Paint();
+
                     Win32API.FillRect(hdc, ref ps.rcPaint, new IntPtr(5 /*COLOR_WINDOW*/));
+
+                    var brush = Gdi32API.CreateSolidBrush(0x00FF0000);
+                    var pen = Gdi32API.GetStockObject(GdiStockObjectType.BLACK_PEN);
+
                     RECT rect = new RECT {left = 10, top = 10, right = 200, bottom = 100};
-                    Win32API.FillRect(hdc, ref rect, new IntPtr(6 /*COLOR_WINDOWFRAME*/));
+                    Win32API.FillRect(hdc, ref rect, brush);
+
+                    var originalBrush = Gdi32API.SelectObject(hdc, brush);
+                    var originalPen = Gdi32API.SelectObject(hdc, pen);
+
+                    Gdi32API.Rectangle(hdc, 10, 90, 200, 180);
+
+                    Gdi32API.SelectObject(hdc, originalBrush);
+                    Gdi32API.SelectObject(hdc, originalPen);
+                    Gdi32API.DeleteObject(brush);
                 }
                 finally
                 {
