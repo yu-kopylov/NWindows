@@ -38,7 +38,7 @@ namespace NWindows.X11
             }
         }
 
-        public void Run(Window window)
+        public void Run(BasicWindow window)
         {
             display = LibX11.XOpenDisplay(null);
             if (display == IntPtr.Zero)

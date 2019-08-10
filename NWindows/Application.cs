@@ -6,7 +6,7 @@ namespace NWindows
 {
     public class Application
     {
-        public void Run(Window window)
+        public void Run(BasicWindow window)
         {
             if (X11Application.IsAvailable())
             {

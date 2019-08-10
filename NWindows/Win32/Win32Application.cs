@@ -9,7 +9,7 @@ namespace NWindows.Win32
     {
         private const string WindowClassName = "DEFAULT";
 
-        private readonly Dictionary<IntPtr, Window> windows = new Dictionary<IntPtr, Window>();
+        private readonly Dictionary<IntPtr, BasicWindow> windows = new Dictionary<IntPtr, BasicWindow>();
 
         public static bool IsAvailable()
         {
@@ -29,7 +29,7 @@ namespace NWindows.Win32
             }
         }
 
-        public void Run(Window window)
+        public void Run(BasicWindow window)
         {
             GdiplusStartupInput gdiPlusStartupInput = GdiplusStartupInput.CreateV1();
             GdiPlusAPI.CheckStatus(GdiPlusAPI.GdiplusStartup(out var gdiPlusToken, ref gdiPlusStartupInput, out _));
