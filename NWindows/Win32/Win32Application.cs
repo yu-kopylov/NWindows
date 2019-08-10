@@ -31,6 +31,9 @@ namespace NWindows.Win32
 
         public void Run(Window window)
         {
+            GdiplusStartupInput gdiPlusStartupInput = GdiplusStartupInput.CreateV1();
+            GdiPlusAPI.CheckStatus(GdiPlusAPI.GdiplusStartup(out var gdiPlusToken, ref gdiPlusStartupInput, out _));
+
             IntPtr hInstance = Win32API.GetModuleHandleW(null);
 
             var windowClass = new WNDCLASSEXW();
@@ -100,6 +103,9 @@ namespace NWindows.Win32
                 {
                     // todo: log warning
                 }
+
+                // todo: use separate finally for GDI+
+                GdiPlusAPI.GdiplusShutdown(gdiPlusToken);
             }
         }
 

@@ -3,12 +3,18 @@
     using System;
     using System.Runtime.InteropServices;
     using ATOM = System.UInt16;
+    using ARGB = System.Int32;
     using BOOL = System.Int32;
     using BYTE = System.Byte;
     using COLORREF = System.UInt32;
     using DWORD = System.UInt32;
+    using INT = System.Int32;
     using LONG = System.Int32;
     using UINT = System.UInt32;
+    using UINT32 = System.UInt32;
+    using GpBrush = System.IntPtr;
+    using GpGraphics = System.IntPtr;
+    using GpSolidFill = System.IntPtr;
     using HBRUSH = System.IntPtr;
     using HCURSOR = System.IntPtr;
     using HDC = System.IntPtr;
@@ -22,6 +28,7 @@
     using LPARAM = System.IntPtr;
     using LPVOID = System.IntPtr;
     using LRESULT = System.IntPtr;
+    using ULONG_PTR = System.IntPtr;
     using WPARAM = System.IntPtr;
 
     internal static class Win32API
@@ -111,6 +118,41 @@
 
         [DllImport("Gdi32.dll")]
         public static extern BOOL Rectangle(HDC hdc, int left, int top, int right, int bottom);
+    }
+
+    internal static class GdiPlusAPI
+    {
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdiplusStartup(out ULONG_PTR token, ref GdiplusStartupInput input, out GdiplusStartupOutput output);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern void GdiplusShutdown(ULONG_PTR token);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipCreateFromHDC(HDC hdc, out GpGraphics graphics);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipCreateFromHWND(HWND hwnd, out GpGraphics graphics);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipDeleteGraphics(GpGraphics graphics);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipCreateSolidFill(ARGB color, out GpSolidFill brush);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipDeleteBrush(GpBrush brush);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipFillRectangleI(GpGraphics graphics, GpBrush brush, INT x, INT y, INT width, INT height);
+
+        public static void CheckStatus(GpStatus status)
+        {
+            if (status != GpStatus.Ok)
+            {
+                throw new InvalidOperationException($"GDI+ error: {status}.");
+            }
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -223,5 +265,54 @@
         WHITE_PEN = 6,
         BLACK_PEN = 7,
         NULL_PEN = 8
+    }
+
+    internal enum GpStatus
+    {
+        Ok,
+        GenericError,
+        InvalidParameter,
+        OutOfMemory,
+        ObjectBusy,
+        InsufficientBuffer,
+        NotImplemented,
+        Win32Error,
+        WrongState,
+        Aborted,
+        FileNotFound,
+        ValueOverflow,
+        AccessDenied,
+        UnknownImageFormat,
+        FontFamilyNotFound,
+        FontStyleNotFound,
+        NotTrueTypeFont,
+        UnsupportedGdiplusVersion,
+        GdiplusNotInitialized,
+        PropertyNotFound,
+        PropertyNotSupported,
+        ProfileNotFound
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct GdiplusStartupInput
+    {
+        private UINT32 GdiplusVersion;
+        private readonly IntPtr DebugEventCallback;
+        private readonly BOOL SuppressBackgroundThread;
+        private readonly BOOL SuppressExternalCodecs;
+
+        delegate void DebugEventProc(BOOL suppressBackgroundThread, BOOL suppressExternalCodecs);
+
+        public static GdiplusStartupInput CreateV1()
+        {
+            return new GdiplusStartupInput {GdiplusVersion = 1};
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct GdiplusStartupOutput
+    {
+        private readonly IntPtr NotificationHook;
+        private readonly IntPtr NotificationUnhook;
     }
 }

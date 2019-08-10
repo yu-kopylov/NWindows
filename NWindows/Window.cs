@@ -13,7 +13,8 @@ namespace NWindows
         {
             canvas.FillRectangle(Color.White, 0, 0, 500, 350);
             canvas.FillRectangle(Color.Blue, 0, 0, 200, 200);
-            canvas.FillRectangle(Color.Lime, 1, 1, 198, 20);
+            canvas.FillRectangle(Color.Lime, 1, 1, 198, 100);
+            canvas.FillRectangle(Color.FromArgb(0x80, Color.Red), 20, 20, 160, 200);
         }
     }
 }

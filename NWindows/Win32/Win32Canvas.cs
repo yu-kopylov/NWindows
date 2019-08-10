@@ -15,8 +15,9 @@ namespace NWindows.Win32
         public void FillRectangle(Color color, int x, int y, int width, int height)
         {
             // todo: choose W32/GDI/GDI+ method
-            FillRectangleW32(color, x, y, width, height);
+//            FillRectangleW32(color, x, y, width, height);
 //            FillRectangleGDI(color, x, y, width, height);
+            FillRectangleGDIPlus(color, x, y, width, height);
         }
 
         private void FillRectangleW32(Color color, int x, int y, int width, int height)
@@ -49,6 +50,27 @@ namespace NWindows.Win32
         private uint ToCOLORREF(Color color)
         {
             return (uint) (color.B << 16 | color.G << 8 | color.R);
+        }
+
+        private void FillRectangleGDIPlus(Color color, int x, int y, int width, int height)
+        {
+            GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateFromHDC(hdc, out var graphics));
+            try
+            {
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateSolidFill(color.ToArgb(), out var brush));
+                try
+                {
+                    GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipFillRectangleI(graphics, brush, x, y, width, height));
+                }
+                finally
+                {
+                    GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteBrush(brush));
+                }
+            }
+            finally
+            {
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteGraphics(graphics));
+            }
         }
     }
 }
