@@ -3,15 +3,29 @@ using System.Drawing;
 
 namespace NWindows.X11
 {
-    internal class X11Canvas : ICanvas
+    internal class X11Canvas : ICanvas, IDisposable
     {
         private readonly IntPtr display;
         private readonly ulong pictureId;
 
-        public X11Canvas(IntPtr display, ulong pictureId)
+        private X11Canvas(IntPtr display, ulong pictureId)
         {
             this.display = display;
             this.pictureId = pictureId;
+        }
+
+        public static X11Canvas CreateForWindow(IntPtr display, IntPtr pictFormatPtr, ulong windowId)
+        {
+            XRenderPictureAttributes attr = new XRenderPictureAttributes();
+            ulong pictureId = LibXRender.XRenderCreatePicture
+            (
+                display,
+                windowId,
+                pictFormatPtr,
+                0,
+                ref attr
+            );
+            return new X11Canvas(display, pictureId);
         }
 
         public void Dispose()

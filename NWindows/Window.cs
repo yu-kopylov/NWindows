@@ -9,19 +9,11 @@ namespace NWindows
         // todo: setter should update title of existing window
         public string Title { get; set; }
 
-        public virtual void Paint(Rectangle area)
+        public virtual void Paint(ICanvas canvas, Rectangle area)
         {
-            using (ICanvas canvas = CreateCanvas())
-            {
-                canvas.FillRectangle(Color.White, 0, 0, 500, 350);
-                canvas.FillRectangle(Color.Blue, 0, 0, 200, 200);
-                canvas.FillRectangle(Color.Lime, 1, 1, 198, 20);
-            }
-        }
-
-        private ICanvas CreateCanvas()
-        {
-            return NativeWindow.CreateCanvas();
+            canvas.FillRectangle(Color.White, 0, 0, 500, 350);
+            canvas.FillRectangle(Color.Blue, 0, 0, 200, 200);
+            canvas.FillRectangle(Color.Lime, 1, 1, 198, 20);
         }
     }
 }

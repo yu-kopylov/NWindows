@@ -202,6 +202,9 @@
         public LONG top;
         public LONG right;
         public LONG bottom;
+
+        public LONG Width => right - left;
+        public LONG Height => bottom - top;
     }
 
     internal enum GdiPenStyle

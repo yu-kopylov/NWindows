@@ -103,16 +103,18 @@ namespace NWindows.X11
             LibX11.XMapWindow(display, windowId);
             LibX11.XFlush(display);
 
-            window.NativeWindow = new X11Window(display, pictFormatPtr, windowId);
+            window.NativeWindow = new X11Window(windowId);
 
-            XEvent evt;
             while (true)
             {
-                LibX11.XNextEvent(display, out evt);
+                LibX11.XNextEvent(display, out XEvent evt);
                 if (evt.type == XEventType.Expose)
                 {
                     var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
-                    window.Paint(rect);
+                    using (X11Canvas canvas = X11Canvas.CreateForWindow(display, pictFormatPtr, windowId))
+                    {
+                        window.Paint(canvas, rect);
+                    }
                 }
             }
 

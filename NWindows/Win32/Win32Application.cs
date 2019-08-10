@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Runtime.InteropServices;
 
 namespace NWindows.Win32
@@ -6,6 +8,8 @@ namespace NWindows.Win32
     public class Win32Application
     {
         private const string WindowClassName = "DEFAULT";
+
+        private readonly Dictionary<IntPtr, Window> windows = new Dictionary<IntPtr, Window>();
 
         public static bool IsAvailable()
         {
@@ -61,10 +65,13 @@ namespace NWindows.Win32
                     throw new InvalidOperationException("Failed to create a window.");
                 }
 
-                Win32API.ShowWindow(hwnd, Win32ShowWindowCommand.SW_SHOWNORMAL);
+                window.NativeWindow = new Win32Window(hwnd);
+                windows.Add(hwnd, window);
 
                 try
                 {
+                    Win32API.ShowWindow(hwnd, Win32ShowWindowCommand.SW_SHOWNORMAL);
+
                     MSG msg = new MSG();
                     int mRet;
                     while ((mRet = Win32API.GetMessageW(ref msg, IntPtr.Zero, 0, 0)) != 0)
@@ -100,6 +107,7 @@ namespace NWindows.Win32
         {
             if (uMsg == Win32MessageType.WM_DESTROY)
             {
+                windows.Remove(hwnd);
                 Win32API.PostQuitMessage(0);
                 return IntPtr.Zero;
             }
@@ -110,24 +118,13 @@ namespace NWindows.Win32
                 IntPtr hdc = Win32API.BeginPaint(hwnd, ref ps);
                 try
                 {
-                    // todo: window.Paint();
-
-                    Win32API.FillRect(hdc, ref ps.rcPaint, new IntPtr(5 /*COLOR_WINDOW*/));
-
-                    var brush = Gdi32API.CreateSolidBrush(0x00FF0000);
-                    var pen = Gdi32API.GetStockObject(GdiStockObjectType.BLACK_PEN);
-
-                    RECT rect = new RECT {left = 10, top = 10, right = 200, bottom = 100};
-                    Win32API.FillRect(hdc, ref rect, brush);
-
-                    var originalBrush = Gdi32API.SelectObject(hdc, brush);
-                    var originalPen = Gdi32API.SelectObject(hdc, pen);
-
-                    Gdi32API.Rectangle(hdc, 10, 90, 200, 180);
-
-                    Gdi32API.SelectObject(hdc, originalBrush);
-                    Gdi32API.SelectObject(hdc, originalPen);
-                    Gdi32API.DeleteObject(brush);
+                    if (windows.TryGetValue(hwnd, out var window))
+                    {
+                        Win32Canvas canvas = new Win32Canvas(hdc);
+                        // todo: check that width and height are exact and aligned with other API
+                        Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
+                        window.Paint(canvas, area);
+                    }
                 }
                 finally
                 {
