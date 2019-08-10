@@ -1,7 +1,10 @@
+using System.Text;
+
 namespace NWindows.X11
 {
     using System;
     using System.Runtime.InteropServices;
+    using Atom = System.UInt64;
     using Bool = System.Int32;
     using Status = System.Int32;
     using Colormap = System.UInt64;
@@ -58,6 +61,13 @@ namespace NWindows.X11
             XSetWindowAttributeMask valuemask,
             ref XSetWindowAttributes attributes
         );
+        
+        [DllImport("libX11.so.6", CharSet = CharSet.Ansi)]
+        public static extern Atom XInternAtom(DisplayPtr display, string atom_name, Bool only_if_exists);
+
+        [DllImport("libX11.so.6")]
+        public static extern int XChangeProperty(DisplayPtr display, Window w, Atom property, Atom type, XChangePropertyFormat format, XChangePropertyMode mode, byte[] data,
+            int nelements);
 
         [DllImport("libX11.so.6")]
         public static extern int XMapWindow(DisplayPtr display, Window w);
@@ -236,5 +246,17 @@ namespace NWindows.X11
         public readonly int x, y;
         public readonly int width, height;
         public readonly int count; /* if non-zero, at least this many more */
+    }
+
+    internal enum XChangePropertyFormat
+    {
+        Byte = 8
+    }
+    
+    internal enum XChangePropertyMode
+    {
+        PropModeReplace = 0,
+        PropModePrepend = 1,
+        PropModeAppend = 2
     }
 }

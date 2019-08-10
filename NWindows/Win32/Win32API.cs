@@ -73,6 +73,9 @@
         );
 
         [DllImport("User32.dll")]
+        public static extern BOOL SetWindowTextW(HWND hWnd, [MarshalAs(UnmanagedType.LPWStr)] string lpString);
+
+        [DllImport("User32.dll")]
         public static extern BOOL GetMessageW(
             ref MSG lpMsg,
             HWND hWnd,

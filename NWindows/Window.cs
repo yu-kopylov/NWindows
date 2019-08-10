@@ -6,8 +6,17 @@ namespace NWindows
     {
         internal INativeWindow NativeWindow { get; set; }
 
-        // todo: setter should update title of existing window
-        public string Title { get; set; }
+        private string title;
+
+        public string Title
+        {
+            get => title;
+            set
+            {
+                title = value;
+                NativeWindow?.SetTitle(value);
+            }
+        }
 
         // todo: setter should update title of existing window
         public int Width { get; set; } = 600;

@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace NWindows.X11
 {
@@ -100,11 +101,12 @@ namespace NWindows.X11
                 ref attr
             );
 
+            window.NativeWindow = new X11Window(display, windowId);
+            window.NativeWindow.SetTitle(window.Title);
+
             LibX11.XMapWindow(display, windowId);
             LibX11.XFlush(display);
-
-            window.NativeWindow = new X11Window(windowId);
-
+            
             while (true)
             {
                 LibX11.XNextEvent(display, out XEvent evt);
