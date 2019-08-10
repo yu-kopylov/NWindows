@@ -76,9 +76,9 @@ namespace NWindows.X11
 
         public XRenderColor(Color color) : this()
         {
-            red = (ushort) (color.R * 0x101);
-            green = (ushort) (color.G * 0x101);
-            blue = (ushort) (color.B * 0x101);
+            red = (ushort) (color.R * 0x101 * color.A / 255);
+            green = (ushort) (color.G * 0x101 * color.A / 255);
+            blue = (ushort) (color.B * 0x101 * color.A / 255);
             alpha = (ushort) (color.A * 0x101);
         }
     }

@@ -56,7 +56,7 @@ namespace NWindows.Win32
                     window.Title,
                     Win32WindowStyle.WS_OVERLAPPEDWINDOW,
                     CW_USEDEFAULT, CW_USEDEFAULT,
-                    600, 400,
+                    window.Width, window.Height,
                     IntPtr.Zero,
                     IntPtr.Zero,
                     hInstance,

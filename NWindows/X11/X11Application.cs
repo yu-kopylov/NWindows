@@ -89,7 +89,7 @@ namespace NWindows.X11
                 display,
                 defaultRootWindow,
                 0, 0,
-                600, 400,
+                (uint) window.Width, (uint) window.Height,
                 10,
                 pictFormat.depth,
                 WindowClass.InputOutput,
