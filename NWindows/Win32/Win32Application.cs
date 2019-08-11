@@ -126,10 +126,12 @@ namespace NWindows.Win32
                 {
                     if (windows.TryGetValue(hwnd, out var window))
                     {
-                        Win32Canvas canvas = new Win32Canvas(hdc);
-                        // todo: check that width and height are exact and aligned with other API
-                        Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
-                        window.Paint(canvas, area);
+                        using (Win32Canvas canvas = new Win32Canvas(hdc))
+                        {
+                            // todo: check that width and height are exact and aligned with other API
+                            Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
+                            window.Paint(canvas, area);
+                        }
                     }
                 }
                 finally

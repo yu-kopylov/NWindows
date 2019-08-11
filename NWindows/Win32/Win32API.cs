@@ -13,8 +13,13 @@
     using UINT = System.UInt32;
     using UINT32 = System.UInt32;
     using GpBrush = System.IntPtr;
+    using GpFont = System.IntPtr;
+    using GpFontCollection = System.IntPtr;
+    using GpFontFamily = System.IntPtr;
     using GpGraphics = System.IntPtr;
+    using GpImage = System.IntPtr;
     using GpSolidFill = System.IntPtr;
+    using GpStringFormat = System.IntPtr;
     using HBRUSH = System.IntPtr;
     using HCURSOR = System.IntPtr;
     using HDC = System.IntPtr;
@@ -149,12 +154,67 @@
         [DllImport("Gdiplus.dll")]
         public static extern GpStatus GdipFillRectangleI(GpGraphics graphics, GpBrush brush, INT x, INT y, INT width, INT height);
 
+        [DllImport("Gdiplus.dll", CharSet = CharSet.Unicode)]
+        public static extern GpStatus GdipCreateFontFamilyFromName(string name, GpFontCollection fontCollection, out GpFontFamily fontFamily);
+
+        [DllImport("Gdiplus.dll", CharSet = CharSet.Unicode)]
+        public static extern GpStatus GdipDeleteFontFamily(GpFontFamily fontFamily);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipCreateFont(GpFontFamily fontFamily, float emSize, FontStyle style, Unit unit, out GpFont font);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipDeleteFont(GpFont font);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipStringFormatGetGenericDefault(out GpStringFormat format);
+
+        [DllImport("Gdiplus.dll")]
+        public static extern GpStatus GdipDeleteStringFormat(GpStringFormat format);
+
+        [DllImport("Gdiplus.dll", CharSet = CharSet.Unicode)]
+        public static extern GpStatus GdipDrawString(
+            GpGraphics graphics,
+            string text,
+            INT length,
+            GpFont font,
+            ref RectF layoutRect,
+            GpStringFormat stringFormat,
+            GpBrush brush
+        );
+
         public static void CheckStatus(GpStatus status)
         {
             if (status != GpStatus.Ok)
             {
                 throw new InvalidOperationException($"GDI+ error: {status}.");
             }
+        }
+
+        public static FontStyle GetFontStyle(FontConfig font)
+        {
+            FontStyle style = FontStyle.FontStyleRegular;
+            if (font.IsBold)
+            {
+                style |= FontStyle.FontStyleBold;
+            }
+
+            if (font.IsItalic)
+            {
+                style |= FontStyle.FontStyleItalic;
+            }
+
+            if (font.IsUnderline)
+            {
+                style |= FontStyle.FontStyleUnderline;
+            }
+
+            if (font.IsStrikeout)
+            {
+                style |= FontStyle.FontStyleStrikeout;
+            }
+
+            return style;
         }
     }
 
@@ -317,5 +377,44 @@
     {
         private readonly IntPtr NotificationHook;
         private readonly IntPtr NotificationUnhook;
+    }
+
+    [Flags]
+    internal enum FontStyle
+    {
+        FontStyleRegular = 0,
+        FontStyleBold = 1,
+        FontStyleItalic = 2,
+        FontStyleBoldItalic = 3,
+        FontStyleUnderline = 4,
+        FontStyleStrikeout = 8
+    }
+
+    internal enum Unit
+    {
+        UnitWorld = 0,
+        UnitDisplay = 1,
+        UnitPixel = 2,
+        UnitPoint = 3,
+        UnitInch = 4,
+        UnitDocument = 5,
+        UnitMillimeter = 6
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RectF
+    {
+        private readonly float x;
+        private readonly float y;
+        private readonly float width;
+        private readonly float height;
+
+        public RectF(float x, float y, float width, float height)
+        {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
     }
 }

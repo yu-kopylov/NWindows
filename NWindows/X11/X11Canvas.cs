@@ -43,5 +43,10 @@ namespace NWindows.X11
             XRenderColor xColor = new XRenderColor(color);
             LibXRender.XRenderFillRectangle(display, PictOp.PictOpOver, pictureId, ref xColor, x, y, (uint) width, (uint) height);
         }
+
+        public void DrawString(Color color, FontConfig font, int x, int y, string text)
+        {
+            // todo: implement
+        }
     }
 }

@@ -3,13 +3,47 @@ using System.Drawing;
 
 namespace NWindows.Win32
 {
-    public class Win32Canvas : ICanvas
+    public class Win32Canvas : ICanvas, IDisposable
     {
         private readonly IntPtr hdc;
+
+        private IntPtr graphics;
+        private IntPtr defaultStringFormat;
 
         public Win32Canvas(IntPtr hdc)
         {
             this.hdc = hdc;
+        }
+
+        public void Dispose()
+        {
+            if (graphics != IntPtr.Zero)
+            {
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteGraphics(graphics));
+                graphics = IntPtr.Zero;
+            }
+
+            if (defaultStringFormat != IntPtr.Zero)
+            {
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteStringFormat(defaultStringFormat));
+                graphics = IntPtr.Zero;
+            }
+        }
+
+        private void PrepareGraphics()
+        {
+            if (graphics == IntPtr.Zero)
+            {
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateFromHDC(hdc, out graphics));
+            }
+        }
+
+        private void PrepareDefaultStringFormat()
+        {
+            if (defaultStringFormat == IntPtr.Zero)
+            {
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipStringFormatGetGenericDefault(out defaultStringFormat));
+            }
         }
 
         public void FillRectangle(Color color, int x, int y, int width, int height)
@@ -18,6 +52,39 @@ namespace NWindows.Win32
 //            FillRectangleW32(color, x, y, width, height);
 //            FillRectangleGDI(color, x, y, width, height);
             FillRectangleGDIPlus(color, x, y, width, height);
+        }
+
+        public void DrawString(Color color, FontConfig font, int x, int y, string text)
+        {
+            PrepareGraphics();
+            PrepareDefaultStringFormat();
+            GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateFontFamilyFromName(font.FontFamily, IntPtr.Zero, out var fontFamilyPtr));
+            try
+            {
+                FontStyle fontStyle = GdiPlusAPI.GetFontStyle(font);
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateFont(fontFamilyPtr, font.Size, fontStyle, Unit.UnitPixel, out var fontPtr));
+                try
+                {
+                    GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateSolidFill(color.ToArgb(), out var brush));
+                    try
+                    {
+                        RectF rect = new RectF(x, y, 0, 0);
+                        GdiPlusAPI.GdipDrawString(graphics, text, text.Length, fontPtr, ref rect, defaultStringFormat, brush);
+                    }
+                    finally
+                    {
+                        GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteBrush(brush));
+                    }
+                }
+                finally
+                {
+                    GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteFont(fontPtr));
+                }
+            }
+            finally
+            {
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteFontFamily(fontFamilyPtr));
+            }
         }
 
         private void FillRectangleW32(Color color, int x, int y, int width, int height)
@@ -54,22 +121,15 @@ namespace NWindows.Win32
 
         private void FillRectangleGDIPlus(Color color, int x, int y, int width, int height)
         {
-            GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateFromHDC(hdc, out var graphics));
+            PrepareGraphics();
+            GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateSolidFill(color.ToArgb(), out var brush));
             try
             {
-                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipCreateSolidFill(color.ToArgb(), out var brush));
-                try
-                {
-                    GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipFillRectangleI(graphics, brush, x, y, width, height));
-                }
-                finally
-                {
-                    GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteBrush(brush));
-                }
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipFillRectangleI(graphics, brush, x, y, width, height));
             }
             finally
             {
-                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteGraphics(graphics));
+                GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteBrush(brush));
             }
         }
     }
