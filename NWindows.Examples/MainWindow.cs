@@ -17,11 +17,17 @@ namespace NWindows.Examples
             canvas.FillRectangle(Color.FromArgb(0x80, Color.Red), 20, 20, 160, 200);
 
             FontConfig arial = new FontConfig("Arial", 14);
-            FontConfig times = new FontConfig("Times", 16).Bold().Italic().Underline().Strikeout();
 
-            canvas.DrawString(Color.DarkBlue, arial, 180, 20, "Sample Text \u2690");
-            canvas.DrawString(Color.FromArgb(0x80, Color.DarkBlue), arial, 180, 50, "Sample Text \u2690");
-            canvas.DrawString(Color.DarkBlue, times, 180, 80, "Sample Text \u2690");
+            canvas.FillRectangle(Color.FromArgb(0xFF, 0xFF, 0x98), 210, 10, 300, 16);
+            canvas.DrawString(Color.Blue, arial, 211, 11, "Sample Text \u2690");
+
+            canvas.FillRectangle(Color.FromArgb(0xFF, 0xFF, 0x98), 210, 30, 300, 16);
+            canvas.DrawString(Color.FromArgb(0x80, Color.Blue), arial, 211, 31, "Sample Text \u2690");
+
+            FontConfig times = new FontConfig("Times", 36).Bold().Italic().Underline().Strikeout();
+
+            canvas.FillRectangle(Color.FromArgb(0xFF, 0xFF, 0x98), 210, 50, 300, 45);
+            canvas.DrawString(Color.DarkBlue, times, 211, 51, "Sample Text (x) \u2690");
         }
     }
 }
