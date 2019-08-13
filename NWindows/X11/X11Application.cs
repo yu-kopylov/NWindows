@@ -82,7 +82,7 @@ namespace NWindows.X11
 
             XSetWindowAttributes attr = new XSetWindowAttributes();
             attr.border_pixel = 0;
-            attr.event_mask = XEventMask.ExposureMask;
+            attr.event_mask = XEventMask.ExposureMask | XEventMask.ButtonPressMask | XEventMask.PointerMotionMask;
             attr.colormap = colormap;
 
             ulong windowId = LibX11.XCreateWindow
@@ -124,6 +124,10 @@ namespace NWindows.X11
                     {
                         window.Paint(canvas, rect);
                     }
+                }
+                else if (evt.type == XEventType.MotionNotify)
+                {
+                    window.OnMouseMove(new Point(evt.MotionEvent.x, evt.MotionEvent.y));
                 }
             }
 

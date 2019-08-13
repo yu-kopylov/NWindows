@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace NWindows.X11
 {
     using System;
@@ -10,6 +8,7 @@ namespace NWindows.X11
     using Colormap = System.UInt64;
     using Cursor = System.UInt64;
     using Pixmap = System.UInt64;
+    using Time = System.UInt64;
     using VisualID = System.UInt64;
     using DisplayPtr = System.IntPtr;
     using VisualPtr = System.IntPtr;
@@ -61,13 +60,21 @@ namespace NWindows.X11
             XSetWindowAttributeMask valuemask,
             ref XSetWindowAttributes attributes
         );
-        
+
         [DllImport("libX11.so.6", CharSet = CharSet.Ansi)]
         public static extern Atom XInternAtom(DisplayPtr display, string atom_name, Bool only_if_exists);
 
         [DllImport("libX11.so.6")]
-        public static extern int XChangeProperty(DisplayPtr display, Window w, Atom property, Atom type, XChangePropertyFormat format, XChangePropertyMode mode, byte[] data,
-            int nelements);
+        public static extern int XChangeProperty(
+            DisplayPtr display,
+            Window w,
+            Atom property,
+            Atom type,
+            XChangePropertyFormat format,
+            XChangePropertyMode mode,
+            byte[] data,
+            int nelements
+        );
 
         [DllImport("libX11.so.6")]
         public static extern int XMapWindow(DisplayPtr display, Window w);
@@ -77,6 +84,9 @@ namespace NWindows.X11
 
         [DllImport("libX11.so.6")]
         public static extern int XNextEvent(DisplayPtr display, out XEvent event_return);
+
+        [DllImport("libX11.so.6")]
+        public static extern Status XSendEvent(DisplayPtr display, Window w, Bool propagate, long event_mask, ref XEvent event_send);
     }
 
     internal enum VisualClass
@@ -231,28 +241,58 @@ namespace NWindows.X11
     internal struct XEvent
     {
         // todo: should event size be 96 or 192 (24*4 or 24 *8)
-        [FieldOffset(0)] public readonly XEventType type;
-        [FieldOffset(0)] public readonly XExposeEvent ExposeEvent;
+        [FieldOffset(0)] public XEventType type;
+        [FieldOffset(0)] public XExposeEvent ExposeEvent;
+        [FieldOffset(0)] public XMotionEvent MotionEvent;
+
+        public static XEvent CreateExpose(int x, int y, int width, int height)
+        {
+            var res = new XEvent();
+            res.type = XEventType.Expose;
+            res.ExposeEvent.x = x;
+            res.ExposeEvent.y = y;
+            res.ExposeEvent.width = width;
+            res.ExposeEvent.height = height;
+            return res;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     internal struct XExposeEvent
     {
-        public readonly int type;
+        public int type;
+        public ulong serial; /* # of last request processed by server */
+        public Bool send_event; /* true if this came from a SendEvent request */
+        public DisplayPtr display; /* Display the event was read from */
+        public Window window;
+        public int x, y;
+        public int width, height;
+        public int count; /* if non-zero, at least this many more */
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XMotionEvent
+    {
+        public readonly int type; /* MotionNotify */
         public readonly ulong serial; /* # of last request processed by server */
         public readonly Bool send_event; /* true if this came from a SendEvent request */
         public readonly DisplayPtr display; /* Display the event was read from */
-        public readonly Window window;
-        public readonly int x, y;
-        public readonly int width, height;
-        public readonly int count; /* if non-zero, at least this many more */
+        public readonly Window window; /* ``event'' window reported relative to */
+        public readonly Window root; /* root window that the event occurred on */
+        public readonly Window subwindow; /* child window */
+        public readonly Time time; /* milliseconds */
+        public readonly int x, y; /* pointer x, y coordinates in event window */
+        public readonly int x_root, y_root; /* coordinates relative to root */
+        public readonly uint state; /* key or button mask */
+        public readonly char is_hint; /* detail */
+        public readonly Bool same_screen; /* same screen flag */
     }
 
     internal enum XChangePropertyFormat
     {
         Byte = 8
     }
-    
+
     internal enum XChangePropertyMode
     {
         PropModeReplace = 0,
