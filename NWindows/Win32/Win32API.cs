@@ -104,6 +104,9 @@
         public static extern BOOL EndPaint(HWND hWnd, ref PAINTSTRUCT lpPaint);
 
         [DllImport("User32.dll")]
+        public static extern BOOL InvalidateRect(HWND hWnd, ref RECT lpRect, BOOL bErase);
+
+        [DllImport("User32.dll")]
         public static extern int FillRect(HDC hDC, ref RECT lprc, HBRUSH hbr);
     }
 
@@ -283,7 +286,8 @@
     internal enum Win32MessageType : uint
     {
         WM_DESTROY = 0x0002,
-        WM_PAINT = 0x000F
+        WM_PAINT = 0x000F,
+        WM_MOUSEMOVE = 0x0200
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -24,6 +24,15 @@ namespace NWindows
         // todo: setter should update existing window
         public int Height { get; set; } = 400;
 
+        public void Invalidate(Rectangle area)
+        {
+            NativeWindow.Invalidate(area);
+        }
+
         public abstract void Paint(ICanvas canvas, Rectangle area);
+
+        public virtual void OnMouseMove(Point point)
+        {
+        }
     }
 }

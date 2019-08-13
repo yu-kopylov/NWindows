@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Text;
 
 namespace NWindows.X11
@@ -39,6 +40,11 @@ namespace NWindows.X11
                 windowTitleUTF8,
                 windowTitleUTF8.Length
             );
+        }
+
+        public void Invalidate(Rectangle area)
+        {
+            // todo: implement
         }
     }
 }

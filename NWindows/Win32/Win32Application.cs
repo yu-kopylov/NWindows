@@ -118,6 +118,19 @@ namespace NWindows.Win32
                 return IntPtr.Zero;
             }
 
+            if (uMsg == Win32MessageType.WM_MOUSEMOVE)
+            {
+                ulong lParam32 = (uint) lParam.ToInt64();
+                int x = (short) (lParam32 & 0xFFFF);
+                int y = (short) ((lParam32 >> 16) & 0xFFFF);
+                if (windows.TryGetValue(hwnd, out var window))
+                {
+                    window.OnMouseMove(new Point(x, y));
+                }
+
+                return IntPtr.Zero;
+            }
+
             if (uMsg == Win32MessageType.WM_PAINT)
             {
                 PAINTSTRUCT ps = new PAINTSTRUCT();
