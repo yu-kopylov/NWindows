@@ -1,53 +1,42 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Drawing;
 
 namespace NWindows.Examples
 {
     public class MainWindow : BasicWindow
     {
-        private Point mousePosition;
+        private readonly List<Control> controls = new List<Control>();
+        private readonly MouseExampleControl mouseExampleControl;
 
         public MainWindow()
         {
             Title = "Examples \u2690-\xD83C\xDFC1-\u2690";
+
+            mouseExampleControl = new MouseExampleControl {Area = new Rectangle(0, 250, 200, 25)};
+
+            controls.Add(new DrawingExampleControl {Area = new Rectangle(0, 0, 200, 250)});
+            controls.Add(new TextExampleControl {Area = new Rectangle(200, 0, 400, 250)});
+            controls.Add(mouseExampleControl);
         }
 
         public override void Paint(ICanvas canvas, Rectangle area)
         {
             canvas.FillRectangle(Color.White, area.X, area.Y, area.Width, area.Height);
-
-            if (area.Top < 250)
+            foreach (Control control in controls)
             {
-                canvas.FillRectangle(Color.Blue, 0, 0, 200, 200);
-                canvas.FillRectangle(Color.Lime, 1, 1, 198, 100);
-                canvas.FillRectangle(Color.FromArgb(0x80, Color.Red), 20, 20, 160, 200);
-
-                FontConfig arial = new FontConfig("Arial", 14);
-
-                canvas.FillRectangle(Color.FromArgb(0xFF, 0xFF, 0x98), 210, 10, 300, 16);
-                canvas.DrawString(Color.Blue, arial, 211, 11, "Sample Text \u2690");
-
-                canvas.FillRectangle(Color.FromArgb(0xFF, 0xFF, 0x98), 210, 30, 300, 16);
-                canvas.DrawString(Color.FromArgb(0x80, Color.Blue), arial, 211, 31, "Sample Text \u2690");
-
-                FontConfig times = new FontConfig("Times", 36).Bold().Italic().Underline().Strikeout();
-
-                canvas.FillRectangle(Color.FromArgb(0xFF, 0xFF, 0x98), 210, 50, 300, 45);
-                canvas.DrawString(Color.DarkBlue, times, 211, 51, "Sample Text (x) \u2690");
-            }
-
-            if (area.Top <= 271 && area.Bottom >= 250)
-            {
-                FontConfig arial = new FontConfig("Arial", 16);
-                canvas.FillRectangle(Color.LightBlue, 10, 250, 200, 21);
-                canvas.DrawString(Color.Black, arial, 11, 251, $"Mouse: {mousePosition}");
+                // todo: test edge cases
+                if (control.Area.IntersectsWith(area))
+                {
+                    Rectangle controlArea = new Rectangle(area.X - control.Area.X, area.Y - control.Area.Y, area.Width, area.Height);
+                    control.Paint(new OffsetCanvas(canvas, control.Area.X, control.Area.Y), controlArea);
+                }
             }
         }
 
         public override void OnMouseMove(Point point)
         {
-            mousePosition = point;
-            Invalidate(new Rectangle(10, 250, 200, 21));
+            mouseExampleControl.MousePosition = point;
+            Invalidate(mouseExampleControl.Area);
         }
     }
 }

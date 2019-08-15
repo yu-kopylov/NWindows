@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace NWindows.Win32
 {
-    public class Win32Canvas : ICanvas, IDisposable
+    internal class Win32Canvas : ICanvas, IDisposable
     {
         private readonly IntPtr hdc;
 
