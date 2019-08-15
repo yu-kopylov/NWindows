@@ -23,6 +23,7 @@
     using HBRUSH = System.IntPtr;
     using HCURSOR = System.IntPtr;
     using HDC = System.IntPtr;
+    using HFONT = System.IntPtr;
     using HGDIOBJ = System.IntPtr;
     using HICON = System.IntPtr;
     using HINSTANCE = System.IntPtr;
@@ -112,6 +113,22 @@
 
     internal static class Gdi32API
     {
+        private static readonly HGDIOBJ HGDI_ERROR = new IntPtr(0xFFFFFFFFL);
+        private static readonly COLORREF CLR_INVALID = 0xFFFFFFFF;
+
+        [DllImport("Gdi32.dll")]
+        private static extern Gdi32BackgroundMode SetBkMode(HDC hdc, Gdi32BackgroundMode mode);
+
+        public static void SetBkModeChecked(HDC hdc, Gdi32BackgroundMode mode)
+        {
+            Gdi32BackgroundMode oldMode = SetBkMode(hdc, mode);
+            // todo: is it worth checking?
+            if (oldMode == Gdi32BackgroundMode.ERROR)
+            {
+                throw new InvalidOperationException($"{nameof(SetBkMode)} failed. Mode: {mode}.");
+            }
+        }
+
         [DllImport("Gdi32.dll")]
         public static extern HBRUSH CreateSolidBrush(COLORREF color);
 
@@ -127,8 +144,60 @@
         [DllImport("Gdi32.dll")]
         public static extern HGDIOBJ SelectObject(HDC hdc, HGDIOBJ h);
 
+        public static HGDIOBJ SelectObjectChecked(HDC hdc, HGDIOBJ h)
+        {
+            IntPtr oldObject = SelectObject(hdc, h);
+            // todo: is it worth checking?
+            if (oldObject == HGDI_ERROR)
+            {
+                throw new InvalidOperationException($"{nameof(SelectObject)} failed. Object: 0x{h.ToString("X16")}.");
+            }
+
+            return oldObject;
+        }
+
         [DllImport("Gdi32.dll")]
         public static extern BOOL Rectangle(HDC hdc, int left, int top, int right, int bottom);
+
+        [DllImport("Gdi32.dll")]
+        private static extern COLORREF SetTextColor(HDC hdc, COLORREF color);
+
+        public static void SetTextColorChecked(HDC hdc, COLORREF color)
+        {
+            COLORREF oldColor = SetTextColor(hdc, color);
+            // todo: is it worth checking?
+            if (oldColor == CLR_INVALID)
+            {
+                throw new InvalidOperationException($"{nameof(SetTextColor)} failed. Color: {color:X8}.");
+            }
+        }
+
+        [DllImport("Gdi32.dll", CharSet = CharSet.Unicode)]
+        public static extern HFONT CreateFontW(
+            int cHeight,
+            int cWidth,
+            int cEscapement,
+            int cOrientation,
+            int cWeight,
+            DWORD bItalic,
+            DWORD bUnderline,
+            DWORD bStrikeOut,
+            DWORD iCharSet,
+            DWORD iOutPrecision,
+            DWORD iClipPrecision,
+            DWORD iQuality,
+            DWORD iPitchAndFamily,
+            string pszFaceName
+        );
+
+        [DllImport("Gdi32.dll", CharSet = CharSet.Unicode)]
+        public static extern BOOL TextOutW(
+            HDC hdc,
+            int x,
+            int y,
+            string lpString,
+            int stringLen
+        );
     }
 
     internal static class GdiPlusAPI
@@ -403,6 +472,13 @@
         UnitInch = 4,
         UnitDocument = 5,
         UnitMillimeter = 6
+    }
+
+    internal enum Gdi32BackgroundMode
+    {
+        ERROR = 0,
+        TRANSPARENT = 1,
+        OPAQUE = 2
     }
 
     [StructLayout(LayoutKind.Sequential)]

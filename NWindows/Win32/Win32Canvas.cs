@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace NWindows.Win32
@@ -9,6 +10,9 @@ namespace NWindows.Win32
 
         private IntPtr graphics;
         private IntPtr defaultStringFormat;
+
+        private readonly Dictionary<FontConfig, IntPtr> gdiFonts = new Dictionary<FontConfig, IntPtr>(Gdi32FontConfigComparer.Instance);
+        private IntPtr originalFont;
 
         public Win32Canvas(IntPtr hdc)
         {
@@ -27,6 +31,16 @@ namespace NWindows.Win32
             {
                 GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteStringFormat(defaultStringFormat));
                 graphics = IntPtr.Zero;
+            }
+
+            if (originalFont != IntPtr.Zero)
+            {
+                Gdi32API.SelectObjectChecked(hdc, originalFont);
+            }
+
+            foreach (IntPtr fontPtr in gdiFonts.Values)
+            {
+                Gdi32API.DeleteObject(fontPtr);
             }
         }
 
@@ -55,6 +69,59 @@ namespace NWindows.Win32
         }
 
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
+        {
+            DrawStringGDI(color, font, x, y, text);
+        }
+
+        public void DrawStringGDI(Color color, FontConfig font, int x, int y, string text)
+        {
+            SelectGDIFont(font);
+            Gdi32API.SetBkModeChecked(hdc, Gdi32BackgroundMode.TRANSPARENT);
+            Gdi32API.SetTextColorChecked(hdc, ToCOLORREF(color));
+            Gdi32API.TextOutW(hdc, x, y, text, text.Length);
+        }
+
+        private void SelectGDIFont(FontConfig font)
+        {
+            const uint DEFAULT_CHARSET = 1;
+            const uint OUT_DEFAULT_PRECIS = 0;
+            const uint CLIP_DEFAULT_PRECIS = 0;
+            const uint CLEARTYPE_QUALITY = 5;
+            const uint DEFAULT_PITCH = 0;
+
+            if (!gdiFonts.TryGetValue(font, out IntPtr fontPtr))
+            {
+                fontPtr = Gdi32API.CreateFontW(
+                    -Convert.ToInt32(font.Size),
+                    0, 0, 0,
+                    font.IsBold ? 700 : 400,
+                    font.IsItalic ? 1u : 0,
+                    font.IsUnderline ? 1u : 0,
+                    font.IsStrikeout ? 1u : 0,
+                    DEFAULT_CHARSET,
+                    OUT_DEFAULT_PRECIS,
+                    CLIP_DEFAULT_PRECIS,
+                    CLEARTYPE_QUALITY,
+                    DEFAULT_PITCH,
+                    font.FontFamily
+                );
+
+                if (fontPtr == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException($"Failed to create font: '{font.FontFamily}', {font.Size:0.0}.");
+                }
+
+                gdiFonts.Add(font, fontPtr);
+            }
+
+            IntPtr oldFont = Gdi32API.SelectObjectChecked(hdc, fontPtr);
+            if (originalFont == IntPtr.Zero)
+            {
+                originalFont = oldFont;
+            }
+        }
+
+        public void DrawStringGDIPlus(Color color, FontConfig font, int x, int y, string text)
         {
             PrepareGraphics();
             PrepareDefaultStringFormat();
