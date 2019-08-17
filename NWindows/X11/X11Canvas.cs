@@ -86,8 +86,9 @@ namespace NWindows.X11
 
                         try
                         {
-                            LibXft.XftTextExtents16(display, xftFont, text, text.Length, out var extents);
-                            LibXft.XftDrawString16(xftDraw, xftColorPtr, xftFont, x, y + fontInfo.ascent, text, text.Length);
+                            byte[] utf32Text = Encoding.UTF32.GetBytes(text);
+                            LibXft.XftTextExtents32(display, xftFont, utf32Text, utf32Text.Length / 4, out var extents);
+                            LibXft.XftDrawString32(xftDraw, xftColorPtr, xftFont, x, y + fontInfo.ascent, utf32Text, utf32Text.Length / 4);
                             if (font.IsUnderline)
                             {
                                 int lineHeight = Convert.ToInt32(Math.Max(font.Size / 10, 1));

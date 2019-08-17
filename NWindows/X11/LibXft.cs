@@ -36,23 +36,23 @@ namespace NWindows.X11
         [DllImport("libXft.so.2")]
         public static extern void XftColorFree(Display_ptr dpy, Visual_ptr visual, Colormap colormap, XftColor_ptr xftColor);
 
-        [DllImport("libXft.so.2", CharSet = CharSet.Unicode)]
-        public static extern void XftTextExtents16(
+        [DllImport("libXft.so.2")]
+        public static extern void XftTextExtents32(
             Display_ptr dpy,
             XftFont_ptr font,
-            string text,
+            byte[] text,
             int len,
             out XGlyphInfo extents
         );
 
-        [DllImport("libXft.so.2", CharSet = CharSet.Unicode)]
-        public static extern void XftDrawString16(
+        [DllImport("libXft.so.2")]
+        public static extern void XftDrawString32(
             XftDraw_ptr draw,
             XftColor_ptr color,
             XftFont_ptr pub,
             int x,
             int y,
-            string text,
+            byte[] text,
             int len
         );
     }
