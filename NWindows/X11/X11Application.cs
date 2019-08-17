@@ -113,9 +113,11 @@ namespace NWindows.X11
                 if (evt.type == XEventType.Expose)
                 {
                     var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
+                    using (X11ObjectCache objectCache = new X11ObjectCache(display, defaultScreen))
                     using (X11Canvas canvas = X11Canvas.CreateForWindow(
                         display,
                         defaultScreen,
+                        objectCache,
                         visualInfo.visual,
                         colormap,
                         pictFormatPtr,
