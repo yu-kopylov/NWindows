@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
 
 namespace NWindows.X11
 {
-    public class X11ObjectCache : IDisposable
+    internal class X11ObjectCache : IDisposable
     {
         private readonly IntPtr display;
         private readonly int screen;
 
-        private readonly Dictionary<FontConfig, IntPtr> fonts = new Dictionary<FontConfig, IntPtr>(X11FontConfigComparer.Instance);
+        private readonly Dictionary<FontConfig, XftFontExt> fonts = new Dictionary<FontConfig, XftFontExt>(X11FontConfigComparer.Instance);
 
         public X11ObjectCache(IntPtr display, int screen)
         {
@@ -20,45 +18,22 @@ namespace NWindows.X11
 
         public void Dispose()
         {
-            foreach (IntPtr fontPtr in fonts.Values)
+            foreach (XftFontExt font in fonts.Values)
             {
-                LibXft.XftFontClose(display, fontPtr);
+                font.Dispose();
             }
         }
 
-        public IntPtr GetXftFont(FontConfig font)
+        public XftFontExt GetXftFont(FontConfig fontConfig)
         {
-            if (fonts.TryGetValue(font, out IntPtr fontPtr))
+            if (fonts.TryGetValue(fontConfig, out XftFontExt font))
             {
-                return fontPtr;
+                return font;
             }
 
-            fontPtr = LibXft.XftFontOpenName(display, screen, GetXftFontConfig(font));
-            fonts.Add(font, fontPtr);
-            return fontPtr;
-        }
-
-        private static byte[] GetXftFontConfig(FontConfig font)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append(font.FontFamily);
-
-            if (font.IsBold)
-            {
-                sb.Append(":bold");
-            }
-
-            if (font.IsItalic)
-            {
-                sb.Append(":italic");
-            }
-
-            sb.Append(":pixelsize=");
-            sb.Append(font.Size.ToString("0.0", NumberFormatInfo.InvariantInfo));
-
-            sb.Append('\0');
-
-            return Encoding.UTF8.GetBytes(sb.ToString());
+            font = XftFontExt.Create(fontConfig, display, screen);
+            fonts.Add(fontConfig, font);
+            return font;
         }
     }
 }

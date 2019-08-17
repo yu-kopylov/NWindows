@@ -15,7 +15,7 @@ namespace NWindows.Examples
             mouseExampleControl = new MouseExampleControl {Area = new Rectangle(0, 250, 200, 25)};
 
             controls.Add(new DrawingExampleControl {Area = new Rectangle(0, 0, 200, 250)});
-            controls.Add(new TextExampleControl {Area = new Rectangle(200, 0, 400, 250)});
+            controls.Add(new TextExampleControl {Area = new Rectangle(200, 0, 600, 250)});
             controls.Add(mouseExampleControl);
         }
 

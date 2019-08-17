@@ -75,9 +75,6 @@ namespace NWindows.X11
 
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
         {
-            var xftFont = objectCache.GetXftFont(font);
-            var fontInfo = Marshal.PtrToStructure<XftFont>(xftFont);
-
             var xftDraw = LibXft.XftDrawCreate(display, windowId, visual, colormap);
             try
             {
@@ -95,9 +92,11 @@ namespace NWindows.X11
 
                     try
                     {
-                        byte[] utf32Text = Encoding.UTF32.GetBytes(text);
-                        LibXft.XftTextExtents32(display, xftFont, utf32Text, utf32Text.Length / 4, out var extents);
-                        LibXft.XftDrawString32(xftDraw, xftColorPtr, xftFont, x, y + fontInfo.ascent, utf32Text, utf32Text.Length / 4);
+                        XftFontExt fontExt = objectCache.GetXftFont(font);
+                        var fontInfo = Marshal.PtrToStructure<XftFont>(fontExt.MainFont);
+
+                        int textWidth = DrawString(xftDraw, xftColorPtr, fontExt, x, y + fontInfo.ascent, text);
+
                         if (font.IsUnderline)
                         {
                             int lineHeight = Convert.ToInt32(Math.Max(font.Size / 10, 1));
@@ -105,7 +104,7 @@ namespace NWindows.X11
                                 display, PictOp.PictOpOver, pictureId, ref xColor,
                                 x,
                                 y + fontInfo.ascent + (fontInfo.descent - lineHeight) / 2,
-                                extents.width,
+                                (uint) textWidth,
                                 (uint) lineHeight
                             );
                         }
@@ -118,7 +117,7 @@ namespace NWindows.X11
                                 display, PictOp.PictOpOver, pictureId, ref xColor,
                                 x,
                                 y + fontInfo.ascent - (2 * fontInfo.ascent + 3 * lineHeight) / 6,
-                                extents.width,
+                                (uint) textWidth,
                                 (uint) lineHeight
                             );
                         }
@@ -137,6 +136,76 @@ namespace NWindows.X11
             {
                 LibXft.XftDrawDestroy(xftDraw);
             }
+        }
+
+        private int DrawString(IntPtr xftDraw, IntPtr xftColorPtr, XftFontExt fontExt, int x, int y, string text)
+        {
+            byte[] utf32Text = Encoding.UTF32.GetBytes(text);
+            IntPtr utf32TextPtr = Marshal.AllocHGlobal(utf32Text.Length);
+            try
+            {
+                Marshal.Copy(utf32Text, 0, utf32TextPtr, utf32Text.Length);
+
+                IntPtr rangeFont = fontExt.MainFont;
+                int rangeStart = 0;
+                int textWidth = 0;
+
+                for (int i = 0; i < utf32Text.Length; i += 4)
+                {
+                    int codePoint = utf32Text[i + 3] << 24 | utf32Text[i + 2] << 16 | utf32Text[i + 1] << 8 | utf32Text[i];
+                    IntPtr charFont = fontExt.GetFontByCodePoint(codePoint);
+
+                    if (charFont != rangeFont)
+                    {
+                        textWidth += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + textWidth, y, utf32TextPtr, rangeStart, i);
+
+                        rangeFont = charFont;
+                        rangeStart = i;
+                    }
+                }
+
+                textWidth += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + textWidth, y, utf32TextPtr, rangeStart, utf32Text.Length);
+                return textWidth;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(utf32TextPtr);
+            }
+        }
+
+        private int DrawStringRange(
+            IntPtr xftDraw,
+            IntPtr xftColorPtr,
+            IntPtr font,
+            int x,
+            int y,
+            IntPtr utf32TextPtr,
+            int rangeStart,
+            int rangeEnd
+        )
+        {
+            if (rangeStart >= rangeEnd)
+            {
+                return 0;
+            }
+
+            LibXft.XftTextExtents32(
+                display,
+                font,
+                utf32TextPtr + rangeStart,
+                (rangeEnd - rangeStart) / 4,
+                out var extents
+            );
+            LibXft.XftDrawString32(
+                xftDraw,
+                xftColorPtr,
+                font,
+                x,
+                y,
+                utf32TextPtr + rangeStart,
+                (rangeEnd - rangeStart) / 4
+            );
+            return extents.width;
         }
     }
 }

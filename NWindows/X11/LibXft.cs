@@ -5,6 +5,8 @@ namespace NWindows.X11
     using Colormap = System.UInt64;
     using Display_ptr = System.IntPtr;
     using Drawable = System.UInt64;
+    using FcBool = System.Int32;
+    using FcChar32 = System.UInt32;
     using Visual_ptr = System.IntPtr;
     using XftColor_ptr = System.IntPtr;
     using XftDraw_ptr = System.IntPtr;
@@ -37,10 +39,13 @@ namespace NWindows.X11
         public static extern void XftColorFree(Display_ptr dpy, Visual_ptr visual, Colormap colormap, XftColor_ptr xftColor);
 
         [DllImport("libXft.so.2")]
+        public static extern FcBool XftCharExists(Display_ptr dpy, XftFont_ptr pub, FcChar32 ucs4);
+
+        [DllImport("libXft.so.2")]
         public static extern void XftTextExtents32(
             Display_ptr dpy,
             XftFont_ptr font,
-            byte[] text,
+            IntPtr text,
             int len,
             out XGlyphInfo extents
         );
@@ -52,7 +57,7 @@ namespace NWindows.X11
             XftFont_ptr pub,
             int x,
             int y,
-            byte[] text,
+            IntPtr text,
             int len
         );
     }

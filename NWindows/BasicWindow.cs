@@ -19,10 +19,10 @@ namespace NWindows
         }
 
         // todo: setter should update existing window
-        public int Width { get; set; } = 600;
+        public int Width { get; set; } = 800;
 
         // todo: setter should update existing window
-        public int Height { get; set; } = 400;
+        public int Height { get; set; } = 600;
 
         public void Invalidate(Rectangle area)
         {
