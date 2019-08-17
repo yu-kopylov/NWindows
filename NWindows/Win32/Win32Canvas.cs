@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 namespace NWindows.Win32
@@ -11,12 +10,16 @@ namespace NWindows.Win32
         private IntPtr graphics;
         private IntPtr defaultStringFormat;
 
-        private readonly Dictionary<FontConfig, IntPtr> gdiFonts = new Dictionary<FontConfig, IntPtr>(Gdi32FontConfigComparer.Instance);
+        private readonly Gdi32ObjectCache objectCache;
+
+        private IntPtr originalPen;
+        private IntPtr originalBrush;
         private IntPtr originalFont;
 
-        public Win32Canvas(IntPtr hdc)
+        public Win32Canvas(IntPtr hdc, Gdi32ObjectCache objectCache)
         {
             this.hdc = hdc;
+            this.objectCache = objectCache;
         }
 
         public void Dispose()
@@ -33,14 +36,19 @@ namespace NWindows.Win32
                 graphics = IntPtr.Zero;
             }
 
+            if (originalPen != IntPtr.Zero)
+            {
+                Gdi32API.SelectObjectChecked(hdc, originalPen);
+            }
+
+            if (originalBrush != IntPtr.Zero)
+            {
+                Gdi32API.SelectObjectChecked(hdc, originalBrush);
+            }
+
             if (originalFont != IntPtr.Zero)
             {
                 Gdi32API.SelectObjectChecked(hdc, originalFont);
-            }
-
-            foreach (IntPtr fontPtr in gdiFonts.Values)
-            {
-                Gdi32API.DeleteObject(fontPtr);
             }
         }
 
@@ -62,63 +70,61 @@ namespace NWindows.Win32
 
         public void FillRectangle(Color color, int x, int y, int width, int height)
         {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
             // todo: choose W32/GDI/GDI+ method
 //            FillRectangleW32(color, x, y, width, height);
-//            FillRectangleGDI(color, x, y, width, height);
-            FillRectangleGDIPlus(color, x, y, width, height);
+            FillRectangleGDI(color, x, y, width, height);
+//            FillRectangleGDIPlus(color, x, y, width, height);
         }
 
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
         {
+            // todo: pick
             DrawStringGDI(color, font, x, y, text);
+            // DrawStringGDIPlus(color, font, x, y, text);
         }
 
         public void DrawStringGDI(Color color, FontConfig font, int x, int y, string text)
         {
+            if (color.IsFullyOpaque())
+            {
+                DrawOpaqueStringGDI(color, font, x, y, text);
+                return;
+            }
+
             SelectGDIFont(font);
-            Gdi32API.SetBkModeChecked(hdc, Gdi32BackgroundMode.TRANSPARENT);
-            Gdi32API.SetTextColorChecked(hdc, ToCOLORREF(color));
-            Gdi32API.TextOutW(hdc, x, y, text, text.Length);
+            Gdi32API.GetTextExtentPoint32W(hdc, text, text.Length, out var size);
+
+            int leftPadding, rightPadding;
+            if (font.IsItalic)
+            {
+                int infFontSize = Convert.ToInt32(font.Size);
+                leftPadding = 1 + (4 * infFontSize + 199) / 200;
+                rightPadding = 1 + (11 * infFontSize + 199) / 200;
+            }
+            else
+            {
+                leftPadding = 0;
+                rightPadding = 0;
+            }
+
+            WithTransparentCanvas(
+                new Rectangle(x - leftPadding, y, size.cx + leftPadding + rightPadding, size.cy),
+                color.A, true,
+                canvas => canvas.DrawOpaqueStringGDI(color, font, leftPadding, 0, text)
+            );
         }
 
-        private void SelectGDIFont(FontConfig font)
+        private void DrawOpaqueStringGDI(Color color, FontConfig font, int x, int y, string text)
         {
-            const uint DEFAULT_CHARSET = 1;
-            const uint OUT_DEFAULT_PRECIS = 0;
-            const uint CLIP_DEFAULT_PRECIS = 0;
-            const uint CLEARTYPE_QUALITY = 5;
-            const uint DEFAULT_PITCH = 0;
-
-            if (!gdiFonts.TryGetValue(font, out IntPtr fontPtr))
-            {
-                fontPtr = Gdi32API.CreateFontW(
-                    -Convert.ToInt32(font.Size),
-                    0, 0, 0,
-                    font.IsBold ? 700 : 400,
-                    font.IsItalic ? 1u : 0,
-                    font.IsUnderline ? 1u : 0,
-                    font.IsStrikeout ? 1u : 0,
-                    DEFAULT_CHARSET,
-                    OUT_DEFAULT_PRECIS,
-                    CLIP_DEFAULT_PRECIS,
-                    CLEARTYPE_QUALITY,
-                    DEFAULT_PITCH,
-                    font.FontFamily
-                );
-
-                if (fontPtr == IntPtr.Zero)
-                {
-                    throw new InvalidOperationException($"Failed to create font: '{font.FontFamily}', {font.Size:0.0}.");
-                }
-
-                gdiFonts.Add(font, fontPtr);
-            }
-
-            IntPtr oldFont = Gdi32API.SelectObjectChecked(hdc, fontPtr);
-            if (originalFont == IntPtr.Zero)
-            {
-                originalFont = oldFont;
-            }
+            SelectGDIFont(font);
+            Gdi32API.SetBkModeChecked(hdc, Gdi32BackgroundMode.TRANSPARENT);
+            Gdi32API.SetTextColorChecked(hdc, Gdi32API.ToCOLORREF(color));
+            Gdi32API.TextOutW(hdc, x, y, text, text.Length);
         }
 
         public void DrawStringGDIPlus(Color color, FontConfig font, int x, int y, string text)
@@ -156,34 +162,70 @@ namespace NWindows.Win32
 
         private void FillRectangleW32(Color color, int x, int y, int width, int height)
         {
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            if (color.IsFullyOpaque())
+            {
+                FillOpaqueRectangleW32(color, x, y, width, height);
+                return;
+            }
+
+            WithTransparentCanvas
+            (
+                new Rectangle(x, y, width, height),
+                color.A, false,
+                canvas => canvas.FillOpaqueRectangleW32(color, 0, 0, width, height)
+            );
+        }
+
+        private void FillOpaqueRectangleW32(Color color, int x, int y, int width, int height)
+        {
             // todo: check that width and height are exact
             RECT rect = new RECT {left = x, top = y, right = x + width, bottom = y + height};
-            var brush = Gdi32API.CreateSolidBrush(ToCOLORREF(color));
+            var brush = objectCache.GetSolidBrush(color);
             Win32API.FillRect(hdc, ref rect, brush);
-            Gdi32API.DeleteObject(brush);
         }
 
         private void FillRectangleGDI(Color color, int x, int y, int width, int height)
         {
-            var brush = Gdi32API.CreateSolidBrush(ToCOLORREF(color));
-            var pen = Gdi32API.CreatePen(GdiPenStyle.PS_SOLID, 0, ToCOLORREF(color));
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
 
-            var originalBrush = Gdi32API.SelectObject(hdc, brush);
-            var originalPen = Gdi32API.SelectObject(hdc, pen);
+            if (color.IsFullyOpaque())
+            {
+                FillOpaqueRectangleGDI(color, x, y, width, height);
+                return;
+            }
 
-            // todo: check that width and height are exact
-            Gdi32API.Rectangle(hdc, x, y, x + width, y + height);
-
-            Gdi32API.SelectObject(hdc, originalBrush);
-            Gdi32API.SelectObject(hdc, originalPen);
-
-            Gdi32API.DeleteObject(brush);
-            Gdi32API.DeleteObject(pen);
+            WithTransparentCanvas
+            (
+                new Rectangle(x, y, width, height),
+                color.A, false,
+                canvas => canvas.FillOpaqueRectangleGDI(color, 0, 0, width, height)
+            );
         }
 
-        private uint ToCOLORREF(Color color)
+        private void FillOpaqueRectangleGDI(Color color, int x, int y, int width, int height)
         {
-            return (uint) (color.B << 16 | color.G << 8 | color.R);
+            // todo: check that width and height are exact
+            var region = Gdi32API.CreateRectRgnChecked(x, y, x + width, y + height);
+            try
+            {
+                // todo: pick FillRgn or PaintRgn
+                Gdi32API.FillRgn(hdc, region, objectCache.GetSolidBrush(color));
+
+                // SelectSolidBrush(color);
+                // Gdi32API.PaintRgn(hdc, region);
+            }
+            finally
+            {
+                Gdi32API.DeleteObject(region);
+            }
         }
 
         private void FillRectangleGDIPlus(Color color, int x, int y, int width, int height)
@@ -197,6 +239,80 @@ namespace NWindows.Win32
             finally
             {
                 GdiPlusAPI.CheckStatus(GdiPlusAPI.GdipDeleteBrush(brush));
+            }
+        }
+
+        private void WithTransparentCanvas(Rectangle rect, byte alpha, bool copySource, Action<Win32Canvas> action)
+        {
+            if (rect.Width <= 0 || rect.Height <= 0 || alpha == 0)
+            {
+                return;
+            }
+
+            IntPtr memoryHdc = Gdi32API.CreateCompatibleDCChecked(hdc);
+            try
+            {
+                IntPtr memoryBitmap = Gdi32API.CreateCompatibleBitmapChecked(hdc, rect.Width, rect.Height);
+                try
+                {
+                    var originalBitmap = Gdi32API.SelectObjectChecked(memoryHdc, memoryBitmap);
+                    try
+                    {
+                        if (copySource)
+                        {
+                            Gdi32API.BitBlt(memoryHdc, 0, 0, rect.Width, rect.Height, hdc, rect.X, rect.Y, GDI32RasterOperation.SRCCOPY);
+                        }
+
+                        using (Win32Canvas memoryCanvas = new Win32Canvas(memoryHdc, objectCache))
+                        {
+                            action(memoryCanvas);
+                        }
+
+                        Gdi32API.GdiAlphaBlend(hdc, rect.X, rect.Y, rect.Width, rect.Height, memoryHdc, 0, 0, rect.Width, rect.Height, new BLENDFUNCTION(alpha));
+                    }
+                    finally
+                    {
+                        Gdi32API.SelectObjectChecked(memoryHdc, originalBitmap);
+                    }
+                }
+                finally
+                {
+                    Gdi32API.DeleteObject(memoryBitmap);
+                }
+            }
+            finally
+            {
+                Gdi32API.DeleteDC(memoryHdc);
+            }
+        }
+
+        private void SelectSolidPen(Color color)
+        {
+            IntPtr pen = objectCache.GetSolidPen(color);
+            IntPtr oldPen = Gdi32API.SelectObjectChecked(hdc, pen);
+            if (originalPen == IntPtr.Zero)
+            {
+                originalPen = oldPen;
+            }
+        }
+
+        private void SelectSolidBrush(Color color)
+        {
+            IntPtr brush = objectCache.GetSolidBrush(color);
+            IntPtr oldBrush = Gdi32API.SelectObjectChecked(hdc, brush);
+            if (originalBrush == IntPtr.Zero)
+            {
+                originalBrush = oldBrush;
+            }
+        }
+
+        private void SelectGDIFont(FontConfig fontConfig)
+        {
+            IntPtr font = objectCache.GetFont(fontConfig);
+            IntPtr oldFont = Gdi32API.SelectObjectChecked(hdc, font);
+            if (originalFont == IntPtr.Zero)
+            {
+                originalFont = oldFont;
             }
         }
     }

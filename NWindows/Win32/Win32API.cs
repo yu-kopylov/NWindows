@@ -1,4 +1,6 @@
-﻿namespace NWindows.Win32
+﻿using System.Drawing;
+
+namespace NWindows.Win32
 {
     using System;
     using System.Runtime.InteropServices;
@@ -12,6 +14,7 @@
     using LONG = System.Int32;
     using UINT = System.UInt32;
     using UINT32 = System.UInt32;
+    using WORD = System.UInt16;
     using GpBrush = System.IntPtr;
     using GpFont = System.IntPtr;
     using GpFontCollection = System.IntPtr;
@@ -20,6 +23,8 @@
     using GpImage = System.IntPtr;
     using GpSolidFill = System.IntPtr;
     using GpStringFormat = System.IntPtr;
+    using HANDLE = System.IntPtr;
+    using HBITMAP = System.IntPtr;
     using HBRUSH = System.IntPtr;
     using HCURSOR = System.IntPtr;
     using HDC = System.IntPtr;
@@ -31,6 +36,7 @@
     using HMODULE = System.IntPtr;
     using HPEN = System.IntPtr;
     using HWND = System.IntPtr;
+    using HRGN = System.IntPtr;
     using LPARAM = System.IntPtr;
     using LPVOID = System.IntPtr;
     using LRESULT = System.IntPtr;
@@ -109,12 +115,96 @@
 
         [DllImport("User32.dll")]
         public static extern int FillRect(HDC hDC, ref RECT lprc, HBRUSH hbr);
+
+        [DllImport("User32.dll")]
+        public static extern int DrawTextW(
+            HDC hdc,
+            [MarshalAs(UnmanagedType.LPWStr)] string lpchText,
+            int cchText,
+            [In] ref RECT lprc,
+            UINT format
+        );
+
+        [DllImport("User32.dll")]
+        public static extern int DrawTextExW(
+            HDC hdc,
+            [MarshalAs(UnmanagedType.LPWStr)] string lpchText,
+            int cchText,
+            ref RECT lprc,
+            UINT format,
+            ref DRAWTEXTPARAMS lpdtp
+        );
     }
 
     internal static class Gdi32API
     {
         private static readonly HGDIOBJ HGDI_ERROR = new IntPtr(0xFFFFFFFFL);
         private static readonly COLORREF CLR_INVALID = 0xFFFFFFFF;
+
+        [DllImport("Gdi32.dll")]
+        private static extern HDC CreateCompatibleDC(HDC hdc);
+
+        public static HDC CreateCompatibleDCChecked(HDC hdc)
+        {
+            HDC newHdc = CreateCompatibleDC(hdc);
+            if (newHdc == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"{nameof(CreateCompatibleDC)} failed. Original device context: 0x{hdc.ToString("X16")}.");
+            }
+
+            return newHdc;
+        }
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL DeleteDC(HDC hdc);
+
+        [DllImport("Gdi32.dll")]
+        private static extern HBITMAP CreateDIBSection(
+            HDC hdc,
+            ref BITMAPINFO pbmi,
+            UINT usage,
+            out IntPtr ppvBits,
+            HANDLE hSection,
+            DWORD offset
+        );
+
+        public static HBITMAP CreateDIBSectionChecked(
+            HDC hdc,
+            BITMAPINFO pbmi
+        )
+        {
+            HBITMAP res = CreateDIBSection(hdc, ref pbmi, 0, out IntPtr ppvBits, IntPtr.Zero, 0);
+
+            if (res == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"{nameof(CreateDIBSection)} failed. Width: {pbmi.bmiHeader.biWidth}, Height: {pbmi.bmiHeader.biHeight}.");
+            }
+
+            return res;
+        }
+
+        [DllImport("Gdi32.dll")]
+        private static extern HBITMAP CreateCompatibleBitmap(
+            HDC hdc,
+            int cx,
+            int cy
+        );
+
+        public static HBITMAP CreateCompatibleBitmapChecked(
+            HDC hdc,
+            int cx,
+            int cy
+        )
+        {
+            HBITMAP res = CreateCompatibleBitmap(hdc, cx, cy);
+
+            if (res == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"{nameof(CreateCompatibleBitmap)} failed. Width: {cx}, Height: {cy}.");
+            }
+
+            return res;
+        }
 
         [DllImport("Gdi32.dll")]
         private static extern Gdi32BackgroundMode SetBkMode(HDC hdc, Gdi32BackgroundMode mode);
@@ -157,7 +247,59 @@
         }
 
         [DllImport("Gdi32.dll")]
+        public static extern BOOL BitBlt(
+            HDC hdc,
+            int x,
+            int y,
+            int cx,
+            int cy,
+            HDC hdcSrc,
+            int x1,
+            int y1,
+            GDI32RasterOperation rop
+        );
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL GdiAlphaBlend(
+            HDC hdcDest,
+            int xoriginDest,
+            int yoriginDest,
+            int wDest,
+            int hDest,
+            HDC hdcSrc,
+            int xoriginSrc,
+            int yoriginSrc,
+            int wSrc,
+            int hSrc,
+            BLENDFUNCTION ftn
+        );
+
+        [DllImport("Gdi32.dll")]
         public static extern BOOL Rectangle(HDC hdc, int left, int top, int right, int bottom);
+
+        [DllImport("Gdi32.dll")]
+        private static extern HRGN CreateRectRgn(int x1, int y1, int x2, int y2);
+
+        public static HRGN CreateRectRgnChecked(int x1, int y1, int x2, int y2)
+        {
+            HRGN region = CreateRectRgn(x1, y1, x2, y2);
+            // todo: is it worth checking?
+            if (region == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"{nameof(CreateRectRgn)} failed. X1: {x1}, Y1: {y1}, X2: {x2}, Y2: {y2}.");
+            }
+
+            return region;
+        }
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL SetRectRgn(HRGN hrgn, int left, int top, int right, int bottom);
+
+        [DllImport("Gdi32.dll", CharSet = CharSet.Unicode)]
+        public static extern BOOL PaintRgn(HDC hdc, HRGN hrgn);
+
+        [DllImport("Gdi32.dll", CharSet = CharSet.Unicode)]
+        public static extern BOOL FillRgn(HDC hdc, HRGN hrgn, HBRUSH hbr);
 
         [DllImport("Gdi32.dll")]
         private static extern COLORREF SetTextColor(HDC hdc, COLORREF color);
@@ -190,14 +332,34 @@
             string pszFaceName
         );
 
-        [DllImport("Gdi32.dll", CharSet = CharSet.Unicode)]
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL SetTextJustification(
+            HDC hdc,
+            int extra,
+            int count
+        );
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL GetTextExtentPoint32W(
+            HDC hdc,
+            [MarshalAs(UnmanagedType.LPWStr)] string lpString,
+            int len,
+            out SIZE psizl
+        );
+
+        [DllImport("Gdi32.dll")]
         public static extern BOOL TextOutW(
             HDC hdc,
             int x,
             int y,
-            string lpString,
+            [MarshalAs(UnmanagedType.LPWStr)] string lpString,
             int stringLen
         );
+
+        public static uint ToCOLORREF(Color color)
+        {
+            return (uint) (color.B << 16 | color.G << 8 | color.R);
+        }
     }
 
     internal static class GdiPlusAPI
@@ -495,6 +657,117 @@
             this.y = y;
             this.width = width;
             this.height = height;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct BITMAPINFO
+    {
+        public readonly BITMAPINFOHEADER bmiHeader;
+        public readonly RGBQUAD bmiColors;
+
+        public BITMAPINFO(int width, int height)
+        {
+            bmiHeader = new BITMAPINFOHEADER(width, height);
+            bmiColors = new RGBQUAD();
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct BITMAPINFOHEADER
+    {
+        private const uint BI_RGB = 0;
+
+        public readonly DWORD biSize;
+        public readonly LONG biWidth;
+        public readonly LONG biHeight;
+        public readonly WORD biPlanes;
+        public readonly WORD biBitCount;
+        public readonly DWORD biCompression;
+        public readonly DWORD biSizeImage;
+        public readonly LONG biXPelsPerMeter;
+        public readonly LONG biYPelsPerMeter;
+        public readonly DWORD biClrUsed;
+        public readonly DWORD biClrImportant;
+
+        public BITMAPINFOHEADER(int width, int height)
+        {
+            biSize = (uint) Marshal.SizeOf<BITMAPINFOHEADER>();
+            biWidth = width;
+            biHeight = -height;
+            biPlanes = 1;
+            biBitCount = 32;
+            biCompression = BI_RGB;
+            biSizeImage = 0;
+            biXPelsPerMeter = 0;
+            biYPelsPerMeter = 0;
+            biClrUsed = 0;
+            biClrImportant = 0;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RGBQUAD
+    {
+        public readonly BYTE rgbBlue;
+        public readonly BYTE rgbGreen;
+        public readonly BYTE rgbRed;
+        public readonly BYTE rgbReserved;
+    }
+
+    internal enum GDI32RasterOperation : uint
+    {
+        SRCCOPY = 0x00CC0020
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct BLENDFUNCTION
+    {
+        private const byte AC_SRC_OVER = 0;
+
+        public readonly BYTE BlendOp;
+        public readonly BYTE BlendFlags;
+        public readonly BYTE SourceConstantAlpha;
+        public readonly BYTE AlphaFormat;
+
+        public BLENDFUNCTION(byte alpha)
+        {
+            BlendOp = AC_SRC_OVER;
+            BlendFlags = 0;
+            SourceConstantAlpha = alpha;
+            AlphaFormat = 0;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SIZE
+    {
+        public readonly LONG cx;
+        public readonly LONG cy;
+
+        public SIZE(int cx, int cy) : this()
+        {
+            this.cx = cx;
+            this.cy = cy;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct DRAWTEXTPARAMS
+    {
+        public UINT cbSize;
+        public int iTabLength;
+        public int iLeftMargin;
+        public int iRightMargin;
+        public UINT uiLengthDrawn;
+
+        public DRAWTEXTPARAMS(int tabLength)
+        {
+            cbSize = (uint) Marshal.SizeOf<DRAWTEXTPARAMS>();
+            iTabLength = tabLength;
+            iLeftMargin = 0;
+            iRightMargin = 0;
+            uiLengthDrawn = 0;
         }
     }
 }
