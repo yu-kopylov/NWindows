@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace NWindows.Examples
@@ -6,16 +7,18 @@ namespace NWindows.Examples
     public class MainWindow : BasicWindow
     {
         private readonly List<Control> controls = new List<Control>();
+        private readonly TextExampleControl textExampleControl;
         private readonly MouseExampleControl mouseExampleControl;
 
         public MainWindow()
         {
             Title = "Examples \u2690-\xD83C\xDFC1-\u2690";
 
+            textExampleControl = new TextExampleControl {Area = new Rectangle(200, 0, 600, 250)};
             mouseExampleControl = new MouseExampleControl {Area = new Rectangle(0, 250, 200, 25)};
 
             controls.Add(new DrawingExampleControl {Area = new Rectangle(0, 0, 200, 250)});
-            controls.Add(new TextExampleControl {Area = new Rectangle(200, 0, 600, 250)});
+            controls.Add(textExampleControl);
             controls.Add(mouseExampleControl);
         }
 
@@ -37,6 +40,16 @@ namespace NWindows.Examples
         {
             mouseExampleControl.MousePosition = point;
             Invalidate(mouseExampleControl.Area);
+        }
+
+        public override void OnResize(Size clientArea)
+        {
+            var newTextExampleControlArea = new Rectangle(200, 0, Math.Max(0, clientArea.Width - 200), 250);
+            if (newTextExampleControlArea != textExampleControl.Area)
+            {
+                textExampleControl.Area = newTextExampleControlArea;
+                Invalidate(textExampleControl.Area);
+            }
         }
     }
 }

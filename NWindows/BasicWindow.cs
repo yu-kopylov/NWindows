@@ -23,6 +23,8 @@ namespace NWindows
 
         // todo: setter should update existing window
         public int Height { get; set; } = 600;
+        
+        public Size ClientArea { get; internal set; }
 
         public void Invalidate(Rectangle area)
         {
@@ -32,6 +34,10 @@ namespace NWindows
         public abstract void Paint(ICanvas canvas, Rectangle area);
 
         public virtual void OnMouseMove(Point point)
+        {
+        }
+        
+        public virtual void OnResize(Size clientArea)
         {
         }
     }

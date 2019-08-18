@@ -82,7 +82,10 @@ namespace NWindows.X11
 
             XSetWindowAttributes attr = new XSetWindowAttributes();
             attr.border_pixel = 0;
-            attr.event_mask = XEventMask.ExposureMask | XEventMask.ButtonPressMask | XEventMask.PointerMotionMask;
+            attr.event_mask = XEventMask.ExposureMask |
+                              XEventMask.ButtonPressMask |
+                              XEventMask.PointerMotionMask |
+                              XEventMask.StructureNotifyMask;
             attr.colormap = colormap;
 
             ulong windowId = LibX11.XCreateWindow
@@ -91,7 +94,7 @@ namespace NWindows.X11
                 defaultRootWindow,
                 0, 0,
                 (uint) window.Width, (uint) window.Height,
-                10,
+                1,
                 pictFormat.depth,
                 WindowClass.InputOutput,
                 visualInfo.visual,
@@ -112,6 +115,7 @@ namespace NWindows.X11
                 LibX11.XNextEvent(display, out XEvent evt);
                 if (evt.type == XEventType.Expose)
                 {
+                    // System.Console.WriteLine($"Expose: {evt.ExposeEvent.x} x {evt.ExposeEvent.y} .. {evt.ExposeEvent.width} x {evt.ExposeEvent.height}");
                     var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
                     using (X11ObjectCache objectCache = new X11ObjectCache(display, defaultScreen))
                     using (X11Canvas canvas = X11Canvas.CreateForWindow(
@@ -129,7 +133,19 @@ namespace NWindows.X11
                 }
                 else if (evt.type == XEventType.MotionNotify)
                 {
+                    // System.Console.WriteLine($"MotionNotify: {evt.MotionEvent.x} x {evt.MotionEvent.y}");
                     window.OnMouseMove(new Point(evt.MotionEvent.x, evt.MotionEvent.y));
+                }
+                else if (evt.type == XEventType.ConfigureNotify)
+                {
+                    // System.Console.WriteLine($"ConfigureNotify: {evt.ConfigureEvent.width} x {evt.ConfigureEvent.height}");
+                    Size newClientArea = new Size(evt.ConfigureEvent.width, evt.ConfigureEvent.height);
+                    if (window.ClientArea != newClientArea)
+                    {
+                        // todo: does not look good (2 sources of client area in window)
+                        window.ClientArea = newClientArea;
+                        window.OnResize(newClientArea);
+                    }
                 }
             }
 

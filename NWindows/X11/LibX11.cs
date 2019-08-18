@@ -242,6 +242,7 @@ namespace NWindows.X11
     {
         // todo: should event size be 96 or 192 (24*4 or 24 *8)
         [FieldOffset(0)] public XEventType type;
+        [FieldOffset(0)] public XConfigureEvent ConfigureEvent;
         [FieldOffset(0)] public XExposeEvent ExposeEvent;
         [FieldOffset(0)] public XMotionEvent MotionEvent;
 
@@ -286,6 +287,22 @@ namespace NWindows.X11
         public readonly uint state; /* key or button mask */
         public readonly char is_hint; /* detail */
         public readonly Bool same_screen; /* same screen flag */
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XConfigureEvent
+    {
+        public readonly int type;
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window eventWindow;
+        public readonly Window window;
+        public readonly int x, y;
+        public readonly int width, height;
+        public readonly int border_width;
+        public readonly Window above;
+        public readonly Bool override_redirect;
     }
 
     internal enum XChangePropertyFormat
