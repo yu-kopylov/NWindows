@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace NWindows.X11
 {
@@ -14,6 +13,8 @@ namespace NWindows.X11
         private XRenderPictFormat pictFormat;
         private XVisualInfo visualInfo;
         private ulong colormap;
+
+        private Rectangle? pendingRedraw;
 
         public static bool IsAvailable()
         {
@@ -117,18 +118,17 @@ namespace NWindows.X11
                 {
                     // System.Console.WriteLine($"Expose: {evt.ExposeEvent.x} x {evt.ExposeEvent.y} .. {evt.ExposeEvent.width} x {evt.ExposeEvent.height}");
                     var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
-                    using (X11ObjectCache objectCache = new X11ObjectCache(display, defaultScreen))
-                    using (X11Canvas canvas = X11Canvas.CreateForWindow(
-                        display,
-                        defaultScreen,
-                        objectCache,
-                        visualInfo.visual,
-                        colormap,
-                        pictFormatPtr,
-                        windowId
-                    ))
+                    if (pendingRedraw == null)
                     {
-                        window.Paint(canvas, rect);
+                        pendingRedraw = rect;
+                    }
+                    else
+                    {
+                        int left = Math.Min(pendingRedraw.Value.Left, rect.Left);
+                        int top = Math.Min(pendingRedraw.Value.Top, rect.Top);
+                        int right = Math.Max(pendingRedraw.Value.Right, rect.Right);
+                        int bottom = Math.Max(pendingRedraw.Value.Bottom, rect.Bottom);
+                        pendingRedraw = new Rectangle(left, top, right - left, bottom - top);
                     }
                 }
                 else if (evt.type == XEventType.MotionNotify)
@@ -146,6 +146,25 @@ namespace NWindows.X11
                         window.ClientArea = newClientArea;
                         window.OnResize(newClientArea);
                     }
+                }
+
+                if (pendingRedraw != null && LibX11.XPending(display) == 0)
+                {
+                    using (X11ObjectCache objectCache = new X11ObjectCache(display, defaultScreen))
+                    using (X11Canvas canvas = X11Canvas.CreateForWindow(
+                        display,
+                        defaultScreen,
+                        objectCache,
+                        visualInfo.visual,
+                        colormap,
+                        pictFormatPtr,
+                        windowId
+                    ))
+                    {
+                        window.Paint(canvas, pendingRedraw.Value);
+                    }
+
+                    pendingRedraw = null;
                 }
             }
 

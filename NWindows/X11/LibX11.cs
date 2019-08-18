@@ -86,6 +86,9 @@ namespace NWindows.X11
         public static extern int XNextEvent(DisplayPtr display, out XEvent event_return);
 
         [DllImport("libX11.so.6")]
+        public static extern int XPending(DisplayPtr display);
+
+        [DllImport("libX11.so.6")]
         public static extern Status XSendEvent(DisplayPtr display, Window w, Bool propagate, long event_mask, ref XEvent event_send);
     }
 
