@@ -95,7 +95,7 @@ namespace NWindows.X11
                         XftFontExt fontExt = objectCache.GetXftFont(font);
                         var fontInfo = Marshal.PtrToStructure<XftFont>(fontExt.MainFont);
 
-                        int textWidth = DrawString(xftDraw, xftColorPtr, fontExt, x, y + fontInfo.ascent, text);
+                        int xOffset = DrawString(xftDraw, xftColorPtr, fontExt, x, y + fontInfo.ascent, text);
 
                         if (font.IsUnderline)
                         {
@@ -104,7 +104,7 @@ namespace NWindows.X11
                                 display, PictOp.PictOpOver, pictureId, ref xColor,
                                 x,
                                 y + fontInfo.ascent + (fontInfo.descent - lineHeight) / 2,
-                                (uint) textWidth,
+                                (uint) xOffset,
                                 (uint) lineHeight
                             );
                         }
@@ -117,7 +117,7 @@ namespace NWindows.X11
                                 display, PictOp.PictOpOver, pictureId, ref xColor,
                                 x,
                                 y + fontInfo.ascent - (2 * fontInfo.ascent + 3 * lineHeight) / 6,
-                                (uint) textWidth,
+                                (uint) xOffset,
                                 (uint) lineHeight
                             );
                         }
@@ -148,7 +148,7 @@ namespace NWindows.X11
 
                 IntPtr rangeFont = fontExt.MainFont;
                 int rangeStart = 0;
-                int textWidth = 0;
+                int xOffset = 0;
 
                 for (int i = 0; i < utf32Text.Length; i += 4)
                 {
@@ -157,15 +157,15 @@ namespace NWindows.X11
 
                     if (charFont != rangeFont)
                     {
-                        textWidth += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + textWidth, y, utf32TextPtr, rangeStart, i);
+                        xOffset += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + xOffset, y, utf32TextPtr, rangeStart, i);
 
                         rangeFont = charFont;
                         rangeStart = i;
                     }
                 }
 
-                textWidth += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + textWidth, y, utf32TextPtr, rangeStart, utf32Text.Length);
-                return textWidth;
+                xOffset += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + xOffset, y, utf32TextPtr, rangeStart, utf32Text.Length);
+                return xOffset;
             }
             finally
             {
@@ -205,7 +205,7 @@ namespace NWindows.X11
                 utf32TextPtr + rangeStart,
                 (rangeEnd - rangeStart) / 4
             );
-            return extents.width;
+            return extents.xOff;
         }
     }
 }
