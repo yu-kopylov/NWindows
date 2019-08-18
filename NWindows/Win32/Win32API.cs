@@ -517,6 +517,7 @@ namespace NWindows.Win32
     internal enum Win32MessageType : uint
     {
         WM_DESTROY = 0x0002,
+        WM_SIZE = 0x0005,
         WM_PAINT = 0x000F,
         WM_MOUSEMOVE = 0x0200
     }

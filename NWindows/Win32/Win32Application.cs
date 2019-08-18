@@ -120,11 +120,11 @@ namespace NWindows.Win32
 
             if (uMsg == Win32MessageType.WM_MOUSEMOVE)
             {
-                ulong lParam32 = (uint) lParam.ToInt64();
-                int x = (short) (lParam32 & 0xFFFF);
-                int y = (short) ((lParam32 >> 16) & 0xFFFF);
                 if (windows.TryGetValue(hwnd, out var window))
                 {
+                    ulong lParam32 = (uint) lParam.ToInt64();
+                    int x = (short) (lParam32 & 0xFFFF);
+                    int y = (short) ((lParam32 >> 16) & 0xFFFF);
                     window.OnMouseMove(new Point(x, y));
                 }
 
@@ -151,6 +151,26 @@ namespace NWindows.Win32
                 finally
                 {
                     Win32API.EndPaint(hwnd, ref ps);
+                }
+
+                return IntPtr.Zero;
+            }
+
+            if (uMsg == Win32MessageType.WM_SIZE)
+            {
+                if (windows.TryGetValue(hwnd, out var window))
+                {
+                    ulong lParam32 = (uint) lParam.ToInt64();
+                    int width = (short) (lParam32 & 0xFFFF);
+                    int height = (short) ((lParam32 >> 16) & 0xFFFF);
+                    // todo: This code is same as in X11 implementation. Can it be moved to window.
+                    Size newClientArea = new Size(width, height);
+                    if (window.ClientArea != newClientArea)
+                    {
+                        // todo: does not look good (2 sources of client area in window)
+                        window.ClientArea = newClientArea;
+                        window.OnResize(newClientArea);
+                    }
                 }
 
                 return IntPtr.Zero;
