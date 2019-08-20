@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace NWindows.Win32
 {
-    public class Win32Application
+    public class Win32Application : INativeApplication
     {
         private const string WindowClassName = "DEFAULT";
 
@@ -68,6 +68,8 @@ namespace NWindows.Win32
                     throw new InvalidOperationException("Failed to create a window.");
                 }
 
+                // todo: set only Window?
+                window.Application = this;
                 window.NativeWindow = new Win32Window(hwnd);
                 windows.Add(hwnd, window);
 
@@ -178,5 +180,7 @@ namespace NWindows.Win32
 
             return Win32API.DefWindowProcW(hwnd, uMsg, wParam, lParam);
         }
+
+        public IImageCodec ImageCodec { get; } = new Win32ImageCodec();
     }
 }

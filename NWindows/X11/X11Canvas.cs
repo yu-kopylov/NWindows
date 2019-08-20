@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -136,6 +135,11 @@ namespace NWindows.X11
             {
                 LibXft.XftDrawDestroy(xftDraw);
             }
+        }
+
+        public void DrawImage(IImage image, int x, int y)
+        {
+            // todo: implement
         }
 
         private int DrawString(IntPtr xftDraw, IntPtr xftColorPtr, XftFontExt fontExt, int x, int y, string text)

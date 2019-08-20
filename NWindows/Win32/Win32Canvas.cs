@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using NWindows.X11;
 
 namespace NWindows.Win32
 {
@@ -86,6 +87,11 @@ namespace NWindows.Win32
             // todo: pick
             DrawStringGDI(color, font, x, y, text);
             // DrawStringGDIPlus(color, font, x, y, text);
+        }
+
+        public void DrawImage(IImage image, int x, int y)
+        {
+            // todo: implement
         }
 
         public void DrawStringGDI(Color color, FontConfig font, int x, int y, string text)

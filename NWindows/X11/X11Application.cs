@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace NWindows.X11
 {
-    internal class X11Application
+    internal class X11Application : INativeApplication
     {
         private IntPtr display;
         private int defaultScreen;
@@ -105,6 +105,8 @@ namespace NWindows.X11
                 ref attr
             );
 
+            // todo: set only Window?
+            window.Application = this;
             window.NativeWindow = new X11Window(display, windowId);
             window.NativeWindow.SetTitle(window.Title);
 
@@ -173,5 +175,7 @@ namespace NWindows.X11
 
             LibX11.XCloseDisplay(display);
         }
+
+        public IImageCodec ImageCodec { get; } = new GdkPixBufImageCodec();
     }
 }

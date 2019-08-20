@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using NWindows.X11;
 
 namespace NWindows.Examples
 {
@@ -23,6 +24,11 @@ namespace NWindows.Examples
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
         {
             canvas.DrawString(color, font, x + xOffset, y + yOffset, text);
+        }
+
+        public void DrawImage(IImage image, int x, int y)
+        {
+            canvas.DrawImage(image, x, y);
         }
     }
 }

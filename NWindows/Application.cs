@@ -6,22 +6,39 @@ namespace NWindows
 {
     public class Application
     {
-        public void Run(BasicWindow window)
+        private INativeApplication NativeApp { get; set; }
+
+        public void Init()
         {
+            if (NativeApp != null)
+            {
+                throw new InvalidOperationException("Application was already initialized.");
+            }
+
             if (X11Application.IsAvailable())
             {
-                var app = new X11Application();
-                app.Run(window);
+                NativeApp = new X11Application();
             }
             else if (Win32Application.IsAvailable())
             {
-                var app = new Win32Application();
-                app.Run(window);
+                NativeApp = new Win32Application();
             }
             else
             {
                 throw new InvalidOperationException("Cannot determine a suitable API.");
             }
         }
+
+        public void Run(BasicWindow window)
+        {
+            if (NativeApp == null)
+            {
+                throw new InvalidOperationException("Application is not initialized yet.");
+            }
+
+            NativeApp.Run(window);
+        }
+
+        public IImageCodec ImageCodec => NativeApp.ImageCodec;
     }
 }

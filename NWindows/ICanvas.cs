@@ -1,4 +1,5 @@
 using System.Drawing;
+using NWindows.X11;
 
 namespace NWindows
 {
@@ -8,5 +9,6 @@ namespace NWindows
 
         void FillRectangle(Color color, int x, int y, int width, int height);
         void DrawString(Color color, FontConfig font, int x, int y, string text);
+        void DrawImage(IImage image, int x, int y);
     }
 }
