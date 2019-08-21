@@ -12,6 +12,7 @@ namespace NWindows.X11
         private readonly X11ObjectCache objectCache;
         private readonly IntPtr visual;
         private readonly ulong colormap;
+        private readonly IntPtr pictFormatPtr;
         private readonly ulong windowId;
         private readonly ulong pictureId;
 
@@ -21,6 +22,7 @@ namespace NWindows.X11
             X11ObjectCache objectCache,
             IntPtr visual,
             ulong colormap,
+            IntPtr pictFormatPtr,
             ulong windowId,
             ulong pictureId
         )
@@ -30,6 +32,7 @@ namespace NWindows.X11
             this.objectCache = objectCache;
             this.visual = visual;
             this.colormap = colormap;
+            this.pictFormatPtr = pictFormatPtr;
             this.windowId = windowId;
             this.pictureId = pictureId;
         }
@@ -53,7 +56,7 @@ namespace NWindows.X11
                 0,
                 ref attr
             );
-            return new X11Canvas(display, screenNum, objectCache, visual, colormap, windowId, pictureId);
+            return new X11Canvas(display, screenNum, objectCache, visual, colormap, pictFormatPtr, windowId, pictureId);
         }
 
         public void Dispose()
@@ -137,11 +140,6 @@ namespace NWindows.X11
             }
         }
 
-        public void DrawImage(IImage image, int x, int y)
-        {
-            // todo: implement
-        }
-
         private int DrawString(IntPtr xftDraw, IntPtr xftColorPtr, XftFontExt fontExt, int x, int y, string text)
         {
             byte[] utf32Text = Encoding.UTF32.GetBytes(text);
@@ -210,6 +208,59 @@ namespace NWindows.X11
                 (rangeEnd - rangeStart) / 4
             );
             return extents.xOff;
+        }
+
+        public void DrawImage(IImage image, int x, int y)
+        {
+            // todo: allow null?
+            X11Image x11Image = (X11Image) image;
+
+            var pixmapId = LibX11.XCreatePixmap(
+                display,
+                windowId,
+                (uint) x11Image.Width,
+                (uint) x11Image.Height,
+                X11Application.RequiredColorDepth
+            );
+            try
+            {
+                var gcValues = new XGCValues();
+                var gc = LibX11.XCreateGC(display, pixmapId, 0, ref gcValues);
+                try
+                {
+                    LibX11.XPutImage(display, pixmapId, gc, x11Image.XImage, 0, 0, 0, 0, (uint) x11Image.Width, (uint) x11Image.Height);
+                }
+                finally
+                {
+                    LibX11.XFreeGC(display, gc);
+                }
+
+                XRenderPictureAttributes attr = new XRenderPictureAttributes();
+                var tempPictureId = LibXRender.XRenderCreatePicture(display, pixmapId, pictFormatPtr, 0, ref attr);
+                try
+                {
+                    LibXRender.XRenderComposite
+                    (
+                        display,
+                        PictOp.PictOpOver,
+                        tempPictureId,
+                        0,
+                        pictureId,
+                        0, 0,
+                        0, 0,
+                        x, y,
+                        (uint) x11Image.Width, (uint) x11Image.Height
+                    );
+                }
+                finally
+                {
+                    LibXRender.XRenderFreePicture(display, tempPictureId);
+                }
+            }
+            finally
+            {
+                LibX11.XFreePixmap(display, pixmapId);
+            }
         }
     }
 }

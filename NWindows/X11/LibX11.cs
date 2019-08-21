@@ -7,12 +7,16 @@ namespace NWindows.X11
     using Status = System.Int32;
     using Colormap = System.UInt64;
     using Cursor = System.UInt64;
+    using Drawable = System.UInt64;
+    using Font = System.UInt64;
+    using GC = System.UInt64;
     using Pixmap = System.UInt64;
     using Time = System.UInt64;
     using VisualID = System.UInt64;
     using DisplayPtr = System.IntPtr;
     using VisualPtr = System.IntPtr;
     using Window = System.UInt64;
+    using XImagePtr = System.IntPtr;
 
     internal static class LibX11
     {
@@ -90,6 +94,69 @@ namespace NWindows.X11
 
         [DllImport("libX11.so.6")]
         public static extern Status XSendEvent(DisplayPtr display, Window w, Bool propagate, long event_mask, ref XEvent event_send);
+
+        [DllImport("libX11.so.6")]
+        public static extern XImagePtr XCreateImage(
+            DisplayPtr display,
+            VisualPtr visual,
+            uint depth,
+            XImageFormat format,
+            int offset,
+            IntPtr data,
+            uint width,
+            uint height,
+            int bitmap_pad,
+            int bytes_per_line
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XDestroyImage(XImagePtr ximage);
+
+        [DllImport("libX11.so.6")]
+        public static extern int XPutImage(
+            DisplayPtr display,
+            Drawable d,
+            GC gc,
+            XImagePtr image,
+            int src_x,
+            int src_y,
+            int dest_x,
+            int dest_y,
+            uint width,
+            uint height
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern GC XCreateGC(
+            DisplayPtr display,
+            Drawable d,
+            ulong valuemask,
+            [In] ref XGCValues values
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XFreeGC(DisplayPtr display, GC gc);
+
+        [DllImport("libX11.so.6")]
+        public static extern Pixmap XCreatePixmap(
+            DisplayPtr display,
+            Drawable d,
+            uint width,
+            uint height,
+            uint depth
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern Pixmap XCreateBitmapFromData(
+            DisplayPtr display,
+            Drawable d,
+            IntPtr data,
+            uint width,
+            uint height
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XFreePixmap(DisplayPtr display, Pixmap pixmap);
     }
 
     internal enum VisualClass
@@ -318,5 +385,40 @@ namespace NWindows.X11
         PropModeReplace = 0,
         PropModePrepend = 1,
         PropModeAppend = 2
+    }
+
+    internal enum XImageFormat
+    {
+        XYBitmap = 0,
+        XYPixmap = 1,
+        ZPixmap = 2
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XGCValues
+    {
+        public int function; /* logical operation */
+        public ulong plane_mask; /* plane mask */
+        public ulong foreground; /* foreground pixel */
+        public ulong background; /* background pixel */
+        public int line_width; /* line width (in pixels) */
+        public int line_style; /* LineSolid, LineOnOffDash, LineDoubleDash */
+        public int cap_style; /* CapNotLast, CapButt, CapRound, CapProjecting */
+        public int join_style; /* JoinMiter, JoinRound, JoinBevel */
+        public int fill_style; /* FillSolid, FillTiled, FillStippled FillOpaqueStippled*/
+        public int fill_rule; /* EvenOddRule, WindingRule */
+        public int arc_mode; /* ArcChord, ArcPieSlice */
+        public Pixmap tile; /* tile pixmap for tiling operations */
+        public Pixmap stipple; /* stipple 1 plane pixmap for stippling */
+        public int ts_x_origin; /* offset for tile or stipple operations */
+        public int ts_y_origin;
+        public Font font; /* default text font for text operations */
+        public int subwindow_mode; /* ClipByChildren, IncludeInferiors */
+        public Bool graphics_exposures; /* boolean, should exposures be generated */
+        public int clip_x_origin; /* origin for clipping */
+        public int clip_y_origin;
+        public Pixmap clip_mask; /* bitmap clipping; other calls for rects */
+        public int dash_offset; /* patterned/dashed line information */
+        public char dashes;
     }
 }

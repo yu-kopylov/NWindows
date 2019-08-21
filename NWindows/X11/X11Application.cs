@@ -6,6 +6,9 @@ namespace NWindows.X11
 {
     internal class X11Application : INativeApplication
     {
+        public const int RequiredColorDepth = 32;
+        public const int RequiredBitsPerChannel = 8;
+
         private IntPtr display;
         private int defaultScreen;
         private ulong defaultRootWindow;
@@ -80,6 +83,8 @@ namespace NWindows.X11
                 visualInfo.visual,
                 CreateColormapOption.AllocNone
             );
+
+            ImageCodec = new GdkPixBufImageCodec(display, visualInfo.visual);
 
             XSetWindowAttributes attr = new XSetWindowAttributes();
             attr.border_pixel = 0;
@@ -176,6 +181,6 @@ namespace NWindows.X11
             LibX11.XCloseDisplay(display);
         }
 
-        public IImageCodec ImageCodec { get; } = new GdkPixBufImageCodec();
+        public IImageCodec ImageCodec { get; private set; }
     }
 }

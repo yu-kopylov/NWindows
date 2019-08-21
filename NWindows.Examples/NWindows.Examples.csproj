@@ -9,4 +9,14 @@
       <ProjectReference Include="..\NWindows\NWindows.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Content\Images\arrow.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Content\Images\arrow.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

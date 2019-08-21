@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using NWindows.X11;
 
 namespace NWindows.Examples
 {
@@ -20,6 +21,14 @@ namespace NWindows.Examples
             controls.Add(new DrawingExampleControl {Area = new Rectangle(0, 0, 200, 250)});
             controls.Add(textExampleControl);
             controls.Add(mouseExampleControl);
+        }
+
+        public override void OnAppInit()
+        {
+            foreach (var control in controls)
+            {
+                control.OnAppInit(this);
+            }
         }
 
         public override void Paint(ICanvas canvas, Rectangle area)

@@ -41,6 +41,23 @@ namespace NWindows.X11
             uint width,
             uint height
         );
+
+        [DllImport("libXrender.so.1")]
+        public static extern void XRenderComposite(
+            DisplayPtr dpy,
+            PictOp op,
+            Picture src,
+            Picture mask,
+            Picture dst,
+            int src_x,
+            int src_y,
+            int mask_x,
+            int mask_y,
+            int dst_x,
+            int dst_y,
+            uint width,
+            uint height
+        );
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
