@@ -19,8 +19,13 @@
 *.sql text eol=crlf
 
 # Bitmap Images
+*.bmp -text !eol
+*.gif -text !eol
 *.ico -text !eol
+*.jpeg -text !eol
+*.jpg -text !eol
 *.png -text !eol
+*.tiff -text !eol
 
 # Vector Images
 *.svg text eol=crlf

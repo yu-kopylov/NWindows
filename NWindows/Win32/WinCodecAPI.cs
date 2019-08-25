@@ -139,15 +139,15 @@
     [ComImport, Guid("3b16811b-6a43-4ec9-a813-3d930c13b940"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IWICBitmapFrameDecode : IWICBitmapSource
     {
-        void GetSize(out UINT puiWidth, out UINT puiHeight);
+        new void GetSize(out UINT puiWidth, out UINT puiHeight);
 
-        Guid GetPixelFormat();
+        new Guid GetPixelFormat();
 
-        void GetResolution(out double pDpiX, out double pDpiY);
+        new void GetResolution(out double pDpiX, out double pDpiY);
 
-        void CopyPalette(IWICPalette pIPalette);
+        new void CopyPalette(IWICPalette pIPalette);
 
-        void CopyPixels(
+        new void CopyPixels(
             WICRect prc,
             uint cbStride,
             uint cbBufferSize,
@@ -215,15 +215,15 @@
     [ComImport, Guid("00000301-a8f2-4877-ba0a-fd2b6645fb94"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     internal interface IWICFormatConverter : IWICBitmapSource
     {
-        void GetSize(out UINT puiWidth, out UINT puiHeight);
+        new void GetSize(out UINT puiWidth, out UINT puiHeight);
 
-        Guid GetPixelFormat();
+        new Guid GetPixelFormat();
 
-        void GetResolution(out double pDpiX, out double pDpiY);
+        new void GetResolution(out double pDpiX, out double pDpiY);
 
-        void CopyPalette(IWICPalette pIPalette);
+        new void CopyPalette(IWICPalette pIPalette);
 
-        void CopyPixels(
+        new void CopyPixels(
             WICRect prc,
             uint cbStride,
             uint cbBufferSize,

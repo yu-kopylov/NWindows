@@ -1,5 +1,3 @@
-using NWindows.X11;
-
 namespace NWindows
 {
     public interface IImageCodec
