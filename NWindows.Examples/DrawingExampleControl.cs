@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.IO;
-using NWindows.X11;
 
 namespace NWindows.Examples
 {

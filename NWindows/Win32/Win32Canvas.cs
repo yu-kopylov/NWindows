@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Drawing;
-using NWindows.X11;
+using System.Runtime.InteropServices;
 
 namespace NWindows.Win32
 {
@@ -91,7 +91,33 @@ namespace NWindows.Win32
 
         public void DrawImage(IImage image, int x, int y)
         {
-            // todo: implement
+            // todo: allow null?
+            W32Image w32Image = (W32Image) image;
+
+            var bitmap = Gdi32API.CreateDIBSectionChecked(hdc, new BITMAPINFO(w32Image.Width, w32Image.Height), out IntPtr buffer);
+            IntPtr hdcMem = IntPtr.Zero;
+            try
+            {
+                Marshal.Copy(w32Image.Pixels, 0, buffer, w32Image.Pixels.Length);
+                hdcMem = Gdi32API.CreateCompatibleDCChecked(hdc);
+                var oldBitmap = Gdi32API.SelectObjectChecked(hdcMem, bitmap);
+
+                Gdi32API.GdiAlphaBlend
+                (
+                    hdc,
+                    x, y, w32Image.Width, w32Image.Height,
+                    hdcMem,
+                    0, 0, w32Image.Width, w32Image.Height,
+                    BLENDFUNCTION.SourceAlpha()
+                );
+
+                Gdi32API.SelectObjectChecked(hdcMem, oldBitmap);
+            }
+            finally
+            {
+                Gdi32API.SafeDeleteObject(hdcMem);
+                Gdi32API.DeleteObject(bitmap);
+            }
         }
 
         public void DrawStringGDI(Color color, FontConfig font, int x, int y, string text)
@@ -274,7 +300,14 @@ namespace NWindows.Win32
                             action(memoryCanvas);
                         }
 
-                        Gdi32API.GdiAlphaBlend(hdc, rect.X, rect.Y, rect.Width, rect.Height, memoryHdc, 0, 0, rect.Width, rect.Height, new BLENDFUNCTION(alpha));
+                        Gdi32API.GdiAlphaBlend
+                        (
+                            hdc,
+                            rect.X, rect.Y, rect.Width, rect.Height,
+                            memoryHdc,
+                            0, 0, rect.Width, rect.Height,
+                            BLENDFUNCTION.ConstantAlpha(alpha)
+                        );
                     }
                     finally
                     {

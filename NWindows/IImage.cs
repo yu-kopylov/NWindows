@@ -1,4 +1,4 @@
-namespace NWindows.X11
+namespace NWindows
 {
     public interface IImage
     {

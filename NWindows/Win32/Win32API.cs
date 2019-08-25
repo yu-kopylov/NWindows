@@ -168,12 +168,14 @@ namespace NWindows.Win32
             DWORD offset
         );
 
-        public static HBITMAP CreateDIBSectionChecked(
+        public static HBITMAP CreateDIBSectionChecked
+        (
             HDC hdc,
-            BITMAPINFO pbmi
+            BITMAPINFO pbmi,
+            out IntPtr ppvBits
         )
         {
-            HBITMAP res = CreateDIBSection(hdc, ref pbmi, 0, out IntPtr ppvBits, IntPtr.Zero, 0);
+            HBITMAP res = CreateDIBSection(hdc, ref pbmi, 0, out ppvBits, IntPtr.Zero, 0);
 
             if (res == IntPtr.Zero)
             {
@@ -227,6 +229,14 @@ namespace NWindows.Win32
 
         [DllImport("Gdi32.dll")]
         public static extern BOOL DeleteObject(HGDIOBJ ho);
+
+        public static void SafeDeleteObject(IntPtr obj)
+        {
+            if (obj != IntPtr.Zero)
+            {
+                DeleteObject(obj);
+            }
+        }
 
         [DllImport("Gdi32.dll")]
         public static extern HGDIOBJ GetStockObject(GdiStockObjectType i);
@@ -725,18 +735,29 @@ namespace NWindows.Win32
     internal struct BLENDFUNCTION
     {
         private const byte AC_SRC_OVER = 0;
+        private const byte AC_SRC_ALPHA = 1;
 
         public readonly BYTE BlendOp;
         public readonly BYTE BlendFlags;
         public readonly BYTE SourceConstantAlpha;
         public readonly BYTE AlphaFormat;
 
-        public BLENDFUNCTION(byte alpha)
+        private BLENDFUNCTION(byte blendOp, byte blendFlags, byte sourceConstantAlpha, byte alphaFormat)
         {
-            BlendOp = AC_SRC_OVER;
-            BlendFlags = 0;
-            SourceConstantAlpha = alpha;
-            AlphaFormat = 0;
+            BlendOp = blendOp;
+            BlendFlags = blendFlags;
+            SourceConstantAlpha = sourceConstantAlpha;
+            AlphaFormat = alphaFormat;
+        }
+
+        public static BLENDFUNCTION ConstantAlpha(byte alpha)
+        {
+            return new BLENDFUNCTION(AC_SRC_OVER, 0, alpha, 0);
+        }
+
+        public static BLENDFUNCTION SourceAlpha()
+        {
+            return new BLENDFUNCTION(AC_SRC_OVER, 0, 255, AC_SRC_ALPHA);
         }
     }
 
