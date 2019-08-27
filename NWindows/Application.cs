@@ -27,6 +27,8 @@ namespace NWindows
             {
                 throw new InvalidOperationException("Cannot determine a suitable API.");
             }
+            
+            NativeApp.Init();
         }
 
         public void Run(BasicWindow window)

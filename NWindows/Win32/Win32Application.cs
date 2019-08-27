@@ -29,6 +29,10 @@ namespace NWindows.Win32
             }
         }
 
+        public void Init()
+        {
+        }
+
         public void Run(BasicWindow window)
         {
             GdiplusStartupInput gdiPlusStartupInput = GdiplusStartupInput.CreateV1();

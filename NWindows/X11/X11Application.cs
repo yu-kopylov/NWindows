@@ -42,7 +42,7 @@ namespace NWindows.X11
             }
         }
 
-        public void Run(BasicWindow window)
+        public void Init()
         {
             display = LibX11.XOpenDisplay(null);
             if (display == IntPtr.Zero)
@@ -85,7 +85,10 @@ namespace NWindows.X11
             );
 
             ImageCodec = new GdkPixBufImageCodec(display, visualInfo.visual);
+        }
 
+        public void Run(BasicWindow window)
+        {
             XSetWindowAttributes attr = new XSetWindowAttributes();
             attr.border_pixel = 0;
             attr.event_mask = XEventMask.ExposureMask |
