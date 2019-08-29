@@ -15,6 +15,8 @@ namespace Test.NWindows
             var app = new Application();
             app.Init();
 
+            TestLoadFromFile(app, testFolder, "colors-1bpp.bmp");
+            TestLoadFromFile(app, testFolder, "colors-4bpp.bmp");
             TestLoadFromFile(app, testFolder, "colors-8bpp.bmp");
             TestLoadFromFile(app, testFolder, "colors-8bpp.gif");
             TestLoadFromFile(app, testFolder, "colors-8bpp.png");
