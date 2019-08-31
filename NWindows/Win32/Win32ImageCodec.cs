@@ -19,7 +19,8 @@ namespace NWindows.Win32
             GCHandle pinnedContent = GCHandle.Alloc(streamContent, GCHandleType.Pinned);
             try
             {
-                return LoadImageFromMemory(pinnedContent.AddrOfPinnedObject(), (uint) streamContent.Length);
+                IntPtr pinnedContentPtr = pinnedContent.AddrOfPinnedObject();
+                return LoadImageFromMemory(pinnedContentPtr, (uint) streamContent.Length);
             }
             finally
             {
@@ -29,7 +30,7 @@ namespace NWindows.Win32
 
         private INativeImage LoadImageFromMemory(IntPtr sourceBuffer, uint sourceBufferSize)
         {
-            IWICImagingFactory imagingFactory = new IWICImagingFactory();
+            IWICImagingFactory imagingFactory = null;
             IWICStream wicStream = null;
             IWICBitmapDecoder decoder = null;
             IWICBitmapFrameDecode frame = null;
@@ -37,6 +38,8 @@ namespace NWindows.Win32
 
             try
             {
+                imagingFactory = new IWICImagingFactory();
+
                 wicStream = imagingFactory.CreateStream();
                 wicStream.InitializeFromMemory(sourceBuffer, sourceBufferSize);
 
