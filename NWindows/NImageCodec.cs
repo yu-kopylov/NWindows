@@ -1,4 +1,5 @@
-﻿using NWindows.NativeApi;
+﻿using System.IO;
+using NWindows.NativeApi;
 
 namespace NWindows
 {
@@ -13,7 +14,15 @@ namespace NWindows
 
         public NImage LoadImageFromFile(string filename)
         {
-            INativeImage nativeImage = NativeCodec.LoadFromFile(filename);
+            using (FileStream stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                return LoadImageFromStream(stream);
+            }
+        }
+
+        public NImage LoadImageFromStream(Stream stream)
+        {
+            INativeImage nativeImage = NativeCodec.LoadImageFromStream(stream);
             return new NImage(this, nativeImage);
         }
     }

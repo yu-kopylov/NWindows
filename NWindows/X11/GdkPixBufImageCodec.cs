@@ -17,10 +17,12 @@ namespace NWindows.X11
             this.visual = visual;
         }
 
-        public INativeImage LoadFromFile(string filename)
+        public INativeImage LoadImageFromStream(Stream stream)
         {
-            NBitmap bitmap = LoadBitmapFromFile(filename);
-            return CreateImageFromBitmap(bitmap);
+            // todo: implement
+            return null;
+            // NBitmap bitmap = LoadBitmapFromFile(filename);
+            // return CreateImageFromBitmap(bitmap);
         }
 
         private NBitmap LoadBitmapFromFile(string filename)

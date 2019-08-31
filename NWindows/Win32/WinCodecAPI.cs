@@ -8,6 +8,7 @@
     using HICON = System.IntPtr;
     using HPALETTE = System.IntPtr;
     using UINT = System.UInt32;
+    using ULARGE_INTEGER = System.Int64;
     using ULONG_PTR = System.IntPtr;
     using WINBOOL = System.Boolean;
 
@@ -21,7 +22,7 @@
     internal interface IWICImagingFactory
     {
         IWICBitmapDecoder CreateDecoderFromFilename(
-            [MarshalAs(UnmanagedType.LPWStr)] string wzFilename,
+            [In, MarshalAs(UnmanagedType.LPWStr)] string wzFilename,
             [In, MarshalAs(UnmanagedType.LPStruct)] Guid pguidVendor,
             WICFileAccessMask dwDesiredAccess,
             WICDecodeOptions metadataOptions
@@ -29,13 +30,13 @@
 
         IWICBitmapDecoder CreateDecoderFromStream(
             IStream pIStream,
-            [In] ref Guid? pguidVendor,
+            [In, MarshalAs(UnmanagedType.LPStruct)] Guid pguidVendor,
             WICDecodeOptions metadataOptions
         );
 
         IWICBitmapDecoder CreateDecoderFromFileHandle(
             ULONG_PTR hFile,
-            [In] ref Guid? pguidVendor,
+            [In, MarshalAs(UnmanagedType.LPStruct)] Guid pguidVendor,
             WICDecodeOptions metadataOptions
         );
 
@@ -208,8 +209,32 @@
     {
     }
 
-    internal interface IWICStream
+    [ComImport, Guid("135ff860-22b7-4ddf-b0f6-218f4f299a43"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    internal interface IWICStream : IStream
     {
+        void __ISequentialStream__Read();
+        void __ISequentialStream__Write();
+
+        void __IStream__Seek();
+        void __IStream__SetSize();
+        void __IStream__CopyTo();
+        void __IStream__Commit();
+        void __IStream__Revert();
+        void __IStream__LockRegion();
+        void __IStream__UnlockRegion();
+        void __IStream__Stat();
+        void __IStream__Clone();
+
+        void InitializeFromIStream(IStream pIStream);
+
+        void InitializeFromFilename(
+            [In, MarshalAs(UnmanagedType.LPWStr)] string wzFileName,
+            WICFileAccessMask dwAccessMode
+        );
+
+        void InitializeFromMemory(IntPtr pbBuffer, DWORD cbBufferSize);
+
+        void InitializeFromIStreamRegion(IStream pIStream, ULARGE_INTEGER ulOffset, ULARGE_INTEGER ulMaxSize);
     }
 
     [ComImport, Guid("00000301-a8f2-4877-ba0a-fd2b6645fb94"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

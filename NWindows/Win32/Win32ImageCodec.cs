@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using NWindows.NativeApi;
 
@@ -6,19 +7,42 @@ namespace NWindows.Win32
 {
     internal class Win32ImageCodec : INativeImageCodec
     {
-        public INativeImage LoadFromFile(string filename)
+        public INativeImage LoadImageFromStream(Stream stream)
+        {
+            byte[] streamContent;
+            using (var mem = new MemoryStream())
+            {
+                stream.CopyTo(mem);
+                streamContent = mem.ToArray();
+            }
+
+            GCHandle pinnedContent = GCHandle.Alloc(streamContent, GCHandleType.Pinned);
+            try
+            {
+                return LoadImageFromMemory(pinnedContent.AddrOfPinnedObject(), (uint) streamContent.Length);
+            }
+            finally
+            {
+                pinnedContent.Free();
+            }
+        }
+
+        private INativeImage LoadImageFromMemory(IntPtr sourceBuffer, uint sourceBufferSize)
         {
             IWICImagingFactory imagingFactory = new IWICImagingFactory();
+            IWICStream wicStream = null;
             IWICBitmapDecoder decoder = null;
             IWICBitmapFrameDecode frame = null;
             IWICFormatConverter formatConverter = null;
 
             try
             {
-                decoder = imagingFactory.CreateDecoderFromFilename(
-                    filename,
+                wicStream = imagingFactory.CreateStream();
+                wicStream.InitializeFromMemory(sourceBuffer, sourceBufferSize);
+
+                decoder = imagingFactory.CreateDecoderFromStream(
+                    wicStream,
                     Guid.Empty,
-                    WICFileAccessMask.GENERIC_READ,
                     WICDecodeOptions.WICDecodeMetadataCacheOnLoad
                 );
 
@@ -63,6 +87,7 @@ namespace NWindows.Win32
                 SafeRelease(formatConverter);
                 SafeRelease(frame);
                 SafeRelease(decoder);
+                SafeRelease(wicStream);
                 SafeRelease(imagingFactory);
             }
         }

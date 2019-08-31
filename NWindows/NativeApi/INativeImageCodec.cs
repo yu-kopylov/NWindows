@@ -1,7 +1,9 @@
+using System.IO;
+
 namespace NWindows.NativeApi
 {
     internal interface INativeImageCodec
     {
-        INativeImage LoadFromFile(string filename);
+        INativeImage LoadImageFromStream(Stream stream);
     }
 }
