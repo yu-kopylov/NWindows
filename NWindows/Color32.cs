@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace NWindows
 {
     [StructLayout(LayoutKind.Explicit, Size = 4)]
-    public struct Color32
+    internal struct Color32
     {
         [FieldOffset(0)] private readonly uint argb;
 

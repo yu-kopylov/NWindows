@@ -1,17 +1,18 @@
 ﻿using System.Drawing;
 using System.IO;
+using NWindows.NativeApi;
 
 namespace NWindows.Examples
 {
     public class DrawingExampleControl : Control
     {
-        private IImage arrow;
+        private NImage arrow;
 
         public override void OnAppInit(MainWindow mainWindow)
         {
             base.OnAppInit(mainWindow);
             string arrowPath = Path.Combine(Path.GetDirectoryName(this.GetType().Assembly.Location), "Content", "Images", "arrow.png");
-            arrow = mainWindow.ImageCodec.LoadFromFile(arrowPath);
+            arrow = mainWindow.ImageCodec.LoadImageFromFile(arrowPath);
         }
 
         public override void Paint(ICanvas canvas, Rectangle area)

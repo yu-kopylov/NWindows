@@ -1,10 +1,11 @@
 using System;
+using NWindows.NativeApi;
 using NWindows.Win32;
 using NWindows.X11;
 
 namespace NWindows
 {
-    public class Application
+    public class NApplication
     {
         private INativeApplication NativeApp { get; set; }
 
@@ -27,20 +28,23 @@ namespace NWindows
             {
                 throw new InvalidOperationException("Cannot determine a suitable API.");
             }
-            
+
             NativeApp.Init();
+
+            ImageCodec = new NImageCodec(NativeApp.CreateImageCodec());
         }
 
-        public void Run(BasicWindow window)
+        public void Run(NWindow window)
         {
             if (NativeApp == null)
             {
                 throw new InvalidOperationException("Application is not initialized yet.");
             }
 
-            NativeApp.Run(window);
+            window.Application = this;
+            NativeApp.Run(window.StartupInfo);
         }
 
-        public IImageCodec ImageCodec => NativeApp.ImageCodec;
+        public NImageCodec ImageCodec { get; private set; }
     }
 }

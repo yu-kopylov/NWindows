@@ -2,10 +2,11 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using NWindows.NativeApi;
 
 namespace NWindows.X11
 {
-    public class GdkPixBufImageCodec : IImageCodec
+    internal class GdkPixBufImageCodec : INativeImageCodec
     {
         private readonly IntPtr display;
         private readonly IntPtr visual;
@@ -16,7 +17,7 @@ namespace NWindows.X11
             this.visual = visual;
         }
 
-        public IImage LoadFromFile(string filename)
+        public INativeImage LoadFromFile(string filename)
         {
             NBitmap bitmap = LoadBitmapFromFile(filename);
             return CreateImageFromBitmap(bitmap);
@@ -108,7 +109,7 @@ namespace NWindows.X11
             }
         }
 
-        private IImage CreateImageFromBitmap(NBitmap bitmap)
+        private INativeImage CreateImageFromBitmap(NBitmap bitmap)
         {
             int imageDataSize = bitmap.Width * bitmap.Height;
             int[] imageData = new int[imageDataSize];

@@ -1,9 +1,9 @@
 using System;
+using NWindows.NativeApi;
 
 namespace NWindows.X11
 {
-    // todo: make IImage disposable?
-    internal class X11Image : IImage, IDisposable
+    internal class X11Image : INativeImage
     {
         public IntPtr XImage { get; }
         public int Width { get; }
@@ -18,6 +18,7 @@ namespace NWindows.X11
 
         public void Dispose()
         {
+            // todo: use finalizer?
             LibX11.XDestroyImage(XImage);
         }
     }

@@ -2,6 +2,10 @@ using System.Drawing;
 
 namespace NWindows
 {
+    /// <summary>
+    /// <para>Represents a platform-independent image suitable for direct access to pixels by native and managed libraries.</para>
+    /// <para>Image format is 32 bits per pixel ARGB with straight alpha.</para>
+    /// </summary>
     public class NBitmap
     {
         private readonly Color32[,] pixels;
@@ -16,10 +20,10 @@ namespace NWindows
             pixels = new Color32[height, width];
         }
 
-        public Color32 this[int x, int y]
+        internal Color32 this[int x, int y]
         {
-            get { return pixels[x, y]; }
-            set { pixels[x, y] = value; }
+            get { return pixels[y, x]; }
+            set { pixels[y, x] = value; }
         }
 
         public Color GetColor(int x, int y)

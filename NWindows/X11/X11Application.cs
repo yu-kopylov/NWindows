@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using NWindows.NativeApi;
 
 namespace NWindows.X11
 {
@@ -83,11 +84,9 @@ namespace NWindows.X11
                 visualInfo.visual,
                 CreateColormapOption.AllocNone
             );
-
-            ImageCodec = new GdkPixBufImageCodec(display, visualInfo.visual);
         }
 
-        public void Run(BasicWindow window)
+        public void Run(INativeWindowStartupInfo window)
         {
             XSetWindowAttributes attr = new XSetWindowAttributes();
             attr.border_pixel = 0;
@@ -113,10 +112,9 @@ namespace NWindows.X11
                 ref attr
             );
 
-            // todo: set only Window?
-            window.Application = this;
-            window.NativeWindow = new X11Window(display, windowId);
-            window.NativeWindow.SetTitle(window.Title);
+            X11Window nativeWindow = new X11Window(display, windowId);
+            window.OnCreate(nativeWindow);
+            nativeWindow.SetTitle(window.Title);
 
             LibX11.XMapWindow(display, windowId);
             LibX11.XFlush(display);
@@ -149,13 +147,8 @@ namespace NWindows.X11
                 else if (evt.type == XEventType.ConfigureNotify)
                 {
                     // System.Console.WriteLine($"ConfigureNotify: {evt.ConfigureEvent.width} x {evt.ConfigureEvent.height}");
-                    Size newClientArea = new Size(evt.ConfigureEvent.width, evt.ConfigureEvent.height);
-                    if (window.ClientArea != newClientArea)
-                    {
-                        // todo: does not look good (2 sources of client area in window)
-                        window.ClientArea = newClientArea;
-                        window.OnResize(newClientArea);
-                    }
+                    Size clientArea = new Size(evt.ConfigureEvent.width, evt.ConfigureEvent.height);
+                    window.OnResize(clientArea);
                 }
 
                 if (pendingRedraw != null && LibX11.XPending(display) == 0)
@@ -171,7 +164,7 @@ namespace NWindows.X11
                         windowId
                     ))
                     {
-                        window.Paint(canvas, pendingRedraw.Value);
+                        window.OnPaint(canvas, pendingRedraw.Value);
                     }
 
                     pendingRedraw = null;
@@ -184,6 +177,9 @@ namespace NWindows.X11
             LibX11.XCloseDisplay(display);
         }
 
-        public IImageCodec ImageCodec { get; private set; }
+        public INativeImageCodec CreateImageCodec()
+        {
+            return new GdkPixBufImageCodec(display, visualInfo.visual);
+        }
     }
 }

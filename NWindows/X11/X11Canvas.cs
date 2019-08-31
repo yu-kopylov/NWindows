@@ -2,10 +2,11 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
+using NWindows.NativeApi;
 
 namespace NWindows.X11
 {
-    internal class X11Canvas : ICanvas, IDisposable
+    internal class X11Canvas : INativeCanvas, IDisposable
     {
         private readonly IntPtr display;
         private readonly int screenNum;
@@ -210,7 +211,7 @@ namespace NWindows.X11
             return extents.xOff;
         }
 
-        public void DrawImage(IImage image, int x, int y)
+        public void DrawImage(INativeImage image, int x, int y)
         {
             // todo: allow null?
             X11Image x11Image = (X11Image) image;

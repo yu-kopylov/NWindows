@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using NWindows.NativeApi;
 
 namespace NWindows.Examples
 {

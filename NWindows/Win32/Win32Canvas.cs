@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
-    internal class Win32Canvas : ICanvas, IDisposable
+    internal class Win32Canvas : INativeCanvas, IDisposable
     {
         private readonly IntPtr hdc;
 
@@ -89,7 +90,7 @@ namespace NWindows.Win32
             // DrawStringGDIPlus(color, font, x, y, text);
         }
 
-        public void DrawImage(IImage image, int x, int y)
+        public void DrawImage(INativeImage image, int x, int y)
         {
             // todo: allow null?
             W32Image w32Image = (W32Image) image;

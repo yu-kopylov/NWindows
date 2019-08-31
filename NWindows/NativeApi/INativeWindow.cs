@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace NWindows
+namespace NWindows.NativeApi
 {
     internal interface INativeWindow
     {

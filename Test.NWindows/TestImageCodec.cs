@@ -12,7 +12,7 @@ namespace Test.NWindows
             string testFolder = Path.Combine("Temp", "Test");
             Directory.CreateDirectory(testFolder);
 
-            var app = new Application();
+            var app = new NApplication();
             app.Init();
 
             TestLoadFromFile(app, testFolder, "colors-1bpp.bmp");
@@ -30,10 +30,10 @@ namespace Test.NWindows
             TestLoadFromFile(app, testFolder, "colors-32bpp.tiff");
         }
 
-        private void TestLoadFromFile(Application app, string testFolder, string resourceName)
+        private void TestLoadFromFile(NApplication app, string testFolder, string resourceName)
         {
             CopyResourceToFile(testFolder, resourceName);
-            var image = app.ImageCodec.LoadFromFile(Path.Combine(testFolder, resourceName));
+            var image = app.ImageCodec.LoadImageFromFile(Path.Combine(testFolder, resourceName));
             Assert.That(image.Width, Is.EqualTo(64), () => $"{resourceName}, {nameof(image.Width)}");
             Assert.That(image.Height, Is.EqualTo(64), () => $"{resourceName}, {nameof(image.Height)}");
         }

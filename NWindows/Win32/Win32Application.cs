@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
-    public class Win32Application : INativeApplication
+    internal class Win32Application : INativeApplication
     {
         private const string WindowClassName = "DEFAULT";
 
-        private readonly Dictionary<IntPtr, BasicWindow> windows = new Dictionary<IntPtr, BasicWindow>();
+        private readonly Dictionary<IntPtr, INativeWindowStartupInfo> windows = new Dictionary<IntPtr, INativeWindowStartupInfo>();
 
         public static bool IsAvailable()
         {
@@ -33,11 +34,10 @@ namespace NWindows.Win32
         {
         }
 
-        public void Run(BasicWindow window)
+        public void Run(INativeWindowStartupInfo window)
         {
             GdiplusStartupInput gdiPlusStartupInput = GdiplusStartupInput.CreateV1();
             GdiPlusAPI.CheckStatus(GdiPlusAPI.GdiplusStartup(out var gdiPlusToken, ref gdiPlusStartupInput, out _));
-
             IntPtr hInstance = Win32API.GetModuleHandleW(null);
 
             var windowClass = new WNDCLASSEXW();
@@ -72,10 +72,8 @@ namespace NWindows.Win32
                     throw new InvalidOperationException("Failed to create a window.");
                 }
 
-                // todo: set only Window?
-                window.Application = this;
-                window.NativeWindow = new Win32Window(hwnd);
                 windows.Add(hwnd, window);
+                window.OnCreate(new Win32Window(hwnd));
 
                 try
                 {
@@ -150,7 +148,7 @@ namespace NWindows.Win32
                         {
                             // todo: check that width and height are exact and aligned with other API
                             Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
-                            window.Paint(canvas, area);
+                            window.OnPaint(canvas, area);
                         }
                     }
                 }
@@ -169,14 +167,7 @@ namespace NWindows.Win32
                     ulong lParam32 = (uint) lParam.ToInt64();
                     int width = (short) (lParam32 & 0xFFFF);
                     int height = (short) ((lParam32 >> 16) & 0xFFFF);
-                    // todo: This code is same as in X11 implementation. Can it be moved to window.
-                    Size newClientArea = new Size(width, height);
-                    if (window.ClientArea != newClientArea)
-                    {
-                        // todo: does not look good (2 sources of client area in window)
-                        window.ClientArea = newClientArea;
-                        window.OnResize(newClientArea);
-                    }
+                    window.OnResize(new Size(width, height));
                 }
 
                 return IntPtr.Zero;
@@ -185,6 +176,9 @@ namespace NWindows.Win32
             return Win32API.DefWindowProcW(hwnd, uMsg, wParam, lParam);
         }
 
-        public IImageCodec ImageCodec { get; } = new Win32ImageCodec();
+        public INativeImageCodec CreateImageCodec()
+        {
+            return new Win32ImageCodec();
+        }
     }
 }

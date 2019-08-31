@@ -1,12 +1,12 @@
 using System;
 using System.Runtime.InteropServices;
-using NWindows.X11;
+using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
-    public class Win32ImageCodec : IImageCodec
+    internal class Win32ImageCodec : INativeImageCodec
     {
-        public IImage LoadFromFile(string filename)
+        public INativeImage LoadFromFile(string filename)
         {
             IWICImagingFactory imagingFactory = new IWICImagingFactory();
             IWICBitmapDecoder decoder = null;

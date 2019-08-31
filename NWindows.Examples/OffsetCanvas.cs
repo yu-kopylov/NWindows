@@ -1,5 +1,5 @@
 ﻿using System.Drawing;
-using NWindows.X11;
+using NWindows.NativeApi;
 
 namespace NWindows.Examples
 {
@@ -26,7 +26,7 @@ namespace NWindows.Examples
             canvas.DrawString(color, font, x + xOffset, y + yOffset, text);
         }
 
-        public void DrawImage(IImage image, int x, int y)
+        public void DrawImage(NImage image, int x, int y)
         {
             canvas.DrawImage(image, x, y);
         }

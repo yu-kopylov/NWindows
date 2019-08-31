@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using NWindows.X11;
+using NWindows.NativeApi;
 
 namespace NWindows.Examples
 {
-    public class MainWindow : BasicWindow
+    public class MainWindow : NWindow
     {
         private readonly List<Control> controls = new List<Control>();
         private readonly TextExampleControl textExampleControl;
@@ -31,7 +31,7 @@ namespace NWindows.Examples
             }
         }
 
-        public override void Paint(ICanvas canvas, Rectangle area)
+        public override void OnPaint(ICanvas canvas, Rectangle area)
         {
             canvas.FillRectangle(Color.White, area.X, area.Y, area.Width, area.Height);
             foreach (Control control in controls)

@@ -4,7 +4,7 @@
     {
         static void Main(string[] args)
         {
-            var app = new Application();
+            var app = new NApplication();
             app.Init();
             app.Run(new MainWindow());
         }
