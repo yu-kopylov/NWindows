@@ -19,15 +19,41 @@ namespace NWindows.X11
 
         public INativeImage LoadImageFromStream(Stream stream)
         {
-            // todo: implement
-            return null;
-            // NBitmap bitmap = LoadBitmapFromFile(filename);
-            // return CreateImageFromBitmap(bitmap);
+            byte[] streamContent;
+            using (var mem = new MemoryStream())
+            {
+                stream.CopyTo(mem);
+                streamContent = mem.ToArray();
+            }
+
+            GCHandle pinnedContent = GCHandle.Alloc(streamContent, GCHandleType.Pinned);
+            try
+            {
+                NBitmap bitmap = LoadBitmapFromMemory(pinnedContent.AddrOfPinnedObject(), streamContent.Length);
+                return CreateImageFromBitmap(bitmap);
+            }
+            finally
+            {
+                pinnedContent.Free();
+            }
         }
 
-        private NBitmap LoadBitmapFromFile(string filename)
+        private NBitmap LoadBitmapFromMemory(IntPtr sourceBuffer, int sourceBufferSize)
         {
-            IntPtr pixbuf = LibGdkPixBuf.gdk_pixbuf_new_from_file(filename, out IntPtr errorPtr);
+            IntPtr gdkStream = LibGdkPixBuf.g_memory_input_stream_new_from_data(sourceBuffer, sourceBufferSize, IntPtr.Zero);
+            try
+            {
+                return LoadBitmapFromGdkStream(gdkStream);
+            }
+            finally
+            {
+                LibGdkPixBuf.g_object_unref(gdkStream);
+            }
+        }
+
+        private NBitmap LoadBitmapFromGdkStream(IntPtr gdkStream)
+        {
+            IntPtr pixbuf = LibGdkPixBuf.gdk_pixbuf_new_from_stream(gdkStream, IntPtr.Zero, out IntPtr errorPtr);
             try
             {
                 if (pixbuf == IntPtr.Zero)
@@ -43,7 +69,7 @@ namespace NWindows.X11
                         gdkErrorMessage = "Unknown error.";
                     }
 
-                    throw new IOException($"{nameof(LibGdkPixBuf.gdk_pixbuf_new_from_file)} error: {gdkErrorMessage}");
+                    throw new IOException($"{nameof(LibGdkPixBuf.gdk_pixbuf_new_from_stream)} error: {gdkErrorMessage}");
                 }
 
                 var colorSpace = LibGdkPixBuf.gdk_pixbuf_get_colorspace(pixbuf);

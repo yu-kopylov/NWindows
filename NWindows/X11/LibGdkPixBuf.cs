@@ -3,12 +3,17 @@ using System.Runtime.InteropServices;
 namespace NWindows.X11
 {
     using gboolean = System.Boolean;
-    using GdkPixbufPtr = System.IntPtr;
-    using GErrorPtr = System.IntPtr;
     using gint = System.Int32;
     using gpointer = System.IntPtr;
-    using GQuark = System.UInt32;
+    using gssize = System.Int64;
     using guchar_ptr = System.IntPtr;
+    using GCancellablePtr = System.IntPtr;
+    using GDestroyNotify = System.IntPtr;
+    using GdkPixbufPtr = System.IntPtr;
+    using GErrorPtr = System.IntPtr;
+    using GInputStreamPtr = System.IntPtr;
+    using GQuark = System.UInt32;
+    using VoidPtr = System.IntPtr;
 
     internal class LibGdkPixBuf
     {
@@ -19,8 +24,10 @@ namespace NWindows.X11
         public static extern void g_error_free(GErrorPtr error);
 
         [DllImport("libgdk_pixbuf-2.0")]
-        // todo: encoding
-        public static extern GdkPixbufPtr gdk_pixbuf_new_from_file([MarshalAs(UnmanagedType.LPStr)] string filename, out GErrorPtr error);
+        public static extern GInputStreamPtr g_memory_input_stream_new_from_data(VoidPtr data, gssize len, GDestroyNotify destroy);
+
+        [DllImport("libgdk_pixbuf-2.0")]
+        public static extern GdkPixbufPtr gdk_pixbuf_new_from_stream(GInputStreamPtr stream, GCancellablePtr cancellable, out GErrorPtr error);
 
         [DllImport("libgdk_pixbuf-2.0")]
         public static extern GdkColorspace gdk_pixbuf_get_colorspace(GdkPixbufPtr pixbuf);
