@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using System.IO;
 using NWindows.NativeApi;
 
 namespace NWindows.Examples
@@ -11,8 +10,12 @@ namespace NWindows.Examples
         public override void OnAppInit(MainWindow mainWindow)
         {
             base.OnAppInit(mainWindow);
-            string arrowPath = Path.Combine(Path.GetDirectoryName(this.GetType().Assembly.Location), "Content", "Images", "arrow.png");
-            arrow = mainWindow.ImageCodec.LoadImageFromFile(arrowPath);
+
+            var type = typeof(Program);
+            using (var stream = type.Assembly.GetManifestResourceStream($"{type.Namespace}.Resources.Images.arrow.png"))
+            {
+                arrow = mainWindow.ImageCodec.LoadImageFromStream(stream);
+            }
         }
 
         public override void Paint(ICanvas canvas, Rectangle area)

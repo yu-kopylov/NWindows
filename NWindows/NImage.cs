@@ -20,7 +20,7 @@ namespace NWindows
             NativeImage.Dispose();
         }
 
-        internal NImageCodec Codec { get; }
+        private NImageCodec Codec { get; }
 
         internal INativeImage NativeImage { get; }
 

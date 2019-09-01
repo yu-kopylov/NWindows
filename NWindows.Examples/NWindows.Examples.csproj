@@ -10,13 +10,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Content\Images\arrow.png" />
+      <None Remove="Resources\**\*.*" />
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="Content\Images\arrow.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+      <EmbeddedResource Include="Resources\**\*.*" />
     </ItemGroup>
 
 </Project>

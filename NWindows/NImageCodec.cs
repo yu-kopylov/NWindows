@@ -5,12 +5,12 @@ namespace NWindows
 {
     public class NImageCodec
     {
+        private readonly INativeImageCodec nativeCodec;
+
         internal NImageCodec(INativeImageCodec nativeCodec)
         {
-            NativeCodec = nativeCodec;
+            this.nativeCodec = nativeCodec;
         }
-
-        internal INativeImageCodec NativeCodec { get; }
 
         public NImage LoadImageFromFile(string filename)
         {
@@ -22,7 +22,7 @@ namespace NWindows
 
         public NImage LoadImageFromStream(Stream stream)
         {
-            INativeImage nativeImage = NativeCodec.LoadImageFromStream(stream);
+            INativeImage nativeImage = nativeCodec.LoadImageFromStream(stream);
             return new NImage(this, nativeImage);
         }
     }
