@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Drawing;
+using System.IO;
 using NWindows.NativeApi;
 
 namespace NWindows
@@ -24,6 +25,24 @@ namespace NWindows
         {
             INativeImage nativeImage = nativeCodec.LoadImageFromStream(stream);
             return new NImage(this, nativeImage);
+        }
+
+        public NBitmap LoadBitmapFromFile(string filename)
+        {
+            using (FileStream stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                return LoadBitmapFromStream(stream);
+            }
+        }
+
+        public NBitmap LoadBitmapFromStream(Stream stream)
+        {
+            return nativeCodec.LoadBitmapFromStream(stream, source =>
+            {
+                NBitmap bitmap = new NBitmap(source.Width, source.Height);
+                bitmap.WithPinnedPixels(ptr => source.CopyToBitmap(new Rectangle(0, 0, source.Width, source.Height), ptr, 4 * source.Width));
+                return bitmap;
+            });
         }
     }
 }

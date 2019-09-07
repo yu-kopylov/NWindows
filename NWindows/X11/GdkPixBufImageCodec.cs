@@ -38,6 +38,12 @@ namespace NWindows.X11
             }
         }
 
+        public T LoadBitmapFromStream<T>(Stream stream, CreateBitmapDelegate<T> create)
+        {
+            // todo: implement
+            return create(null);
+        }
+
         private NBitmap LoadBitmapFromMemory(IntPtr sourceBuffer, int sourceBufferSize)
         {
             IntPtr gdkStream = LibGdkPixBuf.g_memory_input_stream_new_from_data(sourceBuffer, sourceBufferSize, IntPtr.Zero);

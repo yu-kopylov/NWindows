@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using NWindows.NativeApi;
@@ -8,6 +9,32 @@ namespace NWindows.Win32
     internal class Win32ImageCodec : INativeImageCodec
     {
         public INativeImage LoadImageFromStream(Stream stream)
+        {
+            return LoadBitmapFromStream(stream, WICPixelFormat.GUID_WICPixelFormat32bppPBGRA, CreateImage);
+        }
+
+        public T LoadBitmapFromStream<T>(Stream stream, CreateBitmapDelegate<T> createBitmap)
+        {
+            return LoadBitmapFromStream(stream, WICPixelFormat.GUID_WICPixelFormat32bppBGRA, createBitmap);
+        }
+
+        private static INativeImage CreateImage(INativeBitmapSource source)
+        {
+            byte[] pixels = new byte[4 * source.Width * source.Height];
+            GCHandle pixelsHandle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+            try
+            {
+                source.CopyToBitmap(new Rectangle(0, 0, source.Width, source.Height), pixelsHandle.AddrOfPinnedObject(), 4 * source.Width);
+            }
+            finally
+            {
+                pixelsHandle.Free();
+            }
+
+            return new W32Image(source.Width, source.Height, pixels);
+        }
+
+        private T LoadBitmapFromStream<T>(Stream stream, Guid pixelFormat, CreateBitmapDelegate<T> createImage)
         {
             byte[] streamContent;
             using (var mem = new MemoryStream())
@@ -20,7 +47,7 @@ namespace NWindows.Win32
             try
             {
                 IntPtr pinnedContentPtr = pinnedContent.AddrOfPinnedObject();
-                return LoadImageFromMemory(pinnedContentPtr, (uint) streamContent.Length);
+                return LoadBitmapFromMemory(pinnedContentPtr, (uint) streamContent.Length, pixelFormat, createImage);
             }
             finally
             {
@@ -28,7 +55,7 @@ namespace NWindows.Win32
             }
         }
 
-        private INativeImage LoadImageFromMemory(IntPtr sourceBuffer, uint sourceBufferSize)
+        private T LoadBitmapFromMemory<T>(IntPtr sourceBuffer, uint sourceBufferSize, Guid pixelFormat, CreateBitmapDelegate<T> createBitmap)
         {
             IWICImagingFactory imagingFactory = null;
             IWICStream wicStream = null;
@@ -53,7 +80,7 @@ namespace NWindows.Win32
 
                 IWICBitmapSource source;
 
-                if (frame.GetPixelFormat() == WICPixelFormat.GUID_WICPixelFormat32bppPBGRA)
+                if (frame.GetPixelFormat() == pixelFormat)
                 {
                     source = frame;
                 }
@@ -72,18 +99,13 @@ namespace NWindows.Win32
                 }
 
                 source.GetSize(out uint width, out uint height);
-                byte[] pixels = new byte[4 * width * height];
-                GCHandle pixelsHandle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
-                try
+                if (width * 4UL > int.MaxValue || height * 4UL > int.MaxValue || 4UL * width * height > int.MaxValue)
                 {
-                    source.CopyPixels(null, 4 * width, 4 * width * height, pixelsHandle.AddrOfPinnedObject());
-                }
-                finally
-                {
-                    pixelsHandle.Free();
+                    throw new IOException($"Image is too large: {width}x{height}.");
                 }
 
-                return new W32Image((int) width, (int) height, pixels);
+                WicBitmapSource bitmapSource = new WicBitmapSource(source, (int) width, (int) height);
+                return createBitmap(bitmapSource);
             }
             finally
             {
@@ -103,18 +125,31 @@ namespace NWindows.Win32
             }
         }
 
-        internal class DisposableComObject<T> : IDisposable
+        private class WicBitmapSource : INativeBitmapSource
         {
-            public T Object { get; }
+            private readonly IWICBitmapSource source;
 
-            public DisposableComObject(T obj)
+            public WicBitmapSource(IWICBitmapSource source, int width, int height)
             {
-                Object = obj;
+                this.source = source;
+                Width = width;
+                Height = height;
             }
 
-            public void Dispose()
+            public int Width { get; }
+            public int Height { get; }
+
+            public void CopyToBitmap(Rectangle sourceArea, IntPtr bitmap, int stride)
             {
-                Marshal.ReleaseComObject(Object);
+                NativeBitmapSourceParameterValidation.CopyToBitmap(this, sourceArea, bitmap, stride, out int requiredBufferSize);
+
+                if (sourceArea.Width <= 0 || sourceArea.Height <= 0)
+                {
+                    return;
+                }
+
+                WICRect rect = new WICRect(sourceArea.X, sourceArea.Y, sourceArea.Width, sourceArea.Height);
+                source.CopyPixels(rect, (uint) stride, (uint) requiredBufferSize, bitmap);
             }
         }
     }
