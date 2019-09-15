@@ -34,7 +34,7 @@ namespace NWindows.Win32
             try
             {
                 IntPtr pixelsPtr = pixelsHandle.AddrOfPinnedObject() + (imageArea.Y * Width + imageArea.X) * 4;
-                PixelConverter.ConvertArgb32ToPArgb32(bitmap, bitmapStride, pixelsPtr, Width * 4, imageArea.Width, imageArea.Height);
+                PixelConverter.Convert_ARGB_32_To_PARGB_32(bitmap, bitmapStride, pixelsPtr, Width * 4, imageArea.Width, imageArea.Height);
             }
             finally
             {
@@ -44,15 +44,13 @@ namespace NWindows.Win32
 
         public void CopyToBitmap(Rectangle imageArea, IntPtr bitmap, int bitmapStride)
         {
-            //todo: rename area parameter in both CopyToBitmap and CopyFromBitmap
-
             NativeBitmapSourceParameterValidation.CopyToBitmap(this, imageArea, bitmap, bitmapStride, out _);
 
             GCHandle pixelsHandle = GCHandle.Alloc(Pixels, GCHandleType.Pinned);
             try
             {
                 IntPtr pixelsPtr = pixelsHandle.AddrOfPinnedObject() + (imageArea.Y * Width + imageArea.X) * 4;
-                PixelConverter.ConvertPArgb32ToArgb32(pixelsPtr, Width * 4, bitmap, bitmapStride, imageArea.Width, imageArea.Height);
+                PixelConverter.Convert_PARGB_32_To_ARGB_32(pixelsPtr, Width * 4, bitmap, bitmapStride, imageArea.Width, imageArea.Height);
             }
             finally
             {

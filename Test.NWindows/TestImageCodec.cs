@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -36,9 +37,19 @@ namespace Test.NWindows
                 CopyToFile(stream, fileName);
             }
 
-            var image = app.ImageCodec.LoadImageFromFile(fileName);
-            Assert.That(image.Width, Is.EqualTo(sample.Width), () => $"{sample.ResourceName}, {nameof(image.Width)}");
-            Assert.That(image.Height, Is.EqualTo(sample.Height), () => $"{sample.ResourceName}, {nameof(image.Height)}");
+            using (var image = app.ImageCodec.LoadImageFromFile(fileName))
+            {
+                Assert.That(image.Width, Is.EqualTo(sample.Width), () => $"{sample.ResourceName}, {nameof(image.Width)}");
+                Assert.That(image.Height, Is.EqualTo(sample.Height), () => $"{sample.ResourceName}, {nameof(image.Height)}");
+
+                NBitmap bitmap = new NBitmap(image.Width, image.Height);
+                image.CopyToBitmap(Point.Empty, bitmap, Point.Empty, new Size(image.Width, image.Height));
+
+                Assert.That(bitmap.GetColor(0, 0), Is.EqualTo(sample.TopLeftColor), nameof(sample.TopLeftColor));
+                Assert.That(bitmap.GetColor(bitmap.Width - 1, 0), Is.EqualTo(sample.TopRightColor), nameof(sample.TopRightColor));
+                Assert.That(bitmap.GetColor(0, bitmap.Height - 1), Is.EqualTo(sample.BottomLeftColor), nameof(sample.BottomLeftColor));
+                Assert.That(bitmap.GetColor(bitmap.Width - 1, bitmap.Height - 1), Is.EqualTo(sample.BottomRightColor), nameof(sample.BottomRightColor));
+            }
         }
 
         [Test]
@@ -116,7 +127,7 @@ namespace Test.NWindows
             Rectangle result2Rect = new Rectangle(10, 20, 60, 40);
             Rectangle result3Rect = new Rectangle(30, 40, 60, 40);
 
-            Parallel.For(0, 90, y =>
+            for (int y = 0; y < 90; y++)
             {
                 for (int x = 0; x < 100; x++)
                 {
@@ -124,11 +135,22 @@ namespace Test.NWindows
                     Color expectedColor1 = result1Rect.Contains(point) ? color2 : color1;
                     Color expectedColor2 = result2Rect.Contains(point) ? color2 : color3;
                     Color expectedColor3 = result3Rect.Contains(point) ? color2 : color3;
-                    Assert.That(result1.GetColor(x, y), Is.EqualTo(expectedColor1), () => $"{nameof(result1)}, X={x}, Y={y}");
-                    Assert.That(result2.GetColor(x, y), Is.EqualTo(expectedColor2), () => $"{nameof(result2)}, X={x}, Y={y}");
-                    Assert.That(result3.GetColor(x, y), Is.EqualTo(expectedColor3), () => $"{nameof(result3)}, X={x}, Y={y}");
+
+                    AssertColorEquals(expectedColor1, result1.GetColor(x, y), () => $"{nameof(result1)}, X={x}, Y={y}");
+                    AssertColorEquals(expectedColor2, result2.GetColor(x, y), () => $"{nameof(result2)}, X={x}, Y={y}");
+                    AssertColorEquals(expectedColor3, result3.GetColor(x, y), () => $"{nameof(result3)}, X={x}, Y={y}");
                 }
-            });
+            }
+        }
+
+        private void AssertColorEquals(Color expectedColor, Color actualColor, Func<string> message)
+        {
+            int expectedArgb = expectedColor.ToArgb();
+            int actualArgb = actualColor.ToArgb();
+            if (expectedArgb != actualArgb)
+            {
+                throw new AssertionException($"{message()}\n\tExpected Color: 0x{expectedArgb:X8}\n\tActual Color 0x{actualArgb:X8}");
+            }
         }
 
         private void FillBitmap(NBitmap bitmap, Color color)
