@@ -8,5 +8,6 @@ namespace NWindows.NativeApi
     {
         INativeImage LoadImageFromStream(Stream stream);
         T LoadBitmapFromStream<T>(Stream stream, CreateBitmapDelegate<T> create);
+        INativeImage CreateImage(int width, int height);
     }
 }

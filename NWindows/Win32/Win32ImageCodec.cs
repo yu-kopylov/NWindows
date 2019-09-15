@@ -18,6 +18,12 @@ namespace NWindows.Win32
             return LoadBitmapFromStream(stream, WICPixelFormat.GUID_WICPixelFormat32bppBGRA, createBitmap);
         }
 
+        public INativeImage CreateImage(int width, int height)
+        {
+            // todo: validate parameters
+            return new W32Image(width, height, new byte[width * height * 4]);
+        }
+
         private static INativeImage CreateImage(INativeBitmapSource source)
         {
             byte[] pixels = new byte[4 * source.Width * source.Height];
@@ -139,17 +145,17 @@ namespace NWindows.Win32
             public int Width { get; }
             public int Height { get; }
 
-            public void CopyToBitmap(Rectangle sourceArea, IntPtr bitmap, int stride)
+            public void CopyToBitmap(Rectangle imageArea, IntPtr bitmap, int bitmapStride)
             {
-                NativeBitmapSourceParameterValidation.CopyToBitmap(this, sourceArea, bitmap, stride, out int requiredBufferSize);
+                NativeBitmapSourceParameterValidation.CopyToBitmap(this, imageArea, bitmap, bitmapStride, out int requiredBufferSize);
 
-                if (sourceArea.Width <= 0 || sourceArea.Height <= 0)
+                if (imageArea.Width <= 0 || imageArea.Height <= 0)
                 {
                     return;
                 }
 
-                WICRect rect = new WICRect(sourceArea.X, sourceArea.Y, sourceArea.Width, sourceArea.Height);
-                source.CopyPixels(rect, (uint) stride, (uint) requiredBufferSize, bitmap);
+                WICRect rect = new WICRect(imageArea.X, imageArea.Y, imageArea.Width, imageArea.Height);
+                source.CopyPixels(rect, (uint) bitmapStride, (uint) requiredBufferSize, bitmap);
             }
         }
     }

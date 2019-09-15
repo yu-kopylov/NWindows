@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using NWindows.NativeApi;
 
 namespace NWindows.X11
@@ -20,6 +21,16 @@ namespace NWindows.X11
         {
             // todo: use finalizer?
             LibX11.XDestroyImage(XImage);
+        }
+
+        public void CopyToBitmap(Rectangle imageArea, IntPtr bitmap, int bitmapStride)
+        {
+            // todo: implement
+        }
+
+        public void CopyFromBitmap(Rectangle imageArea, IntPtr bitmap, int bitmapStride)
+        {
+            // todo: implement
         }
     }
 }

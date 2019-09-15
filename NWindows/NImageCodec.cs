@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.IO;
 using NWindows.NativeApi;
 
@@ -43,6 +44,21 @@ namespace NWindows
                 bitmap.WithPinnedPixels(ptr => source.CopyToBitmap(new Rectangle(0, 0, source.Width, source.Height), ptr, 4 * source.Width));
                 return bitmap;
             });
+        }
+
+        public NImage Create(int width, int height)
+        {
+            if (width < 0 || height < 0)
+            {
+                throw new ArgumentException($"Image dimensions cannot be negative ({width} x {height}).");
+            }
+
+            if (width * 4L > int.MaxValue || height * 4L > int.MaxValue || 4L * width * height > int.MaxValue)
+            {
+                throw new ArgumentException($"Image dimensions are too large ({width} x {height}).");
+            }
+
+            return new NImage(this, nativeCodec.CreateImage(width, height));
         }
     }
 }

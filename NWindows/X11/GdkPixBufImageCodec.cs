@@ -44,6 +44,12 @@ namespace NWindows.X11
             return create(null);
         }
 
+        public INativeImage CreateImage(int width, int height)
+        {
+            // todo: implement
+            return null;
+        }
+
         private NBitmap LoadBitmapFromMemory(IntPtr sourceBuffer, int sourceBufferSize)
         {
             IntPtr gdkStream = LibGdkPixBuf.g_memory_input_stream_new_from_data(sourceBuffer, sourceBufferSize, IntPtr.Zero);

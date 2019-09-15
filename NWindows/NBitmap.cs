@@ -17,6 +17,16 @@ namespace NWindows
 
         public NBitmap(int width, int height)
         {
+            if (width < 0 || height < 0)
+            {
+                throw new ArgumentException($"Bitmap dimensions cannot be negative ({width} x {height}).");
+            }
+
+            if (width * 4L > int.MaxValue || height * 4L > int.MaxValue || 4L * width * height > int.MaxValue)
+            {
+                throw new ArgumentException($"Bitmap dimensions are too large ({width} x {height}).");
+            }
+
             Width = width;
             Height = height;
             pixels = new Color32[height, width];
@@ -30,12 +40,12 @@ namespace NWindows
 
         public Color GetColor(int x, int y)
         {
-            return pixels[x, y].ToColor();
+            return pixels[y, x].ToColor();
         }
 
         public void SetColor(int x, int y, Color color)
         {
-            pixels[x, y] = Color32.FromColor(color);
+            pixels[y, x] = Color32.FromColor(color);
         }
 
         public void WithPinnedPixels(Action<IntPtr> action)

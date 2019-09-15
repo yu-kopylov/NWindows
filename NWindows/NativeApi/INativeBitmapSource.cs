@@ -9,21 +9,21 @@ namespace NWindows.NativeApi
         int Height { get; }
 
         /// <summary>
-        /// <para>Copies content of this image into a bitmap.</para>
-        /// <para>Image format is 32 bits per pixel ARGB with straight alpha in native byte order.</para>
+        /// <para>Copies content of this image source into a bitmap.</para>
+        /// <para>Bitmap format is 32 bits per pixel ARGB with straight alpha in native byte order.</para>
         /// </summary>
-        /// <param name="sourceArea">Area of the image that should be copied.</param>
+        /// <param name="imageArea">Area of the image that should be copied.</param>
         /// <param name="bitmap">Pointer to the destination bitmap.</param>
-        /// <param name="stride">Number of bytes between start of one row of the pixels to start of the next row.</param>
+        /// <param name="bitmapStride">Number of bytes between start of one row of the pixels to start of the next row.</param>
         /// <exception cref="NullReferenceException">If <paramref name="bitmap"/> is <see cref="IntPtr.Zero"/>.</exception>
         /// <exception cref="InvalidOperationException">
-        /// <para>When the given <paramref name="sourceArea"/> does not fit within the area of this source.</para>
-        /// <para>When width or height of the given <paramref name="sourceArea"/> is negative.</para>
-        /// <para>When <paramref name="stride"/> is negative.</para>
-        /// <para>When <paramref name="stride"/> is less than 4 * (width of <paramref name="sourceArea"/>).</para>
+        /// <para>When the given <paramref name="imageArea"/> does not fit within the area of this image source.</para>
+        /// <para>When width or height of the given <paramref name="imageArea"/> is negative.</para>
+        /// <para>When <paramref name="bitmapStride"/> is negative.</para>
+        /// <para>When <paramref name="bitmapStride"/> is less than 4 * (width of <paramref name="imageArea"/>).</para>
         /// <para>When required size of target buffer exceeds <see cref="int.MaxValue"/>.</para>
         /// </exception>
-        void CopyToBitmap(Rectangle sourceArea, IntPtr bitmap, int stride);
+        void CopyToBitmap(Rectangle imageArea, IntPtr bitmap, int bitmapStride);
     }
 
     internal static class NativeBitmapSourceParameterValidation
