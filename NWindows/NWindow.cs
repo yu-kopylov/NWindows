@@ -65,19 +65,17 @@ namespace NWindows
             NativeWindow.Invalidate(area);
         }
 
-        public abstract void OnPaint(ICanvas canvas, Rectangle area);
+        protected abstract void OnPaint(ICanvas canvas, Rectangle area);
 
-        public virtual void OnAppInit()
-        {
-        }
+        protected virtual void OnAppInit() {}
 
-        public virtual void OnMouseMove(Point point)
-        {
-        }
+        protected virtual void OnMouseMove(Point point) {}
 
-        public virtual void OnResize(Size clientArea)
-        {
-        }
+        protected virtual void OnKeyDown(NKeyCode keyCode, bool autoRepeat) {}
+
+        protected virtual void OnKeyUp(NKeyCode keyCode) {}
+
+        protected virtual void OnResize(Size clientArea) {}
 
         private class NWindowStartupInfo : INativeWindowStartupInfo
         {
@@ -95,6 +93,16 @@ namespace NWindows
             public void OnCreate(INativeWindow nativeWindow)
             {
                 window.NativeWindow = nativeWindow;
+            }
+
+            public void OnKeyDown(NKeyCode keyCode, bool autoRepeat)
+            {
+                window.OnKeyDown(keyCode, autoRepeat);
+            }
+
+            public void OnKeyUp(NKeyCode keyCode)
+            {
+                window.OnKeyUp(keyCode);
             }
 
             public void OnMouseMove(Point point)

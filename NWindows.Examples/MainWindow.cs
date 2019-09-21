@@ -10,20 +10,24 @@ namespace NWindows.Examples
         private readonly List<Control> controls = new List<Control>();
         private readonly TextExampleControl textExampleControl;
         private readonly MouseExampleControl mouseExampleControl;
+        private readonly KeyboardExampleControl keyboardExampleControl;
 
         public MainWindow()
         {
             Title = "Examples \u2690-\xD83C\xDFC1-\u2690";
 
+            var drawingExampleControl = new DrawingExampleControl {Area = new Rectangle(0, 0, 200, 250)};
             textExampleControl = new TextExampleControl {Area = new Rectangle(200, 0, 600, 250)};
             mouseExampleControl = new MouseExampleControl {Area = new Rectangle(0, 250, 200, 25)};
+            keyboardExampleControl = new KeyboardExampleControl {Area = new Rectangle(200, 250, 200, 200)};
 
-            controls.Add(new DrawingExampleControl {Area = new Rectangle(0, 0, 200, 250)});
+            controls.Add(drawingExampleControl);
             controls.Add(textExampleControl);
             controls.Add(mouseExampleControl);
+            controls.Add(keyboardExampleControl);
         }
 
-        public override void OnAppInit()
+        protected override void OnAppInit()
         {
             foreach (var control in controls)
             {
@@ -31,7 +35,7 @@ namespace NWindows.Examples
             }
         }
 
-        public override void OnPaint(ICanvas canvas, Rectangle area)
+        protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
             canvas.FillRectangle(Color.White, area.X, area.Y, area.Width, area.Height);
             foreach (Control control in controls)
@@ -45,13 +49,25 @@ namespace NWindows.Examples
             }
         }
 
-        public override void OnMouseMove(Point point)
+        protected override void OnMouseMove(Point point)
         {
             mouseExampleControl.MousePosition = point;
             Invalidate(mouseExampleControl.Area);
         }
 
-        public override void OnResize(Size clientArea)
+        protected override void OnKeyDown(NKeyCode keyCode, bool autoRepeat)
+        {
+            keyboardExampleControl.HandleKeyDown(keyCode, autoRepeat);
+            Invalidate(keyboardExampleControl.Area);
+        }
+
+        protected override void OnKeyUp(NKeyCode keyCode)
+        {
+            keyboardExampleControl.HandleKeyUp(keyCode);
+            Invalidate(keyboardExampleControl.Area);
+        }
+
+        protected override void OnResize(Size clientArea)
         {
             var newTextExampleControlArea = new Rectangle(200, 0, Math.Max(0, clientArea.Width - 200), 250);
             if (newTextExampleControlArea != textExampleControl.Area)

@@ -134,6 +134,9 @@ namespace NWindows.Win32
             UINT format,
             ref DRAWTEXTPARAMS lpdtp
         );
+
+        [DllImport("User32.dll")]
+        public static extern UINT MapVirtualKeyW(UINT uCode, VirtualKeyMapType uMapType);
     }
 
     internal static class Gdi32API
@@ -529,6 +532,11 @@ namespace NWindows.Win32
         WM_DESTROY = 0x0002,
         WM_SIZE = 0x0005,
         WM_PAINT = 0x000F,
+        WM_KEYDOWN = 0x0100,
+        WM_KEYUP = 0x0101,
+        WM_CHAR = 0x0102,
+        WM_SYSKEYDOWN = 0x0104,
+        WM_SYSKEYUP = 0x0105,
         WM_MOUSEMOVE = 0x0200
     }
 
@@ -652,6 +660,14 @@ namespace NWindows.Win32
         ERROR = 0,
         TRANSPARENT = 1,
         OPAQUE = 2
+    }
+
+    internal enum VirtualKeyMapType : UINT
+    {
+        MAPVK_VK_TO_CHAR = 2,
+        MAPVK_VK_TO_VSC = 0,
+        MAPVK_VSC_TO_VK = 1,
+        MAPVK_VSC_TO_VK_EX = 3
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -30,9 +30,7 @@ namespace NWindows.Win32
             }
         }
 
-        public void Init()
-        {
-        }
+        public void Init() {}
 
         public void Run(INativeWindowStartupInfo window)
         {
@@ -126,10 +124,33 @@ namespace NWindows.Win32
             {
                 if (windows.TryGetValue(hwnd, out var window))
                 {
-                    ulong lParam32 = (uint) lParam.ToInt64();
+                    uint wParam32 = (uint) wParam.ToInt64();
+                    uint lParam32 = (uint) lParam.ToInt64();
                     int x = (short) (lParam32 & 0xFFFF);
                     int y = (short) ((lParam32 >> 16) & 0xFFFF);
                     window.OnMouseMove(new Point(x, y));
+                }
+
+                return IntPtr.Zero;
+            }
+
+            if (uMsg == Win32MessageType.WM_KEYDOWN || uMsg == Win32MessageType.WM_SYSKEYDOWN)
+            {
+                if (windows.TryGetValue(hwnd, out var window))
+                {
+                    ulong lParam32 = (uint) lParam.ToInt64();
+                    bool autoRepeat = (lParam32 & 0x40000000) != 0;
+                    window.OnKeyDown(W32KeyMap.GetKeyCode(lParam, wParam), autoRepeat);
+                }
+
+                return IntPtr.Zero;
+            }
+
+            if (uMsg == Win32MessageType.WM_KEYUP || uMsg == Win32MessageType.WM_SYSKEYUP)
+            {
+                if (windows.TryGetValue(hwnd, out var window))
+                {
+                    window.OnKeyUp(W32KeyMap.GetKeyCode(lParam, wParam));
                 }
 
                 return IntPtr.Zero;
