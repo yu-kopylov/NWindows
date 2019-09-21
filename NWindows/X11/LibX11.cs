@@ -10,12 +10,14 @@ namespace NWindows.X11
     using Drawable = System.UInt64;
     using Font = System.UInt64;
     using GC = System.UInt64;
+    using KeySym = System.UInt64;
     using Pixmap = System.UInt64;
     using Time = System.UInt64;
     using VisualID = System.UInt64;
     using DisplayPtr = System.IntPtr;
     using VisualPtr = System.IntPtr;
     using Window = System.UInt64;
+    using XComposeStatusPtr = System.IntPtr;
     using XImagePtr = System.IntPtr;
 
     internal static class LibX11
@@ -90,6 +92,9 @@ namespace NWindows.X11
         public static extern int XNextEvent(DisplayPtr display, out XEvent event_return);
 
         [DllImport("libX11.so.6")]
+        public static extern int XPeekEvent(DisplayPtr display, out XEvent event_return);
+
+        [DllImport("libX11.so.6")]
         public static extern int XPending(DisplayPtr display);
 
         [DllImport("libX11.so.6")]
@@ -157,6 +162,18 @@ namespace NWindows.X11
 
         [DllImport("libX11.so.6")]
         public static extern int XFreePixmap(DisplayPtr display, Pixmap pixmap);
+
+        [DllImport("libX11.so.6")]
+        public static extern KeySym XLookupKeysym([MarshalAs(UnmanagedType.LPStruct)] XKeyEvent key_event, int index);
+
+        [DllImport("libX11.so.6")]
+        public static extern int XLookupString(
+            [MarshalAs(UnmanagedType.LPStruct)] XKeyEvent event_struct,
+            byte[] buffer_return,
+            int bytes_buffer,
+            out KeySym keysym_return,
+            XComposeStatusPtr status_in_out
+        );
     }
 
     internal enum VisualClass
@@ -314,6 +331,7 @@ namespace NWindows.X11
         [FieldOffset(0)] public XEventType type;
         [FieldOffset(0)] public XConfigureEvent ConfigureEvent;
         [FieldOffset(0)] public XExposeEvent ExposeEvent;
+        [FieldOffset(0)] public XKeyEvent KeyEvent;
         [FieldOffset(0)] public XMotionEvent MotionEvent;
 
         public static XEvent CreateExpose(int x, int y, int width, int height)
@@ -339,6 +357,24 @@ namespace NWindows.X11
         public int x, y;
         public int width, height;
         public int count; /* if non-zero, at least this many more */
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XKeyEvent
+    {
+        public readonly int type; /* KeyPress or KeyRelease */
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window window; /* ``event'' window it is reported relative to */
+        public readonly Window root; /* root window that the event occurred on */
+        public readonly Window subwindow; /* child window */
+        public readonly Time time; /* milliseconds */
+        public readonly int x, y; /* pointer x, y coordinates in event window */
+        public readonly int x_root, y_root; /* coordinates relative to root */
+        public readonly uint state; /* key or button mask */
+        public readonly uint keycode; /* detail */
+        public readonly Bool same_screen; /* same screen flag */
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]

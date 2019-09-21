@@ -2,7 +2,7 @@
 
 namespace NWindows.Win32
 {
-    internal class W32KeyMap
+    internal static class W32KeyMap
     {
         private const byte VK_SHIFT = 0x10;
 
@@ -114,7 +114,7 @@ namespace NWindows.Win32
             keyCodes[0x0DB] = NKeyCode.LeftBracket;
             keyCodes[0x0DC] = NKeyCode.Backslash;
             keyCodes[0x0DD] = NKeyCode.RightBracket;
-            keyCodes[0x0DE] = NKeyCode.Quote;
+            keyCodes[0x0DE] = NKeyCode.Apostrophe;
 
             keyCodes[0x10D] = NKeyCode.NumPadEnter;
 

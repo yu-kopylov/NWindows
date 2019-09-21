@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Text;
 using NWindows.NativeApi;
 
 namespace NWindows.X11
@@ -92,6 +93,8 @@ namespace NWindows.X11
             attr.border_pixel = 0;
             attr.event_mask = XEventMask.ExposureMask |
                               XEventMask.ButtonPressMask |
+                              XEventMask.KeyPressMask |
+                              XEventMask.KeyReleaseMask |
                               XEventMask.PointerMotionMask |
                               XEventMask.StructureNotifyMask;
             attr.colormap = colormap;
@@ -118,6 +121,9 @@ namespace NWindows.X11
 
             LibX11.XMapWindow(display, windowId);
             LibX11.XFlush(display);
+
+            byte[] textBuffer = new byte[32];
+            bool autoRepeat = false;
 
             while (true)
             {
@@ -149,6 +155,39 @@ namespace NWindows.X11
                     // System.Console.WriteLine($"ConfigureNotify: {evt.ConfigureEvent.width} x {evt.ConfigureEvent.height}");
                     Size clientArea = new Size(evt.ConfigureEvent.width, evt.ConfigureEvent.height);
                     window.OnResize(clientArea);
+                }
+                else if (evt.type == XEventType.KeyPress)
+                {
+                    var keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
+
+                    // XLookupString returns no more than the requested number of characters, but it also writes a zero-byte after them
+                    int charCount = LibX11.XLookupString(evt.KeyEvent, textBuffer, textBuffer.Length - 1, out _, IntPtr.Zero);
+
+                    window.OnKeyDown(X11KeyMap.GetKeyCode(keySym), autoRepeat);
+                    autoRepeat = false;
+
+                    if (charCount > 0)
+                    {
+                        string text = Encoding.UTF8.GetString(textBuffer, 0, charCount);
+                        window.OnTextInput(text);
+                    }
+                }
+                else if (evt.type == XEventType.KeyRelease)
+                {
+                    if (LibX11.XPending(display) > 0)
+                    {
+                        LibX11.XPeekEvent(display, out XEvent nextEvent);
+                        autoRepeat =
+                            nextEvent.type == XEventType.KeyPress &&
+                            nextEvent.KeyEvent.time == evt.KeyEvent.time &&
+                            nextEvent.KeyEvent.keycode == evt.KeyEvent.keycode;
+                    }
+
+                    if (!autoRepeat)
+                    {
+                        var keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
+                        window.OnKeyUp(X11KeyMap.GetKeyCode(keySym));
+                    }
                 }
 
                 if (pendingRedraw != null && LibX11.XPending(display) == 0)

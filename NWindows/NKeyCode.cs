@@ -40,7 +40,7 @@
         Backslash,
 
         Semicolon,
-        Quote,
+        Apostrophe,
         Enter,
 
         Comma,
