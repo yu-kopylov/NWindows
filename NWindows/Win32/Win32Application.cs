@@ -156,6 +156,16 @@ namespace NWindows.Win32
                 return IntPtr.Zero;
             }
 
+            if (uMsg == Win32MessageType.WM_CHAR)
+            {
+                if (windows.TryGetValue(hwnd, out var window))
+                {
+                    char c = (char) wParam.ToInt64();
+                    window.OnTextInput(c.ToString());
+                }
+                return IntPtr.Zero;
+            }
+
             if (uMsg == Win32MessageType.WM_PAINT)
             {
                 PAINTSTRUCT ps = new PAINTSTRUCT();

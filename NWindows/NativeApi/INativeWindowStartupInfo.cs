@@ -11,6 +11,7 @@ namespace NWindows.NativeApi
         void OnCreate(INativeWindow nativeWindow);
         void OnKeyDown(NKeyCode keyCode, bool autoRepeat);
         void OnKeyUp(NKeyCode keyCode);
+        void OnTextInput(string text);
         void OnMouseMove(Point point);
         void OnPaint(INativeCanvas canvas, Rectangle area);
         void OnResize(Size clientArea);

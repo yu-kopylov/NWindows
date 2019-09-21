@@ -75,6 +75,8 @@ namespace NWindows
 
         protected virtual void OnKeyUp(NKeyCode keyCode) {}
 
+        protected virtual void OnTextInput(string text) {}
+
         protected virtual void OnResize(Size clientArea) {}
 
         private class NWindowStartupInfo : INativeWindowStartupInfo
@@ -103,6 +105,11 @@ namespace NWindows
             public void OnKeyUp(NKeyCode keyCode)
             {
                 window.OnKeyUp(keyCode);
+            }
+
+            public void OnTextInput(string text)
+            {
+                window.OnTextInput(text);
             }
 
             public void OnMouseMove(Point point)

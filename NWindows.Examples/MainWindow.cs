@@ -67,6 +67,12 @@ namespace NWindows.Examples
             Invalidate(keyboardExampleControl.Area);
         }
 
+        protected override void OnTextInput(string text)
+        {
+            keyboardExampleControl.HandleTextInput(text);
+            Invalidate(keyboardExampleControl.Area);
+        }
+
         protected override void OnResize(Size clientArea)
         {
             var newTextExampleControlArea = new Rectangle(200, 0, Math.Max(0, clientArea.Width - 200), 250);

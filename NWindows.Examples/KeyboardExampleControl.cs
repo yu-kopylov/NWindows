@@ -30,6 +30,12 @@ namespace NWindows.Examples
             TruncateList();
         }
 
+        public void HandleTextInput(string text)
+        {
+            lastKeys.Add($"[T] {text}");
+            TruncateList();
+        }
+
         private void TruncateList()
         {
             if (lastKeys.Count > 10)
