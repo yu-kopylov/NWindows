@@ -167,7 +167,7 @@ namespace NWindows.X11
                         keyCode = X11KeyMap.GetKeyCode(keySym);
                     }
 
-                    window.OnKeyDown(keyCode, autoRepeat);
+                    window.OnKeyDown(keyCode, GetModifierKey(evt.KeyEvent.state), autoRepeat);
                     autoRepeat = false;
 
                     if (charCount > 0)
@@ -226,6 +226,28 @@ namespace NWindows.X11
             //todo: free colormap?
 
             LibX11.XCloseDisplay(display);
+        }
+
+        private NModifierKey GetModifierKey(uint state)
+        {
+            NModifierKey modifierKey = NModifierKey.None;
+
+            if ((state & (1 << 0)) != 0)
+            {
+                modifierKey |= NModifierKey.Shift;
+            }
+
+            if ((state & (1 << 2)) != 0)
+            {
+                modifierKey |= NModifierKey.Control;
+            }
+
+            if ((state & (1 << 3)) != 0)
+            {
+                modifierKey |= NModifierKey.Alt;
+            }
+
+            return modifierKey;
         }
 
         public INativeImageCodec CreateImageCodec()

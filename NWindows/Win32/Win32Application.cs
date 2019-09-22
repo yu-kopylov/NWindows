@@ -140,7 +140,7 @@ namespace NWindows.Win32
                 {
                     ulong lParam32 = (uint) lParam.ToInt64();
                     bool autoRepeat = (lParam32 & 0x40000000) != 0;
-                    window.OnKeyDown(W32KeyMap.GetKeyCode(lParam, wParam), autoRepeat);
+                    window.OnKeyDown(W32KeyMap.GetKeyCode(lParam, wParam), NModifierKey.None, autoRepeat);
                 }
 
                 return IntPtr.Zero;

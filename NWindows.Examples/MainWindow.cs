@@ -55,9 +55,9 @@ namespace NWindows.Examples
             Invalidate(mouseExampleControl.Area);
         }
 
-        protected override void OnKeyDown(NKeyCode keyCode, bool autoRepeat)
+        protected override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
-            keyboardExampleControl.HandleKeyDown(keyCode, autoRepeat);
+            keyboardExampleControl.HandleKeyDown(keyCode, modifierKey, autoRepeat);
             Invalidate(keyboardExampleControl.Area);
         }
 

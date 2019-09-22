@@ -71,7 +71,7 @@ namespace NWindows
 
         protected virtual void OnMouseMove(Point point) {}
 
-        protected virtual void OnKeyDown(NKeyCode keyCode, bool autoRepeat) {}
+        protected virtual void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat) {}
 
         protected virtual void OnKeyUp(NKeyCode keyCode) {}
 
@@ -97,9 +97,9 @@ namespace NWindows
                 window.NativeWindow = nativeWindow;
             }
 
-            public void OnKeyDown(NKeyCode keyCode, bool autoRepeat)
+            public void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
             {
-                window.OnKeyDown(keyCode, autoRepeat);
+                window.OnKeyDown(keyCode, modifierKey, autoRepeat);
             }
 
             public void OnKeyUp(NKeyCode keyCode)

@@ -18,9 +18,9 @@ namespace NWindows.Examples
             }
         }
 
-        public void HandleKeyDown(NKeyCode keyCode, bool autoRepeat)
+        public void HandleKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
-            lastKeys.Add($"[D] {keyCode}{(autoRepeat ? " (R)" : "")}");
+            lastKeys.Add($"[D] {keyCode}{(autoRepeat ? " (R)" : "")}({modifierKey})");
             TruncateList();
         }
 
