@@ -83,7 +83,7 @@ namespace NWindows.Win32
             keyCodes[0x06A] = NKeyCode.NumPadMultiply;
             keyCodes[0x06B] = NKeyCode.NumPadAdd;
             keyCodes[0x06D] = NKeyCode.NumPadSubtract;
-            keyCodes[0x06E] = NKeyCode.NumPadSeparator;
+            keyCodes[0x06E] = NKeyCode.NumPadDecimal;
 
             keyCodes[0x070] = NKeyCode.F1;
             keyCodes[0x071] = NKeyCode.F2;

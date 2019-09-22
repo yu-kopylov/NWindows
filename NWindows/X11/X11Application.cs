@@ -158,12 +158,16 @@ namespace NWindows.X11
                 }
                 else if (evt.type == XEventType.KeyPress)
                 {
-                    var keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
-
                     // XLookupString returns no more than the requested number of characters, but it also writes a zero-byte after them
-                    int charCount = LibX11.XLookupString(evt.KeyEvent, textBuffer, textBuffer.Length - 1, out _, IntPtr.Zero);
+                    int charCount = LibX11.XLookupString(evt.KeyEvent, textBuffer, textBuffer.Length - 1, out var keySym, IntPtr.Zero);
+                    var keyCode = X11KeyMap.GetKeyCode(keySym);
+                    if (keyCode == NKeyCode.Unknown)
+                    {
+                        keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
+                        keyCode = X11KeyMap.GetKeyCode(keySym);
+                    }
 
-                    window.OnKeyDown(X11KeyMap.GetKeyCode(keySym), autoRepeat);
+                    window.OnKeyDown(keyCode, autoRepeat);
                     autoRepeat = false;
 
                     if (charCount > 0)
@@ -185,8 +189,16 @@ namespace NWindows.X11
 
                     if (!autoRepeat)
                     {
-                        var keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
-                        window.OnKeyUp(X11KeyMap.GetKeyCode(keySym));
+                        // XLookupString returns no more than the requested number of characters, but it also writes a zero-byte after them
+                        LibX11.XLookupString(evt.KeyEvent, textBuffer, textBuffer.Length - 1, out var keySym, IntPtr.Zero);
+                        var keyCode = X11KeyMap.GetKeyCode(keySym);
+                        if (keyCode == NKeyCode.Unknown)
+                        {
+                            keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
+                            keyCode = X11KeyMap.GetKeyCode(keySym);
+                        }
+
+                        window.OnKeyUp(keyCode);
                     }
                 }
 

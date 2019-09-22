@@ -132,6 +132,6 @@
         NumPadSubtract,
         NumPadMultiply,
         NumPadDivide,
-        NumPadSeparator
+        NumPadDecimal
     }
 }
