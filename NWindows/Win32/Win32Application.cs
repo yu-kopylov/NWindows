@@ -140,7 +140,7 @@ namespace NWindows.Win32
                 {
                     ulong lParam32 = (uint) lParam.ToInt64();
                     bool autoRepeat = (lParam32 & 0x40000000) != 0;
-                    window.OnKeyDown(W32KeyMap.GetKeyCode(lParam, wParam), NModifierKey.None, autoRepeat);
+                    window.OnKeyDown(W32KeyMap.GetKeyCode(lParam, wParam), GetModifierKey(), autoRepeat);
                 }
 
                 return IntPtr.Zero;
@@ -163,6 +163,7 @@ namespace NWindows.Win32
                     char c = (char) wParam.ToInt64();
                     window.OnTextInput(c.ToString());
                 }
+
                 return IntPtr.Zero;
             }
 
@@ -205,6 +206,28 @@ namespace NWindows.Win32
             }
 
             return Win32API.DefWindowProcW(hwnd, uMsg, wParam, lParam);
+        }
+
+        private NModifierKey GetModifierKey()
+        {
+            NModifierKey modifierKey = NModifierKey.None;
+
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_SHIFT) & 0x8000) != 0)
+            {
+                modifierKey |= NModifierKey.Shift;
+            }
+
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_CONTROL) & 0x8000) != 0)
+            {
+                modifierKey |= NModifierKey.Control;
+            }
+
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_MENU) & 0x8000) != 0)
+            {
+                modifierKey |= NModifierKey.Alt;
+            }
+
+            return modifierKey;
         }
 
         public INativeImageCodec CreateImageCodec()

@@ -12,6 +12,7 @@ namespace NWindows.Win32
     using DWORD = System.UInt32;
     using INT = System.Int32;
     using LONG = System.Int32;
+    using SHORT = System.Int16;
     using UINT = System.UInt32;
     using UINT32 = System.UInt32;
     using WORD = System.UInt16;
@@ -103,6 +104,9 @@ namespace NWindows.Win32
 
         [DllImport("User32.dll")]
         public static extern void PostQuitMessage(int nExitCode);
+
+        [DllImport("User32.dll")]
+        public static extern SHORT GetKeyState(W32VirtualKey nVirtKey);
 
         [DllImport("User32.dll")]
         public static extern HDC BeginPaint(HWND hWnd, ref PAINTSTRUCT lpPaint);
@@ -660,6 +664,13 @@ namespace NWindows.Win32
         ERROR = 0,
         TRANSPARENT = 1,
         OPAQUE = 2
+    }
+
+    internal enum W32VirtualKey
+    {
+        VK_SHIFT = 0x10,
+        VK_CONTROL = 0x11,
+        VK_MENU = 0x12
     }
 
     internal enum VirtualKeyMapType : UINT
