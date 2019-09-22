@@ -65,6 +65,11 @@ namespace NWindows.X11
             LibXRender.XRenderFreePicture(display, pictureId);
         }
 
+        public void SetClipRectangle(int x, int y, int width, int height)
+        {
+            // todo: implement
+        }
+
         public void FillRectangle(Color color, int x, int y, int width, int height)
         {
             if (width < 0 || height < 0)

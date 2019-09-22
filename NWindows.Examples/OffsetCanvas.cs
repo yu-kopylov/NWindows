@@ -16,6 +16,11 @@ namespace NWindows.Examples
             this.yOffset = yOffset;
         }
 
+        public void SetClipRectangle(int x, int y, int width, int height)
+        {
+            canvas.SetClipRectangle(x + xOffset, y + yOffset, width, height);
+        }
+
         public void FillRectangle(Color color, int x, int y, int width, int height)
         {
             canvas.FillRectangle(color, x + xOffset, y + yOffset, width, height);

@@ -10,7 +10,12 @@ namespace NWindows
             NativeCanvas = nativeCanvas;
         }
 
-        internal INativeCanvas NativeCanvas { get; }
+        private INativeCanvas NativeCanvas { get; }
+
+        public void SetClipRectangle(int x, int y, int width, int height)
+        {
+            NativeCanvas.SetClipRectangle(x, y, width, height);
+        }
 
         public void FillRectangle(Color color, int x, int y, int width, int height)
         {

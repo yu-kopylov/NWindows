@@ -70,6 +70,19 @@ namespace NWindows.Win32
             }
         }
 
+        public void SetClipRectangle(int x, int y, int width, int height)
+        {
+            var region = Gdi32API.CreateRectRgnChecked(x, y, x + width, y + height);
+            try
+            {
+                Gdi32API.SelectClipRgn(hdc, region);
+            }
+            finally
+            {
+                Gdi32API.DeleteObject(region);
+            }
+        }
+
         public void FillRectangle(Color color, int x, int y, int width, int height)
         {
             if (width <= 0 || height <= 0)

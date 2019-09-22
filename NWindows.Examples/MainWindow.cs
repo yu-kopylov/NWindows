@@ -43,6 +43,7 @@ namespace NWindows.Examples
                 // todo: test edge cases
                 if (control.Area.IntersectsWith(area))
                 {
+                    canvas.SetClipRectangle(control.Area.X, control.Area.Y, control.Area.Width, control.Area.Height);
                     Rectangle controlArea = new Rectangle(area.X - control.Area.X, area.Y - control.Area.Y, area.Width, area.Height);
                     control.Paint(new OffsetCanvas(canvas, control.Area.X, control.Area.Y), controlArea);
                 }

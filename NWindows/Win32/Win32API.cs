@@ -229,6 +229,9 @@ namespace NWindows.Win32
         }
 
         [DllImport("Gdi32.dll")]
+        public static extern int SelectClipRgn(HDC hdc, HRGN hrgn);
+
+        [DllImport("Gdi32.dll")]
         public static extern HBRUSH CreateSolidBrush(COLORREF color);
 
         [DllImport("Gdi32.dll")]
