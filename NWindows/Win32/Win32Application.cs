@@ -161,7 +161,11 @@ namespace NWindows.Win32
                 if (windows.TryGetValue(hwnd, out var window))
                 {
                     char c = (char) wParam.ToInt64();
-                    window.OnTextInput(c.ToString());
+
+                    if (!char.IsControl(c))
+                    {
+                        window.OnTextInput(c.ToString());
+                    }
                 }
 
                 return IntPtr.Zero;

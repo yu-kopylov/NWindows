@@ -29,6 +29,7 @@ namespace NWindows.Win32
             keyCodes[0x026] = NKeyCode.NumPadUpArrow;
             keyCodes[0x027] = NKeyCode.NumPadRightArrow;
             keyCodes[0x028] = NKeyCode.NumPadDownArrow;
+            keyCodes[0x02C] = NKeyCode.PrintScreen;
             keyCodes[0x02D] = NKeyCode.NumPadInsert;
             keyCodes[0x02E] = NKeyCode.NumPadDelete;
 
