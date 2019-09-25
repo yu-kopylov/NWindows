@@ -173,7 +173,19 @@ namespace NWindows.X11
                     if (charCount > 0)
                     {
                         string text = Encoding.UTF8.GetString(textBuffer, 0, charCount);
-                        window.OnTextInput(text);
+                        StringBuilder sb = new StringBuilder(text.Length);
+                        foreach (char c in text)
+                        {
+                            if (!char.IsControl(c))
+                            {
+                                sb.Append(c);
+                            }
+                        }
+
+                        if (sb.Length > 0)
+                        {
+                            window.OnTextInput(sb.ToString());
+                        }
                     }
                 }
                 else if (evt.type == XEventType.KeyRelease)
