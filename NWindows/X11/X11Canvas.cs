@@ -16,6 +16,7 @@ namespace NWindows.X11
         private readonly IntPtr pictFormatPtr;
         private readonly ulong windowId;
         private readonly ulong pictureId;
+        private readonly IntPtr xftDraw;
 
         private X11Canvas(
             IntPtr display,
@@ -25,7 +26,8 @@ namespace NWindows.X11
             ulong colormap,
             IntPtr pictFormatPtr,
             ulong windowId,
-            ulong pictureId
+            ulong pictureId,
+            IntPtr xftDraw
         )
         {
             this.display = display;
@@ -36,6 +38,7 @@ namespace NWindows.X11
             this.pictFormatPtr = pictFormatPtr;
             this.windowId = windowId;
             this.pictureId = pictureId;
+            this.xftDraw = xftDraw;
         }
 
         public static X11Canvas CreateForWindow(
@@ -57,17 +60,43 @@ namespace NWindows.X11
                 0,
                 ref attr
             );
-            return new X11Canvas(display, screenNum, objectCache, visual, colormap, pictFormatPtr, windowId, pictureId);
+
+            IntPtr xftDraw = IntPtr.Zero;
+            X11Canvas canvas = null;
+
+            try
+            {
+                xftDraw = LibXft.XftDrawCreate(display, windowId, visual, colormap);
+                canvas = new X11Canvas(display, screenNum, objectCache, visual, colormap, pictFormatPtr, windowId, pictureId, xftDraw);
+                xftDraw = IntPtr.Zero;
+            }
+            finally
+            {
+                if (canvas == null)
+                {
+                    if (xftDraw != IntPtr.Zero)
+                    {
+                        LibXft.XftDrawDestroy(xftDraw);
+                    }
+
+                    LibXRender.XRenderFreePicture(display, pictureId);
+                }
+            }
+
+            return canvas;
         }
 
         public void Dispose()
         {
+            LibXft.XftDrawDestroy(xftDraw);
             LibXRender.XRenderFreePicture(display, pictureId);
         }
 
         public void SetClipRectangle(int x, int y, int width, int height)
         {
-            // todo: implement
+            XRectangle[] rectangles = {new XRectangle(x, y, width, height)};
+            LibXRender.XRenderSetPictureClipRectangles(display, pictureId, 0, 0, rectangles, 1);
+            LibXft.XftDrawSetClipRectangles(xftDraw, 0, 0, rectangles, 1);
         }
 
         public void FillRectangle(Color color, int x, int y, int width, int height)
@@ -83,66 +112,58 @@ namespace NWindows.X11
 
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
         {
-            var xftDraw = LibXft.XftDrawCreate(display, windowId, visual, colormap);
+            var xftColorPtr = Marshal.AllocHGlobal(Marshal.SizeOf<XftColor>());
             try
             {
-                var xftColorPtr = Marshal.AllocHGlobal(Marshal.SizeOf<XftColor>());
+                XRenderColor xColor = new XRenderColor(color);
+                LibXft.XftColorAllocValue(
+                    display,
+                    visual,
+                    colormap,
+                    xColor,
+                    xftColorPtr
+                );
+
                 try
                 {
-                    XRenderColor xColor = new XRenderColor(color);
-                    LibXft.XftColorAllocValue(
-                        display,
-                        visual,
-                        colormap,
-                        xColor,
-                        xftColorPtr
-                    );
+                    XftFontExt fontExt = objectCache.GetXftFont(font);
+                    var fontInfo = Marshal.PtrToStructure<XftFont>(fontExt.MainFont);
 
-                    try
+                    int xOffset = DrawString(xftDraw, xftColorPtr, fontExt, x, y + fontInfo.ascent, text);
+
+                    if (font.IsUnderline)
                     {
-                        XftFontExt fontExt = objectCache.GetXftFont(font);
-                        var fontInfo = Marshal.PtrToStructure<XftFont>(fontExt.MainFont);
-
-                        int xOffset = DrawString(xftDraw, xftColorPtr, fontExt, x, y + fontInfo.ascent, text);
-
-                        if (font.IsUnderline)
-                        {
-                            int lineHeight = Convert.ToInt32(Math.Max(font.Size / 10, 1));
-                            LibXRender.XRenderFillRectangle(
-                                display, PictOp.PictOpOver, pictureId, ref xColor,
-                                x,
-                                y + fontInfo.ascent + (fontInfo.descent - lineHeight) / 2,
-                                (uint) xOffset,
-                                (uint) lineHeight
-                            );
-                        }
-
-                        if (font.IsStrikeout)
-                        {
-                            int lineHeight = Convert.ToInt32(Math.Max(font.Size / 20, 1));
-                            LibXRender.XRenderFillRectangle
-                            (
-                                display, PictOp.PictOpOver, pictureId, ref xColor,
-                                x,
-                                y + fontInfo.ascent - (2 * fontInfo.ascent + 3 * lineHeight) / 6,
-                                (uint) xOffset,
-                                (uint) lineHeight
-                            );
-                        }
+                        int lineHeight = Convert.ToInt32(Math.Max(font.Size / 10, 1));
+                        LibXRender.XRenderFillRectangle(
+                            display, PictOp.PictOpOver, pictureId, ref xColor,
+                            x,
+                            y + fontInfo.ascent + (fontInfo.descent - lineHeight) / 2,
+                            (uint) xOffset,
+                            (uint) lineHeight
+                        );
                     }
-                    finally
+
+                    if (font.IsStrikeout)
                     {
-                        LibXft.XftColorFree(display, visual, colormap, xftColorPtr);
+                        int lineHeight = Convert.ToInt32(Math.Max(font.Size / 20, 1));
+                        LibXRender.XRenderFillRectangle
+                        (
+                            display, PictOp.PictOpOver, pictureId, ref xColor,
+                            x,
+                            y + fontInfo.ascent - (2 * fontInfo.ascent + 3 * lineHeight) / 6,
+                            (uint) xOffset,
+                            (uint) lineHeight
+                        );
                     }
                 }
                 finally
                 {
-                    Marshal.FreeHGlobal(xftColorPtr);
+                    LibXft.XftColorFree(display, visual, colormap, xftColorPtr);
                 }
             }
             finally
             {
-                LibXft.XftDrawDestroy(xftDraw);
+                Marshal.FreeHGlobal(xftColorPtr);
             }
         }
 

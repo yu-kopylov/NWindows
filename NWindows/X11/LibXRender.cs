@@ -31,6 +31,16 @@ namespace NWindows.X11
         public static extern void XRenderFreePicture(DisplayPtr dpy, Picture picture);
 
         [DllImport("libXrender.so.1")]
+        public static extern void XRenderSetPictureClipRectangles(
+            DisplayPtr dpy,
+            Picture picture,
+            int xOrigin,
+            int yOrigin,
+            XRectangle[] rects,
+            int n
+        );
+
+        [DllImport("libXrender.so.1")]
         public static extern void XRenderFillRectangle(
             DisplayPtr dpy,
             PictOp op,

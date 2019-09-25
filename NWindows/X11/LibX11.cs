@@ -457,4 +457,49 @@ namespace NWindows.X11
         public int dash_offset; /* patterned/dashed line information */
         public char dashes;
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XRectangle
+    {
+        public readonly short x, y;
+        public readonly ushort width, height;
+
+        public XRectangle(int x, int y, int width, int height)
+        {
+            this.x = ToShort(x);
+            this.y = ToShort(y);
+            this.width = ToUShort(width);
+            this.height = ToUShort(height);
+        }
+
+        private static short ToShort(int val)
+        {
+            if (val < short.MinValue)
+            {
+                return short.MinValue;
+            }
+
+            if (val > short.MaxValue)
+            {
+                return short.MaxValue;
+            }
+
+            return (short) val;
+        }
+
+        private static ushort ToUShort(int val)
+        {
+            if (val < ushort.MinValue)
+            {
+                return ushort.MinValue;
+            }
+
+            if (val > ushort.MaxValue)
+            {
+                return ushort.MaxValue;
+            }
+
+            return (ushort) val;
+        }
+    }
 }

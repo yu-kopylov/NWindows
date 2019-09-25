@@ -24,6 +24,9 @@ namespace NWindows.X11
         public static extern XftDraw_ptr XftDrawCreate(Display_ptr dpy, Drawable drawable, Visual_ptr visual, Colormap colormap);
 
         [DllImport("libXft.so.2")]
+        public static extern bool XftDrawSetClipRectangles(XftDraw_ptr draw, int xOrigin, int yOrigin, XRectangle[] rects, int n);
+
+        [DllImport("libXft.so.2")]
         public static extern void XftDrawDestroy(XftDraw_ptr draw);
 
         [DllImport("libXft.so.2")]

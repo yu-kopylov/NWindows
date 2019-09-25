@@ -11,6 +11,8 @@ namespace NWindows.Examples
 
             FontConfig arial = new FontConfig("Arial", 14);
 
+            canvas.SetClipRectangle(0, 0, Area.Width - 10, Area.Height);
+
             canvas.FillRectangle(Color.FromArgb(0xFF, 0xFF, 0x98), 10, 10, Area.Width - 20, 16);
             canvas.DrawString(Color.Blue, arial, 11, 11, sampleText);
 
