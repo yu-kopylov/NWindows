@@ -35,7 +35,7 @@ namespace NWindows.Examples
         {
             foreach (var control in controls)
             {
-                control.OnAppInit(this);
+                control.OnAppInit(Application);
             }
         }
 

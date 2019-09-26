@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using NWindows.NativeApi;
 
-namespace NWindows.Examples
+namespace NWindows.Examples.Controls
 {
     public abstract class Control
     {
@@ -10,8 +10,6 @@ namespace NWindows.Examples
         public abstract void Paint(ICanvas canvas, Rectangle area);
 
         // todo: set parent instead of passing parameter
-        public virtual void OnAppInit(MainWindow mainWindow)
-        {
-        }
+        public virtual void OnAppInit(NApplication mainWindow) {}
     }
 }

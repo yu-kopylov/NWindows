@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\NWindows.Examples.Controls\NWindows.Examples.Controls.csproj" />
       <ProjectReference Include="..\NWindows\NWindows.csproj" />
     </ItemGroup>
 
