@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using NWindows.Examples.Controls;
-using NWindows.NativeApi;
 
 namespace NWindows.Examples
 {
-    public class MainWindow : NWindow
+    public class MainWindow : Window
     {
-        private readonly List<Control> controls = new List<Control>();
         private readonly TextExampleControl textExampleControl;
         private readonly MouseExampleControl mouseExampleControl;
         private readonly KeyboardExampleControl keyboardExampleControl;
@@ -24,34 +21,11 @@ namespace NWindows.Examples
             keyboardExampleControl = new KeyboardExampleControl {Area = new Rectangle(200, 250, 200, 200)};
             textBox = new TextBox {Area = new Rectangle(450, 250, 200, 20)};
 
-            controls.Add(drawingExampleControl);
-            controls.Add(textExampleControl);
-            controls.Add(mouseExampleControl);
-            controls.Add(keyboardExampleControl);
-            controls.Add(textBox);
-        }
-
-        protected override void OnAppInit()
-        {
-            foreach (var control in controls)
-            {
-                control.OnAppInit(Application);
-            }
-        }
-
-        protected override void OnPaint(ICanvas canvas, Rectangle area)
-        {
-            canvas.FillRectangle(Color.White, area.X, area.Y, area.Width, area.Height);
-            foreach (Control control in controls)
-            {
-                // todo: test edge cases
-                if (control.Area.IntersectsWith(area))
-                {
-                    canvas.SetClipRectangle(control.Area.X, control.Area.Y, control.Area.Width, control.Area.Height);
-                    Rectangle controlArea = new Rectangle(area.X - control.Area.X, area.Y - control.Area.Y, area.Width, area.Height);
-                    control.Paint(new OffsetCanvas(canvas, control.Area.X, control.Area.Y), controlArea);
-                }
-            }
+            Add(drawingExampleControl);
+            Add(textExampleControl);
+            Add(mouseExampleControl);
+            Add(keyboardExampleControl);
+            Add(textBox);
         }
 
         protected override void OnMouseMove(Point point)

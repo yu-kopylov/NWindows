@@ -1,9 +1,8 @@
 ﻿using System.Drawing;
-using NWindows.NativeApi;
 
 namespace NWindows.Examples
 {
-    public class OffsetCanvas : ICanvas
+    internal class OffsetCanvas : ICanvas
     {
         private readonly ICanvas canvas;
         private readonly int xOffset;

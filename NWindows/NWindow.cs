@@ -1,4 +1,3 @@
-using System;
 using System.Drawing;
 using NWindows.NativeApi;
 
@@ -19,15 +18,7 @@ namespace NWindows
 
         public NApplication Application
         {
-            get
-            {
-                if (application == null)
-                {
-                    throw new InvalidOperationException("This window is not associated with an application yet.");
-                }
-
-                return application;
-            }
+            get { return application; }
             internal set
             {
                 if (value != application)
@@ -37,8 +28,6 @@ namespace NWindows
                 }
             }
         }
-
-        public NImageCodec ImageCodec => Application.ImageCodec;
 
         private string title;
 

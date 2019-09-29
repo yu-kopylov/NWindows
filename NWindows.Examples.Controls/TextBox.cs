@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
-using NWindows.NativeApi;
 
 namespace NWindows.Examples.Controls
 {

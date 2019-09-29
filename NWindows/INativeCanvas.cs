@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace NWindows.NativeApi
+namespace NWindows
 {
     public interface ICanvas
     {

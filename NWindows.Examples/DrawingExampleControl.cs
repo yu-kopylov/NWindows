@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using NWindows.Examples.Controls;
-using NWindows.NativeApi;
 
 namespace NWindows.Examples
 {
@@ -8,12 +7,12 @@ namespace NWindows.Examples
     {
         private NImage arrow;
 
-        public override void OnAppInit(NApplication application)
+        public override void OnAppInit()
         {
             var type = typeof(Program);
             using (var stream = type.Assembly.GetManifestResourceStream($"{type.Namespace}.Resources.Images.arrow.png"))
             {
-                arrow = application.ImageCodec.LoadImageFromStream(stream);
+                arrow = Application.ImageCodec.LoadImageFromStream(stream);
             }
         }
 
