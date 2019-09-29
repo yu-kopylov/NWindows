@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace NWindows.Examples.Controls
@@ -17,6 +18,12 @@ namespace NWindows.Examples.Controls
         private readonly LinkedList<TextBoxState> redoLog = new LinkedList<TextBoxState>();
         private TextBoxState state = new TextBoxState {Text = "TextBox Test", CursorOffset = 4, SelectionFrom = 4, SelectionTo = 4 + 5};
         private ActionType lastActionType = ActionType.Undefined;
+
+        private bool coordinatesCalculated;
+        private int textOffsetX;
+        private int cursorX;
+        private int selectionFromX;
+        private int selectionToX;
 
         public Color TextColor
         {
@@ -40,7 +47,7 @@ namespace NWindows.Examples.Controls
                 if (font != value)
                 {
                     font = value;
-                    MakeCursorVisible();
+                    coordinatesCalculated = false;
                     Invalidate();
                 }
             }
@@ -48,21 +55,57 @@ namespace NWindows.Examples.Controls
 
         public override void Paint(ICanvas canvas, Rectangle area)
         {
-            // todo: measure text
+            UpdateCoordinates();
+
+            // todo: use font to get height
             int textHeight = 18;
 
             if (state.HasSelection)
             {
-                int selectionFromX = state.SelectionFrom * 8;
-                int selectionToX = state.SelectionTo * 8;
                 // todo: check +/- 1 in width
-                canvas.FillRectangle(selectionColor, selectionFromX, 0, selectionToX - selectionFromX, textHeight);
+                canvas.FillRectangle(selectionColor, textOffsetX + selectionFromX, 0, selectionToX - selectionFromX, textHeight);
             }
 
-            int cursorX = state.CursorOffset * 8;
-            canvas.FillRectangle(cursorColor, cursorX, 0, 1, textHeight);
+            canvas.FillRectangle(cursorColor, textOffsetX + cursorX, 0, 1, textHeight);
+            canvas.DrawString(textColor, font, textOffsetX, 0, state.Text);
+        }
 
-            canvas.DrawString(textColor, font, 0, 0, state.Text);
+        private void UpdateCoordinates()
+        {
+            if (coordinatesCalculated)
+            {
+                return;
+            }
+
+            coordinatesCalculated = true;
+
+            if (state.HasSelection)
+            {
+                selectionFromX = Application.Graphics.MeasureText(font, state.Text.Substring(0, state.SelectionFrom)).Width;
+                selectionToX = Application.Graphics.MeasureText(font, state.Text.Substring(0, state.SelectionTo)).Width;
+            }
+
+            cursorX = Application.Graphics.MeasureText(font, state.Text.Substring(0, state.CursorOffset)).Width;
+
+            // todo: recalculate offset when TextBox is resized
+            if (textOffsetX + cursorX >= Area.Width)
+            {
+                textOffsetX = Area.Width - 1 - cursorX;
+            }
+            else if (textOffsetX < 0)
+            {
+                // todo: check edge-cases
+                int textWidth = Application.Graphics.MeasureText(font, state.Text).Width;
+                if (textOffsetX + textWidth + 1 < Area.Width)
+                {
+                    textOffsetX = Math.Min(0, Area.Width - textWidth - 1);
+                }
+            }
+
+            if (textOffsetX + cursorX < 0)
+            {
+                textOffsetX = -cursorX;
+            }
         }
 
         public void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
@@ -70,7 +113,7 @@ namespace NWindows.Examples.Controls
             if (keyCode == NKeyCode.A && modifierKey == NModifierKey.Control)
             {
                 state.SelectAll();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.Z && modifierKey == NModifierKey.Control)
@@ -83,7 +126,7 @@ namespace NWindows.Examples.Controls
                 }
 
                 lastActionType = ActionType.Undefined;
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.Z && modifierKey == (NModifierKey.Control | NModifierKey.Shift))
@@ -96,7 +139,7 @@ namespace NWindows.Examples.Controls
                 }
 
                 lastActionType = ActionType.Undefined;
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.LeftArrow && modifierKey == NModifierKey.None)
@@ -104,7 +147,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad arrow keys
                 SaveState(ActionType.Undefined);
                 state.MoveCursorLeft();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.RightArrow && modifierKey == NModifierKey.None)
@@ -112,7 +155,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad arrow keys
                 SaveState(ActionType.Undefined);
                 state.MoveCursorRight();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.LeftArrow && modifierKey == NModifierKey.Shift)
@@ -120,7 +163,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad arrow keys
                 SaveState(ActionType.Undefined);
                 state.SelectLeft();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.RightArrow && modifierKey == NModifierKey.Shift)
@@ -128,7 +171,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad arrow keys
                 SaveState(ActionType.Undefined);
                 state.SelectRight();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.Home && modifierKey == NModifierKey.None)
@@ -136,7 +179,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad home key
                 SaveState(ActionType.Undefined);
                 state.GoHome();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.End && modifierKey == NModifierKey.None)
@@ -144,7 +187,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad end key
                 SaveState(ActionType.Undefined);
                 state.GoEnd();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.Backspace && modifierKey == NModifierKey.None)
@@ -152,7 +195,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad end key
                 SaveState(ActionType.Deletion);
                 state.DeleteLeft();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
             else if (keyCode == NKeyCode.Delete && modifierKey == NModifierKey.None)
@@ -160,7 +203,7 @@ namespace NWindows.Examples.Controls
                 // todo: handle num-pad end key
                 SaveState(ActionType.Deletion);
                 state.DeleteRight();
-                MakeCursorVisible();
+                coordinatesCalculated = false;
                 Invalidate();
             }
         }
@@ -170,13 +213,8 @@ namespace NWindows.Examples.Controls
             // todo: limit text length
             SaveState(ActionType.Typing);
             state.EnterText(text);
-            MakeCursorVisible();
+            coordinatesCalculated = false;
             Invalidate();
-        }
-
-        private void MakeCursorVisible()
-        {
-            // todo: implement
         }
 
         private void SaveState(ActionType actionType)
@@ -200,7 +238,8 @@ namespace NWindows.Examples.Controls
 
         private class TextBoxState
         {
-            public string Text { get; set; }
+            // todo: make sure that text is never null
+            public string Text { get; set; } = string.Empty;
             public int CursorOffset { get; set; }
             public int SelectionFrom { get; set; }
             public int SelectionTo { get; set; }

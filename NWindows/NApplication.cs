@@ -31,6 +31,7 @@ namespace NWindows
 
             NativeApp.Init();
 
+            Graphics = new NGraphics(NativeApp.CreateGraphics());
             ImageCodec = new NImageCodec(NativeApp.CreateImageCodec());
         }
 
@@ -45,6 +46,7 @@ namespace NWindows
             NativeApp.Run(window.StartupInfo);
         }
 
+        public NGraphics Graphics { get; private set; }
         public NImageCodec ImageCodec { get; private set; }
     }
 }

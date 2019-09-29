@@ -262,6 +262,11 @@ namespace NWindows.X11
             return modifierKey;
         }
 
+        public INativeGraphics CreateGraphics()
+        {
+            return new X11Graphics();
+        }
+
         public INativeImageCodec CreateImageCodec()
         {
             return new GdkPixBufImageCodec(display, visualInfo.visual);

@@ -5,6 +5,7 @@ namespace NWindows.NativeApi
         void Init();
         void Run(INativeWindowStartupInfo window);
 
+        INativeGraphics CreateGraphics();
         INativeImageCodec CreateImageCodec();
     }
 }

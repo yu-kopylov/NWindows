@@ -234,6 +234,11 @@ namespace NWindows.Win32
             return modifierKey;
         }
 
+        public INativeGraphics CreateGraphics()
+        {
+            return new W32Graphics();
+        }
+
         public INativeImageCodec CreateImageCodec()
         {
             return new Win32ImageCodec();
