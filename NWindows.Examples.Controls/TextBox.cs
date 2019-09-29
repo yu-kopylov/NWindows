@@ -179,11 +179,6 @@ namespace NWindows.Examples.Controls
             // todo: implement
         }
 
-        private void Invalidate()
-        {
-            // todo: implement
-        }
-
         private void SaveState(ActionType actionType)
         {
             if (lastActionType != actionType)

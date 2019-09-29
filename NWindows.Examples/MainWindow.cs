@@ -31,31 +31,23 @@ namespace NWindows.Examples
         protected override void OnMouseMove(Point point)
         {
             mouseExampleControl.MousePosition = point;
-            Invalidate(mouseExampleControl.Area);
         }
 
         protected override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
             keyboardExampleControl.HandleKeyDown(keyCode, modifierKey, autoRepeat);
             textBox.OnKeyDown(keyCode, modifierKey, autoRepeat);
-
-            Invalidate(keyboardExampleControl.Area);
-            Invalidate(textBox.Area);
         }
 
         protected override void OnKeyUp(NKeyCode keyCode)
         {
             keyboardExampleControl.HandleKeyUp(keyCode);
-            Invalidate(keyboardExampleControl.Area);
         }
 
         protected override void OnTextInput(string text)
         {
             keyboardExampleControl.HandleTextInput(text);
             textBox.OnTextInput(text);
-
-            Invalidate(keyboardExampleControl.Area);
-            Invalidate(textBox.Area);
         }
 
         protected override void OnResize(Size clientArea)

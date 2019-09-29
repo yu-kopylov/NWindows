@@ -5,7 +5,17 @@ namespace NWindows.Examples
 {
     public class MouseExampleControl : Control
     {
-        public Point MousePosition { get; set; }
+        private Point mousePosition;
+
+        public Point MousePosition
+        {
+            get { return mousePosition; }
+            set
+            {
+                mousePosition = value;
+                Invalidate();
+            }
+        }
 
         public override void Paint(ICanvas canvas, Rectangle area)
         {

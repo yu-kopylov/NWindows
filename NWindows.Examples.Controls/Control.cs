@@ -35,6 +35,11 @@ namespace NWindows.Examples.Controls
 
         public Rectangle Area { get; set; }
 
+        protected void Invalidate()
+        {
+            host?.Invalidate(Area);
+        }
+
         public abstract void Paint(ICanvas canvas, Rectangle area);
 
         // todo: set parent instead of passing parameter

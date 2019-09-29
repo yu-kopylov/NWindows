@@ -22,18 +22,21 @@ namespace NWindows.Examples
         {
             lastKeys.Add($"[D] {keyCode}{(autoRepeat ? " (R)" : "")}({modifierKey})");
             TruncateList();
+            Invalidate();
         }
 
         public void HandleKeyUp(NKeyCode keyCode)
         {
             lastKeys.Add($"[U] {keyCode}");
             TruncateList();
+            Invalidate();
         }
 
         public void HandleTextInput(string text)
         {
             lastKeys.Add($"[T] {text}");
             TruncateList();
+            Invalidate();
         }
 
         private void TruncateList()
