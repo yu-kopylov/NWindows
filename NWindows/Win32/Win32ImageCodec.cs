@@ -21,7 +21,7 @@ namespace NWindows.Win32
         public INativeImage CreateImage(int width, int height)
         {
             // todo: validate parameters
-            return new W32Image(width, height, new byte[width * height * 4]);
+            return new Win32Image(width, height, new byte[width * height * 4]);
         }
 
         private static INativeImage CreateImage(INativeBitmapSource source)
@@ -37,7 +37,7 @@ namespace NWindows.Win32
                 pixelsHandle.Free();
             }
 
-            return new W32Image(source.Width, source.Height, pixels);
+            return new Win32Image(source.Width, source.Height, pixels);
         }
 
         private T LoadBitmapFromStream<T>(Stream stream, Guid pixelFormat, CreateBitmapDelegate<T> createImage)

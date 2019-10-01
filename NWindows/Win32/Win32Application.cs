@@ -140,7 +140,7 @@ namespace NWindows.Win32
                 {
                     ulong lParam32 = (uint) lParam.ToInt64();
                     bool autoRepeat = (lParam32 & 0x40000000) != 0;
-                    window.OnKeyDown(W32KeyMap.GetKeyCode(lParam, wParam), GetModifierKey(), autoRepeat);
+                    window.OnKeyDown(Win32KeyMap.GetKeyCode(lParam, wParam), GetModifierKey(), autoRepeat);
                 }
 
                 return IntPtr.Zero;
@@ -150,7 +150,7 @@ namespace NWindows.Win32
             {
                 if (windows.TryGetValue(hwnd, out var window))
                 {
-                    window.OnKeyUp(W32KeyMap.GetKeyCode(lParam, wParam));
+                    window.OnKeyUp(Win32KeyMap.GetKeyCode(lParam, wParam));
                 }
 
                 return IntPtr.Zero;
@@ -236,7 +236,7 @@ namespace NWindows.Win32
 
         public INativeGraphics CreateGraphics()
         {
-            return new W32Graphics();
+            return new Win32Graphics();
         }
 
         public INativeImageCodec CreateImageCodec()

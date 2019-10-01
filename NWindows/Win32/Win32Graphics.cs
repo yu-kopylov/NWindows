@@ -4,9 +4,9 @@ using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
-    internal class W32Graphics : INativeGraphics
+    internal class Win32Graphics : INativeGraphics
     {
-        public Size MeasureText(FontConfig font, string text)
+        public Size MeasureString(FontConfig font, string text)
         {
             IntPtr hdc = Win32API.GetDCChecked(IntPtr.Zero);
             try

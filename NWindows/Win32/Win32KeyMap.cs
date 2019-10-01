@@ -2,13 +2,13 @@
 
 namespace NWindows.Win32
 {
-    internal static class W32KeyMap
+    internal static class Win32KeyMap
     {
         private const byte VK_SHIFT = 0x10;
 
         private static readonly NKeyCode[] keyCodes = new NKeyCode[512];
 
-        static W32KeyMap()
+        static Win32KeyMap()
         {
             keyCodes[0x008] = NKeyCode.Backspace;
             keyCodes[0x009] = NKeyCode.Tab;

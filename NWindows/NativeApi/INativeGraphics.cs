@@ -4,6 +4,6 @@ namespace NWindows.NativeApi
 {
     public interface INativeGraphics
     {
-        Size MeasureText(FontConfig font, string text);
+        Size MeasureString(FontConfig font, string text);
     }
 }

@@ -81,11 +81,11 @@ namespace NWindows.Examples.Controls
 
             if (state.HasSelection)
             {
-                selectionFromX = Application.Graphics.MeasureText(font, state.Text.Substring(0, state.SelectionFrom)).Width;
-                selectionToX = Application.Graphics.MeasureText(font, state.Text.Substring(0, state.SelectionTo)).Width;
+                selectionFromX = Application.Graphics.MeasureString(font, state.Text.Substring(0, state.SelectionFrom)).Width;
+                selectionToX = Application.Graphics.MeasureString(font, state.Text.Substring(0, state.SelectionTo)).Width;
             }
 
-            cursorX = Application.Graphics.MeasureText(font, state.Text.Substring(0, state.CursorOffset)).Width;
+            cursorX = Application.Graphics.MeasureString(font, state.Text.Substring(0, state.CursorOffset)).Width;
 
             // todo: recalculate offset when TextBox is resized
             if (textOffsetX + cursorX >= Area.Width)
@@ -95,7 +95,7 @@ namespace NWindows.Examples.Controls
             else if (textOffsetX < 0)
             {
                 // todo: check edge-cases
-                int textWidth = Application.Graphics.MeasureText(font, state.Text).Width;
+                int textWidth = Application.Graphics.MeasureString(font, state.Text).Width;
                 if (textOffsetX + textWidth + 1 < Area.Width)
                 {
                     textOffsetX = Math.Min(0, Area.Width - textWidth - 1);

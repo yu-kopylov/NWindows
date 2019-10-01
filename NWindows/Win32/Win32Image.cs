@@ -5,9 +5,9 @@ using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
-    internal class W32Image : INativeImage
+    internal class Win32Image : INativeImage
     {
-        public W32Image(int width, int height, byte[] pixels)
+        public Win32Image(int width, int height, byte[] pixels)
         {
             Width = width;
             Height = height;

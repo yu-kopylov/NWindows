@@ -12,9 +12,9 @@ namespace NWindows
             this.nativeGraphics = nativeGraphics;
         }
 
-        public Size MeasureText(FontConfig fontConfig, string text)
+        public Size MeasureString(FontConfig fontConfig, string text)
         {
-            return nativeGraphics.MeasureText(fontConfig, text);
+            return nativeGraphics.MeasureString(fontConfig, text);
         }
     }
 }

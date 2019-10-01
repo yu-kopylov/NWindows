@@ -106,22 +106,22 @@ namespace NWindows.Win32
         public void DrawImage(INativeImage image, int x, int y)
         {
             // todo: allow null?
-            W32Image w32Image = (W32Image) image;
+            Win32Image win32Image = (Win32Image) image;
 
-            var bitmap = Gdi32API.CreateDIBSectionChecked(hdc, new BITMAPINFO(w32Image.Width, w32Image.Height), out IntPtr buffer);
+            var bitmap = Gdi32API.CreateDIBSectionChecked(hdc, new BITMAPINFO(win32Image.Width, win32Image.Height), out IntPtr buffer);
             IntPtr hdcMem = IntPtr.Zero;
             try
             {
-                Marshal.Copy(w32Image.Pixels, 0, buffer, w32Image.Pixels.Length);
+                Marshal.Copy(win32Image.Pixels, 0, buffer, win32Image.Pixels.Length);
                 hdcMem = Gdi32API.CreateCompatibleDCChecked(hdc);
                 var oldBitmap = Gdi32API.SelectObjectChecked(hdcMem, bitmap);
 
                 Gdi32API.GdiAlphaBlend
                 (
                     hdc,
-                    x, y, w32Image.Width, w32Image.Height,
+                    x, y, win32Image.Width, win32Image.Height,
                     hdcMem,
-                    0, 0, w32Image.Width, w32Image.Height,
+                    0, 0, win32Image.Width, win32Image.Height,
                     BLENDFUNCTION.SourceAlpha()
                 );
 
