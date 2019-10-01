@@ -50,6 +50,32 @@ namespace NWindows.Win32
         public static extern HMODULE GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
 
         [DllImport("User32.dll")]
+        private static extern HDC GetDC(HWND hWnd);
+
+        public static HDC GetDCChecked(HWND hWnd)
+        {
+            HDC hdc = GetDC(hWnd);
+            if (hdc == IntPtr.Zero)
+            {
+                throw new InvalidOperationException($"{nameof(GetDC)} failed. Window handle: 0x{hWnd.ToString("X16")}.");
+            }
+
+            return hdc;
+        }
+
+        [DllImport("User32.dll")]
+        private static extern int ReleaseDC(HWND hWnd, HDC hDC);
+
+        public static void ReleaseDCChecked(HWND hWnd, HDC hDC)
+        {
+            int res = ReleaseDC(hWnd, hDC);
+            if (res != 1)
+            {
+                throw new InvalidOperationException($"{nameof(ReleaseDC)} failed. Window handle: 0x{hWnd.ToString("X16")}. HDC: 0x{hDC.ToString("X16")}.");
+            }
+        }
+
+        [DllImport("User32.dll")]
         public static extern ATOM RegisterClassExW(ref WNDCLASSEXW arg1);
 
         [DllImport("User32.dll")]
