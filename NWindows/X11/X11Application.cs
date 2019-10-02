@@ -264,7 +264,7 @@ namespace NWindows.X11
 
         public INativeGraphics CreateGraphics()
         {
-            return new X11Graphics();
+            return new X11Graphics(display, defaultScreen);
         }
 
         public INativeImageCodec CreateImageCodec()

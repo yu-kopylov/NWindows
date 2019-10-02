@@ -40,7 +40,33 @@ namespace NWindows.X11
 
         public IntPtr MainFont { get; }
 
-        public IntPtr GetFontByCodePoint(int codePoint)
+        public IEnumerable<XftRange> GetRanges(byte[] utf32Text)
+        {
+            IntPtr rangeFont = MainFont;
+            int rangeStart = 0;
+            int xOffset = 0;
+
+            for (int i = 0; i < utf32Text.Length; i += 4)
+            {
+                int codePoint = utf32Text[i + 3] << 24 | utf32Text[i + 2] << 16 | utf32Text[i + 1] << 8 | utf32Text[i];
+                IntPtr charFont = GetFontByCodePoint(codePoint);
+
+                if (charFont != rangeFont)
+                {
+                    yield return new XftRange(rangeFont, rangeStart, i);
+
+                    rangeFont = charFont;
+                    rangeStart = i;
+                }
+            }
+
+            if (rangeStart < utf32Text.Length)
+            {
+                yield return new XftRange(rangeFont, rangeStart, utf32Text.Length);
+            }
+        }
+
+        private IntPtr GetFontByCodePoint(int codePoint)
         {
             if (fontsByCodePoint.TryGetValue(codePoint, out IntPtr fontPtr))
             {

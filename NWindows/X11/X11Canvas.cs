@@ -170,35 +170,22 @@ namespace NWindows.X11
         private int DrawString(IntPtr xftDraw, IntPtr xftColorPtr, XftFontExt fontExt, int x, int y, string text)
         {
             byte[] utf32Text = Encoding.UTF32.GetBytes(text);
-            IntPtr utf32TextPtr = Marshal.AllocHGlobal(utf32Text.Length);
+            GCHandle utf32TextHandle = GCHandle.Alloc(utf32Text, GCHandleType.Pinned);
             try
             {
-                Marshal.Copy(utf32Text, 0, utf32TextPtr, utf32Text.Length);
+                IntPtr utf32TextPtr = utf32TextHandle.AddrOfPinnedObject();
 
-                IntPtr rangeFont = fontExt.MainFont;
-                int rangeStart = 0;
                 int xOffset = 0;
-
-                for (int i = 0; i < utf32Text.Length; i += 4)
+                foreach (var range in fontExt.GetRanges(utf32Text))
                 {
-                    int codePoint = utf32Text[i + 3] << 24 | utf32Text[i + 2] << 16 | utf32Text[i + 1] << 8 | utf32Text[i];
-                    IntPtr charFont = fontExt.GetFontByCodePoint(codePoint);
-
-                    if (charFont != rangeFont)
-                    {
-                        xOffset += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + xOffset, y, utf32TextPtr, rangeStart, i);
-
-                        rangeFont = charFont;
-                        rangeStart = i;
-                    }
+                    xOffset += DrawStringRange(xftDraw, xftColorPtr, range.Font, x + xOffset, y, utf32TextPtr, range.Start, range.End);
                 }
 
-                xOffset += DrawStringRange(xftDraw, xftColorPtr, rangeFont, x + xOffset, y, utf32TextPtr, rangeStart, utf32Text.Length);
                 return xOffset;
             }
             finally
             {
-                Marshal.FreeHGlobal(utf32TextPtr);
+                utf32TextHandle.Free();
             }
         }
 
@@ -213,11 +200,6 @@ namespace NWindows.X11
             int rangeEnd
         )
         {
-            if (rangeStart >= rangeEnd)
-            {
-                return 0;
-            }
-
             LibXft.XftTextExtents32(
                 display,
                 font,
