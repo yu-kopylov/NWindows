@@ -271,7 +271,7 @@ namespace NWindows.X11
 
         public INativeImageCodec CreateImageCodec()
         {
-            return new GdkPixBufImageCodec(display, visualInfo.visual);
+            return new GdkPixBufImageCodec(display, visualInfo.visual, defaultRootWindow);
         }
     }
 }

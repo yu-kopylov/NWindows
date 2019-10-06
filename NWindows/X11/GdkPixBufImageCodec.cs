@@ -10,18 +10,20 @@ namespace NWindows.X11
     {
         private readonly IntPtr display;
         private readonly IntPtr visual;
+        private readonly ulong rootWindow;
 
-        public GdkPixBufImageCodec(IntPtr display, IntPtr visual)
+        public GdkPixBufImageCodec(IntPtr display, IntPtr visual, ulong rootWindow)
         {
             this.display = display;
             this.visual = visual;
+            this.rootWindow = rootWindow;
         }
 
         public INativeImage LoadImageFromStream(Stream stream)
         {
             using (GdkPixBufBitmapSource source = LoadSourceFromStream(stream))
             {
-                X11Image disposableImage = CreateX11Image(source.Width, source.Height);
+                X11Image disposableImage = X11Image.Create(display, visual, rootWindow, source.Width, source.Height);
                 try
                 {
                     source.CopyToImage(disposableImage);
@@ -57,40 +59,7 @@ namespace NWindows.X11
                 throw new ArgumentException($"Image dimensions are too large ({width} x {height}).");
             }
 
-            return CreateX11Image(width, height);
-        }
-
-        public X11Image CreateX11Image(int width, int height)
-        {
-            IntPtr nativeImageData = IntPtr.Zero;
-            try
-            {
-                nativeImageData = Marshal.AllocHGlobal(4 * width * height);
-
-                IntPtr xImage = LibX11.XCreateImage
-                (
-                    display,
-                    visual,
-                    X11Application.RequiredColorDepth,
-                    XImageFormat.ZPixmap,
-                    0,
-                    nativeImageData,
-                    (uint) width,
-                    (uint) height,
-                    X11Application.RequiredColorDepth,
-                    width * 4
-                );
-                X11Image image = new X11Image(width, height, xImage, nativeImageData);
-                nativeImageData = IntPtr.Zero;
-                return image;
-            }
-            finally
-            {
-                if (nativeImageData != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(nativeImageData);
-                }
-            }
+            return X11Image.Create(display, visual, rootWindow, width, height);
         }
 
         private GdkPixBufBitmapSource LoadSourceFromStream(Stream stream)
@@ -220,17 +189,31 @@ namespace NWindows.X11
                     throw new InvalidOperationException($"Source size ({width} x {height}) does not match image size ({image.Width} x {image.Height}).");
                 }
 
-                if (pixelFormat == PixelFormat.RGBA_32)
+                using (X11Bitmap xBitmap = X11Bitmap.Create(image.Display, image.Visual, width, height))
                 {
-                    PixelConverter.Convert_RGBA_32BE_To_PARGB_32(dataPtr, stride, image.ImageData, 4 * width, width, height);
-                }
-                else if (pixelFormat == PixelFormat.RGB_24)
-                {
-                    PixelConverter.Convert_RGB_24BE_To_ARGB_32(dataPtr, stride, image.ImageData, 4 * width, width, height);
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Unexpected pixel format: {pixelFormat}.");
+                    if (pixelFormat == PixelFormat.RGBA_32)
+                    {
+                        PixelConverter.Convert_RGBA_32BE_To_PARGB_32(dataPtr, stride, xBitmap.ImageData, 4 * width, width, height);
+                    }
+                    else if (pixelFormat == PixelFormat.RGB_24)
+                    {
+                        PixelConverter.Convert_RGB_24BE_To_ARGB_32(dataPtr, stride, xBitmap.ImageData, 4 * width, width, height);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Unexpected pixel format: {pixelFormat}.");
+                    }
+
+                    var gcValues = new XGCValues();
+                    var gc = LibX11.XCreateGC(image.Display, image.PixmapId, 0, ref gcValues);
+                    try
+                    {
+                        LibX11.XPutImage(image.Display, image.PixmapId, gc, xBitmap.XImage, 0, 0, 0, 0, (uint) width, (uint) height);
+                    }
+                    finally
+                    {
+                        LibX11.XFreeGC(image.Display, gc);
+                    }
                 }
             }
 

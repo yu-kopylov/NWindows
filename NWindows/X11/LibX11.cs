@@ -118,6 +118,21 @@ namespace NWindows.X11
         public static extern int XDestroyImage(XImagePtr ximage);
 
         [DllImport("libX11.so.6")]
+        public static extern XImagePtr XGetSubImage(
+            DisplayPtr display,
+            Drawable d,
+            int x,
+            int y,
+            uint width,
+            uint height,
+            ulong plane_mask,
+            XImageFormat format,
+            XImagePtr dest_image,
+            int dest_x,
+            int dest_y
+        );
+
+        [DllImport("libX11.so.6")]
         public static extern int XPutImage(
             DisplayPtr display,
             Drawable d,
