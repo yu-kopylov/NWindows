@@ -91,6 +91,7 @@ namespace NWindows.X11
         {
             XSetWindowAttributes attr = new XSetWindowAttributes();
             attr.border_pixel = 0;
+            attr.bit_gravity = 1 /*NorthWestGravity	*/;
             attr.event_mask = XEventMask.ExposureMask |
                               XEventMask.ButtonPressMask |
                               XEventMask.KeyPressMask |
@@ -110,6 +111,7 @@ namespace NWindows.X11
                 WindowClass.InputOutput,
                 visualInfo.visual,
                 XSetWindowAttributeMask.CWBorderPixel |
+                XSetWindowAttributeMask.CWBitGravity |
                 XSetWindowAttributeMask.CWEventMask |
                 XSetWindowAttributeMask.CWColormap,
                 ref attr
