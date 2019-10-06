@@ -51,7 +51,7 @@ namespace NWindows
 
         public void Invalidate(Rectangle area)
         {
-            NativeWindow.Invalidate(area);
+            NativeWindow?.Invalidate(area);
         }
 
         protected abstract void OnPaint(ICanvas canvas, Rectangle area);

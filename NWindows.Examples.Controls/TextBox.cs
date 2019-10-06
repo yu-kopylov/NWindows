@@ -58,7 +58,7 @@ namespace NWindows.Examples.Controls
             UpdateCoordinates();
 
             // todo: use font to get height
-            int textHeight = Area.Height;
+            int textHeight = 18;
 
             if (state.HasSelection)
             {

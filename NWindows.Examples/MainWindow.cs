@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using NWindows.Examples.Controls;
 
 namespace NWindows.Examples
@@ -15,17 +14,25 @@ namespace NWindows.Examples
         {
             Title = "Examples \u2690-\xD83C\xDFC1-\u2690";
 
-            var drawingExampleControl = new DrawingExampleControl {Area = new Rectangle(0, 0, 200, 250)};
-            textExampleControl = new TextExampleControl {Area = new Rectangle(200, 0, 600, 250)};
-            mouseExampleControl = new MouseExampleControl {Area = new Rectangle(0, 250, 200, 25)};
-            keyboardExampleControl = new KeyboardExampleControl {Area = new Rectangle(200, 250, 200, 200)};
-            textBox = new TextBox {Area = new Rectangle(450, 250, 200, 20)};
+            StackPanel hPanel1 = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
+            StackPanel hPanel2 = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
+            StackPanel vPanel = new StackPanel {Orientation = StackPanelOrientation.Vertical};
+            vPanel.Add(hPanel1);
+            vPanel.Add(hPanel2);
 
-            Add(drawingExampleControl);
-            Add(textExampleControl);
-            Add(mouseExampleControl);
-            Add(keyboardExampleControl);
-            Add(textBox);
+            Content = vPanel;
+
+            var drawingExampleControl = new DrawingExampleControl {ContentSize = new Size(200, 250)};
+            textExampleControl = new TextExampleControl {ContentSize = new Size(600, 250)};
+            mouseExampleControl = new MouseExampleControl {ContentSize = new Size(200, 25)};
+            keyboardExampleControl = new KeyboardExampleControl {ContentSize = new Size(200, 200)};
+            textBox = new TextBox {ContentSize = new Size(200, 20)};
+
+            hPanel1.Add(drawingExampleControl);
+            hPanel1.Add(textExampleControl);
+            hPanel2.Add(mouseExampleControl);
+            hPanel2.Add(keyboardExampleControl);
+            hPanel2.Add(textBox);
         }
 
         protected override void OnMouseMove(Point point)
@@ -48,16 +55,6 @@ namespace NWindows.Examples
         {
             keyboardExampleControl.HandleTextInput(text);
             textBox.OnTextInput(text);
-        }
-
-        protected override void OnResize(Size clientArea)
-        {
-            var newTextExampleControlArea = new Rectangle(200, 0, Math.Max(0, clientArea.Width - 200), 250);
-            if (newTextExampleControlArea != textExampleControl.Area)
-            {
-                textExampleControl.Area = newTextExampleControlArea;
-                Invalidate(textExampleControl.Area);
-            }
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace NWindows.Examples.Controls
 {
     public abstract class Control
     {
         private IControlHost host;
+        private Rectangle area;
 
         public virtual IControlHost Host
         {
@@ -13,7 +13,7 @@ namespace NWindows.Examples.Controls
             internal set
             {
                 host = value;
-                if (host.Application != null)
+                if (host?.Application != null)
                 {
                     OnAppInit();
                 }
@@ -22,18 +22,26 @@ namespace NWindows.Examples.Controls
 
         public NApplication Application
         {
-            get
-            {
-                if (host == null)
-                {
-                    throw new InvalidOperationException("This control is not associated with an host yet.");
-                }
+            get { return host?.Application; }
+        }
 
-                return host.Application;
+        public Rectangle Area
+        {
+            get { return area; }
+            set
+            {
+                if (area != value)
+                {
+                    area = value;
+                    OnResize();
+                }
             }
         }
 
-        public Rectangle Area { get; set; }
+        /// <summary>
+        /// Minimum size of the control that allows fitting all its content without clipping or scaling.
+        /// </summary>
+        public Size ContentSize { get; set; }
 
         protected void Invalidate()
         {
@@ -42,7 +50,8 @@ namespace NWindows.Examples.Controls
 
         public abstract void Paint(ICanvas canvas, Rectangle area);
 
-        // todo: set parent instead of passing parameter
         public virtual void OnAppInit() {}
+
+        public virtual void OnResize() {}
     }
 }
