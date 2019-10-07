@@ -4,7 +4,7 @@ using NWindows.Examples.Controls;
 
 namespace NWindows.Examples
 {
-    public class KeyboardExampleControl : Control
+    public class InputExampleControl : Control
     {
         private readonly List<string> lastKeys = new List<string>();
 
@@ -20,28 +20,42 @@ namespace NWindows.Examples
 
         public void HandleKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
-            lastKeys.Add($"[D] {keyCode}{(autoRepeat ? " (R)" : "")}({modifierKey})");
+            lastKeys.Add($"[D][K] {keyCode}{(autoRepeat ? " (R)" : "")}({modifierKey})");
             TruncateList();
             Invalidate();
         }
 
         public void HandleKeyUp(NKeyCode keyCode)
         {
-            lastKeys.Add($"[U] {keyCode}");
+            lastKeys.Add($"[U][K] {keyCode}");
             TruncateList();
             Invalidate();
         }
 
         public void HandleTextInput(string text)
         {
-            lastKeys.Add($"[T] {text}");
+            lastKeys.Add($"[T][X] {text}");
+            TruncateList();
+            Invalidate();
+        }
+
+        public void HandleMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        {
+            lastKeys.Add($"[D][M] {button} at {point} ({modifierKey})");
+            TruncateList();
+            Invalidate();
+        }
+
+        public void HandleMouseButtonUp(NMouseButton button, Point point)
+        {
+            lastKeys.Add($"[U][M] {button} at {point}");
             TruncateList();
             Invalidate();
         }
 
         private void TruncateList()
         {
-            if (lastKeys.Count > 10)
+            if (lastKeys.Count > 12)
             {
                 lastKeys.RemoveAt(0);
             }

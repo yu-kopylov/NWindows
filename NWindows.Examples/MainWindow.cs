@@ -7,7 +7,7 @@ namespace NWindows.Examples
     {
         private readonly TextExampleControl textExampleControl;
         private readonly MouseExampleControl mouseExampleControl;
-        private readonly KeyboardExampleControl keyboardExampleControl;
+        private readonly InputExampleControl inputExampleControl;
         private readonly TextBox textBox;
 
         public MainWindow()
@@ -25,13 +25,13 @@ namespace NWindows.Examples
             var drawingExampleControl = new DrawingExampleControl {ContentSize = new Size(200, 250)};
             textExampleControl = new TextExampleControl {ContentSize = new Size(600, 250)};
             mouseExampleControl = new MouseExampleControl {ContentSize = new Size(200, 25)};
-            keyboardExampleControl = new KeyboardExampleControl {ContentSize = new Size(200, 200)};
+            inputExampleControl = new InputExampleControl {ContentSize = new Size(350, 250)};
             textBox = new TextBox {ContentSize = new Size(200, 20)};
 
             hPanel1.Add(drawingExampleControl);
             hPanel1.Add(textExampleControl);
             hPanel2.Add(mouseExampleControl);
-            hPanel2.Add(keyboardExampleControl);
+            hPanel2.Add(inputExampleControl);
             hPanel2.Add(textBox);
         }
 
@@ -40,20 +40,30 @@ namespace NWindows.Examples
             mouseExampleControl.MousePosition = point;
         }
 
+        protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        {
+            inputExampleControl.HandleMouseButtonDown(button, point, modifierKey);
+        }
+
+        protected override void OnMouseButtonUp(NMouseButton button, Point point)
+        {
+            inputExampleControl.HandleMouseButtonUp(button, point);
+        }
+
         protected override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
-            keyboardExampleControl.HandleKeyDown(keyCode, modifierKey, autoRepeat);
+            inputExampleControl.HandleKeyDown(keyCode, modifierKey, autoRepeat);
             textBox.OnKeyDown(keyCode, modifierKey, autoRepeat);
         }
 
         protected override void OnKeyUp(NKeyCode keyCode)
         {
-            keyboardExampleControl.HandleKeyUp(keyCode);
+            inputExampleControl.HandleKeyUp(keyCode);
         }
 
         protected override void OnTextInput(string text)
         {
-            keyboardExampleControl.HandleTextInput(text);
+            inputExampleControl.HandleTextInput(text);
             textBox.OnTextInput(text);
         }
     }

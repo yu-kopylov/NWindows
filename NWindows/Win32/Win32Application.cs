@@ -113,6 +113,11 @@ namespace NWindows.Win32
 
         private IntPtr WindowProc(IntPtr hwnd, Win32MessageType uMsg, IntPtr wParam, IntPtr lParam)
         {
+            if (HandleWindowEvent(hwnd, uMsg, wParam, lParam))
+            {
+                return IntPtr.Zero;
+            }
+
             if (uMsg == Win32MessageType.WM_DESTROY)
             {
                 windows.Remove(hwnd);
@@ -129,28 +134,6 @@ namespace NWindows.Win32
                     int x = (short) (lParam32 & 0xFFFF);
                     int y = (short) ((lParam32 >> 16) & 0xFFFF);
                     window.OnMouseMove(new Point(x, y));
-                }
-
-                return IntPtr.Zero;
-            }
-
-            if (uMsg == Win32MessageType.WM_KEYDOWN || uMsg == Win32MessageType.WM_SYSKEYDOWN)
-            {
-                if (windows.TryGetValue(hwnd, out var window))
-                {
-                    ulong lParam32 = (uint) lParam.ToInt64();
-                    bool autoRepeat = (lParam32 & 0x40000000) != 0;
-                    window.OnKeyDown(Win32KeyMap.GetKeyCode(lParam, wParam), GetModifierKey(), autoRepeat);
-                }
-
-                return IntPtr.Zero;
-            }
-
-            if (uMsg == Win32MessageType.WM_KEYUP || uMsg == Win32MessageType.WM_SYSKEYUP)
-            {
-                if (windows.TryGetValue(hwnd, out var window))
-                {
-                    window.OnKeyUp(Win32KeyMap.GetKeyCode(lParam, wParam));
                 }
 
                 return IntPtr.Zero;
@@ -212,26 +195,17 @@ namespace NWindows.Win32
             return Win32API.DefWindowProcW(hwnd, uMsg, wParam, lParam);
         }
 
-        private NModifierKey GetModifierKey()
+        private bool HandleWindowEvent(IntPtr hwnd, Win32MessageType uMsg, IntPtr wParam, IntPtr lParam)
         {
-            NModifierKey modifierKey = NModifierKey.None;
-
-            if ((Win32API.GetKeyState(W32VirtualKey.VK_SHIFT) & 0x8000) != 0)
+            if (!windows.TryGetValue(hwnd, out var window))
             {
-                modifierKey |= NModifierKey.Shift;
+                return false;
             }
 
-            if ((Win32API.GetKeyState(W32VirtualKey.VK_CONTROL) & 0x8000) != 0)
-            {
-                modifierKey |= NModifierKey.Control;
-            }
+            uint wParam32 = (uint) wParam.ToInt64();
+            uint lParam32 = (uint) lParam.ToInt64();
 
-            if ((Win32API.GetKeyState(W32VirtualKey.VK_MENU) & 0x8000) != 0)
-            {
-                modifierKey |= NModifierKey.Alt;
-            }
-
-            return modifierKey;
+            return Win32EventHandler.HandleWindowEvent(window, uMsg, wParam32, lParam32);
         }
 
         public INativeGraphics CreateGraphics()

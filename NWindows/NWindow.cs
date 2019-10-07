@@ -60,6 +60,10 @@ namespace NWindows
 
         protected virtual void OnMouseMove(Point point) {}
 
+        protected virtual void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey) {}
+
+        protected virtual void OnMouseButtonUp(NMouseButton button, Point point) {}
+
         protected virtual void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat) {}
 
         protected virtual void OnKeyUp(NKeyCode keyCode) {}
@@ -104,6 +108,16 @@ namespace NWindows
             public void OnMouseMove(Point point)
             {
                 window.OnMouseMove(point);
+            }
+
+            public void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+            {
+                window.OnMouseButtonDown(button, point, modifierKey);
+            }
+
+            public void OnMouseButtonUp(NMouseButton button, Point point)
+            {
+                window.OnMouseButtonUp(button, point);
             }
 
             public void OnPaint(INativeCanvas canvas, Rectangle area)

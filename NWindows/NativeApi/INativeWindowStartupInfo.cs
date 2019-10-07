@@ -13,6 +13,8 @@ namespace NWindows.NativeApi
         void OnKeyUp(NKeyCode keyCode);
         void OnTextInput(string text);
         void OnMouseMove(Point point);
+        void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey);
+        void OnMouseButtonUp(NMouseButton button, Point point);
         void OnPaint(INativeCanvas canvas, Rectangle area);
         void OnResize(Size clientArea);
     }

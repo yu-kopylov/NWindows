@@ -144,17 +144,14 @@ namespace NWindows.Win32
             keyCodes[0x16F] = NKeyCode.NumPadDivide;
         }
 
-        public static NKeyCode GetKeyCode(IntPtr lParam, IntPtr wParam)
+        public static NKeyCode GetKeyCode(uint lParam, uint wParam)
         {
-            uint lParam32 = (uint) lParam.ToInt64();
-            uint wParam32 = (uint) wParam.ToInt64();
-
-            byte virtualKey = (byte) wParam32;
-            bool isExtended = (lParam32 & 0x01000000) != 0;
+            byte virtualKey = (byte) wParam;
+            bool isExtended = (lParam & 0x01000000) != 0;
 
             if (virtualKey == VK_SHIFT)
             {
-                byte scanCode = (byte) (lParam32 >> 16);
+                byte scanCode = (byte) (lParam >> 16);
                 virtualKey = (byte) Win32API.MapVirtualKeyW(scanCode, VirtualKeyMapType.MAPVK_VSC_TO_VK_EX);
                 return GetKeyCode(virtualKey, isExtended);
             }
