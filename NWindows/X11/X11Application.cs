@@ -94,6 +94,7 @@ namespace NWindows.X11
             attr.bit_gravity = 1 /*NorthWestGravity	*/;
             attr.event_mask = XEventMask.ExposureMask |
                               XEventMask.ButtonPressMask |
+                              XEventMask.ButtonReleaseMask |
                               XEventMask.KeyPressMask |
                               XEventMask.KeyReleaseMask |
                               XEventMask.PointerMotionMask |
@@ -157,6 +158,21 @@ namespace NWindows.X11
                     // System.Console.WriteLine($"ConfigureNotify: {evt.ConfigureEvent.width} x {evt.ConfigureEvent.height}");
                     Size clientArea = new Size(evt.ConfigureEvent.width, evt.ConfigureEvent.height);
                     window.OnResize(clientArea);
+                }
+                else if (evt.type == XEventType.ButtonPress)
+                {
+                    window.OnMouseButtonDown(
+                        GetMouseButton(evt.ButtonEvent.button),
+                        new Point(evt.ButtonEvent.x, evt.ButtonEvent.y),
+                        GetModifierKey(evt.ButtonEvent.state)
+                    );
+                }
+                else if (evt.type == XEventType.ButtonRelease)
+                {
+                    window.OnMouseButtonUp(
+                        GetMouseButton(evt.ButtonEvent.button),
+                        new Point(evt.ButtonEvent.x, evt.ButtonEvent.y)
+                    );
                 }
                 else if (evt.type == XEventType.KeyPress)
                 {
@@ -240,6 +256,36 @@ namespace NWindows.X11
             //todo: free colormap?
 
             LibX11.XCloseDisplay(display);
+        }
+
+        private NMouseButton GetMouseButton(uint button)
+        {
+            if (button == 1)
+            {
+                return NMouseButton.Left;
+            }
+
+            if (button == 2)
+            {
+                return NMouseButton.Middle;
+            }
+
+            if (button == 3)
+            {
+                return NMouseButton.Right;
+            }
+
+            if (button == 8)
+            {
+                return NMouseButton.X1;
+            }
+
+            if (button == 9)
+            {
+                return NMouseButton.X2;
+            }
+
+            return NMouseButton.Unknown;
         }
 
         private NModifierKey GetModifierKey(uint state)

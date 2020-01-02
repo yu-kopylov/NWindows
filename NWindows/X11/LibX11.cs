@@ -344,6 +344,7 @@ namespace NWindows.X11
     {
         // todo: should event size be 96 or 192 (24*4 or 24 *8)
         [FieldOffset(0)] public XEventType type;
+        [FieldOffset(0)] public XButtonEvent ButtonEvent;
         [FieldOffset(0)] public XConfigureEvent ConfigureEvent;
         [FieldOffset(0)] public XExposeEvent ExposeEvent;
         [FieldOffset(0)] public XKeyEvent KeyEvent;
@@ -359,6 +360,24 @@ namespace NWindows.X11
             res.ExposeEvent.height = height;
             return res;
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XButtonEvent
+    {
+        public readonly int type; /* ButtonPress or ButtonRelease */
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window window; /* ``event'' window it is reported relative to */
+        public readonly Window root; /* root window that the event occurred on */
+        public readonly Window subwindow; /* child window */
+        public readonly Time time; /* milliseconds */
+        public readonly int x, y; /* pointer x, y coordinates in event window */
+        public readonly int x_root, y_root; /* coordinates relative to root */
+        public readonly uint state; /* key or button mask */
+        public readonly uint button; /* detail */
+        public readonly Bool same_screen; /* same screen flag */
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
