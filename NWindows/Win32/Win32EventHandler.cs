@@ -31,13 +31,13 @@ namespace NWindows.Win32
                 return false;
             }
 
-            HandleWin32Event x = eventHandlers[messageTypeIndex];
-            if (x == null)
+            HandleWin32Event eventHandler = eventHandlers[messageTypeIndex];
+            if (eventHandler == null)
             {
                 return false;
             }
 
-            x(window, messageType, wParam, lParam);
+            eventHandler(window, messageType, wParam, lParam);
             return true;
         }
 
