@@ -7,5 +7,6 @@ namespace NWindows.NativeApi
 
         INativeGraphics CreateGraphics();
         INativeImageCodec CreateImageCodec();
+        INativeClipboard CreateClipboard();
     }
 }

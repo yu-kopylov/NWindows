@@ -260,6 +260,16 @@ namespace NWindows.Examples.Controls
                 coordinatesCalculated = false;
                 Invalidate();
             }
+            else if (keyCode == NKeyCode.V && modifierKey == NModifierKey.Control)
+            {
+                if (Application.Clipboard.GetText(out var text))
+                {
+                    SaveState(ActionType.Undefined);
+                    state.EnterText(text);
+                    coordinatesCalculated = false;
+                    Invalidate();
+                }
+            }
         }
 
         public void OnTextInput(string text)

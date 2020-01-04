@@ -319,5 +319,10 @@ namespace NWindows.X11
         {
             return new GdkPixBufImageCodec(display, visualInfo.visual, defaultRootWindow);
         }
+
+        public INativeClipboard CreateClipboard()
+        {
+            return new X11Clipboard();
+        }
     }
 }

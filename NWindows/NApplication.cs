@@ -33,6 +33,7 @@ namespace NWindows
 
             Graphics = new NGraphics(NativeApp.CreateGraphics());
             ImageCodec = new NImageCodec(NativeApp.CreateImageCodec());
+            Clipboard = new NClipboard(NativeApp.CreateClipboard());
         }
 
         public void Run(NWindow window)
@@ -48,5 +49,6 @@ namespace NWindows
 
         public NGraphics Graphics { get; private set; }
         public NImageCodec ImageCodec { get; private set; }
+        public NClipboard Clipboard { get; private set; }
     }
 }

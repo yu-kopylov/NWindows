@@ -217,5 +217,10 @@ namespace NWindows.Win32
         {
             return new Win32ImageCodec();
         }
+
+        public INativeClipboard CreateClipboard()
+        {
+            return new Win32Clipboard();
+        }
     }
 }

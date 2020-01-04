@@ -31,6 +31,7 @@ namespace NWindows.Win32
     using HDC = System.IntPtr;
     using HFONT = System.IntPtr;
     using HGDIOBJ = System.IntPtr;
+    using HGLOBAL = System.IntPtr;
     using HICON = System.IntPtr;
     using HINSTANCE = System.IntPtr;
     using HMENU = System.IntPtr;
@@ -48,6 +49,12 @@ namespace NWindows.Win32
     {
         [DllImport("Kernel32.dll")]
         public static extern HMODULE GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
+
+        [DllImport("Kernel32.dll")]
+        public static extern LPVOID GlobalLock(HGLOBAL hMem);
+
+        [DllImport("Kernel32.dll")]
+        public static extern BOOL GlobalUnlock(HGLOBAL hMem);
 
         [DllImport("User32.dll")]
         private static extern HDC GetDC(HWND hWnd);
@@ -167,6 +174,18 @@ namespace NWindows.Win32
 
         [DllImport("User32.dll")]
         public static extern UINT MapVirtualKeyW(UINT uCode, VirtualKeyMapType uMapType);
+
+        [DllImport("User32.dll")]
+        public static extern BOOL OpenClipboard(HWND hWndNewOwner);
+
+        [DllImport("User32.dll")]
+        public static extern BOOL CloseClipboard();
+
+        [DllImport("User32.dll")]
+        public static extern int GetPriorityClipboardFormat(Win32ClipboardFormat[] paFormatPriorityList, int cFormats);
+
+        [DllImport("User32.dll")]
+        public static extern HANDLE GetClipboardData(Win32ClipboardFormat uFormat);
     }
 
     internal static class Gdi32API
@@ -716,6 +735,11 @@ namespace NWindows.Win32
         MAPVK_VK_TO_VSC = 0,
         MAPVK_VSC_TO_VK = 1,
         MAPVK_VSC_TO_VK_EX = 3
+    }
+
+    internal enum Win32ClipboardFormat : UINT
+    {
+        CF_UNICODETEXT = 13
     }
 
     [StructLayout(LayoutKind.Sequential)]
