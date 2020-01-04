@@ -32,6 +32,11 @@ namespace NWindows.Examples.Controls
             content?.Paint(canvas, area);
         }
 
+        protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        {
+            content?.OnMouseButtonDown(button, point, modifierKey);
+        }
+
         protected override void OnResize(Size clientArea)
         {
             if (content != null)

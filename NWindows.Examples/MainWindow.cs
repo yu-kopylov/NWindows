@@ -42,6 +42,7 @@ namespace NWindows.Examples
 
         protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
+            base.OnMouseButtonDown(button, point, modifierKey);
             inputExampleControl.HandleMouseButtonDown(button, point, modifierKey);
         }
 

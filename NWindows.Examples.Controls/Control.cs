@@ -52,6 +52,8 @@ namespace NWindows.Examples.Controls
 
         public virtual void OnAppInit() {}
 
+        public virtual void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey) {}
+
         public virtual void OnResize() {}
     }
 }

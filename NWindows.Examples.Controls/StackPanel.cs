@@ -132,6 +132,21 @@ namespace NWindows.Examples.Controls
             }
         }
 
+        public override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        {
+            // todo: make sure that layout is updated
+            foreach (var control in controls)
+            {
+                if (control.Area.Contains(point))
+                {
+                    var controlPoint = point;
+                    var offset = control.Area.Location;
+                    controlPoint.Offset(-offset.X, -offset.Y);
+                    control.OnMouseButtonDown(button, controlPoint, modifierKey);
+                }
+            }
+        }
+
         public override void OnResize()
         {
             UpdateLayout();

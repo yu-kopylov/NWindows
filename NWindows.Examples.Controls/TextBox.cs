@@ -108,6 +108,60 @@ namespace NWindows.Examples.Controls
             }
         }
 
+        public override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        {
+            if (button == NMouseButton.Left)
+            {
+                UpdateCoordinates();
+                int offset = XToOffset(point.X - textOffsetX);
+
+                SaveState(ActionType.Undefined);
+                state.SetCursorOffset(offset);
+                coordinatesCalculated = false;
+                Invalidate();
+            }
+        }
+
+        private int XToOffset(int x)
+        {
+            int a = 0, b = state.Text.Length;
+
+            while (a < b)
+            {
+                // todo: handle surrogate pairs
+                int c = (a + b + 1) / 2;
+                int width = Application.Graphics.MeasureString(font, state.Text.Substring(0, c)).Width;
+
+                if (x == width)
+                {
+                    a = c;
+                    break;
+                }
+
+                if (x > width)
+                {
+                    a = c;
+                }
+                else
+                {
+                    b = c - 1;
+                }
+            }
+
+            if (a + 1 < state.Text.Length)
+            {
+                // todo: handle surrogate pairs
+                int width1 = Application.Graphics.MeasureString(font, state.Text.Substring(0, a)).Width;
+                int width2 = Application.Graphics.MeasureString(font, state.Text.Substring(0, a + 1)).Width;
+                if (x > (width1 + 2 * width2) / 3)
+                {
+                    a++;
+                }
+            }
+
+            return a;
+        }
+
         public void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
             if (keyCode == NKeyCode.A && modifierKey == NModifierKey.Control)
@@ -423,6 +477,13 @@ namespace NWindows.Examples.Controls
                         Text = Text.Substring(0, CursorOffset) + Text.Substring(CursorOffset + 1);
                     }
                 }
+            }
+
+            public void SetCursorOffset(int offset)
+            {
+                CursorOffset = offset;
+                SelectionFrom = -1;
+                SelectionTo = -1;
             }
         }
 
