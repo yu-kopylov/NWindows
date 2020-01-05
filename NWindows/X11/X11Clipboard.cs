@@ -12,7 +12,9 @@ namespace NWindows.X11
 
         private readonly IntPtr display;
         private readonly ulong windowId;
+        private readonly ulong XA_ATOM;
         private readonly ulong XA_CLIPBOARD;
+        private readonly ulong XA_TARGETS;
         private readonly ulong XA_UTF8_STRING;
         private readonly ulong XA_NWINDOWS_CONVERTED_CLIPBOARD;
 
@@ -21,13 +23,16 @@ namespace NWindows.X11
         private readonly AutoResetEvent selectionConvertedEvent = new AutoResetEvent(false);
 
         private string convertedText;
+        private string bufferText;
 
         private X11Clipboard(IntPtr display, ulong windowId)
         {
             this.display = display;
             this.windowId = windowId;
 
+            XA_ATOM = LibX11.XInternAtom(display, "ATOM", 0);
             XA_CLIPBOARD = LibX11.XInternAtom(display, "CLIPBOARD", 0);
+            XA_TARGETS = LibX11.XInternAtom(display, "TARGETS", 0);
             XA_UTF8_STRING = LibX11.XInternAtom(display, "UTF8_STRING", 0);
             XA_NWINDOWS_CONVERTED_CLIPBOARD = LibX11.XInternAtom(display, "NWINDOWS_CONVERTED_CLIPBOARD", 0);
         }
@@ -96,23 +101,137 @@ namespace NWindows.X11
             {
                 LibX11.XNextEvent(display, out XEvent evt);
                 // todo: log and handle exceptions
-                if (evt.type == XEventType.SelectionNotify)
+                if (evt.type == XEventType.SelectionClear)
                 {
-                    lock (selectionConversionLock)
-                    {
-                        if (evt.SelectionEvent.property == XA_NWINDOWS_CONVERTED_CLIPBOARD)
-                        {
-                            byte[] data = ReadWindowProperty(display, windowId, XA_NWINDOWS_CONVERTED_CLIPBOARD);
-                            convertedText = Encoding.UTF8.GetString(data);
-                        }
-                        else
-                        {
-                            convertedText = null;
-                        }
-
-                        selectionConvertedEvent.Set();
-                    }
+                    HandleSelectionClear(evt.SelectionClearEvent);
                 }
+                else if (evt.type == XEventType.SelectionRequest)
+                {
+                    HandleSelectionRequest(evt.SelectionRequestEvent);
+                }
+                else if (evt.type == XEventType.SelectionNotify)
+                {
+                    HandleSelectionNotify(evt.SelectionEvent);
+                }
+            }
+        }
+
+        private void HandleSelectionClear(XSelectionClearEvent evt)
+        {
+            if (evt.window != windowId)
+            {
+                return;
+            }
+
+            lock (selectionConversionLock)
+            {
+                bufferText = null;
+            }
+        }
+
+        private void HandleSelectionRequest(XSelectionRequestEvent evt)
+        {
+            if (evt.owner != windowId)
+            {
+                return;
+            }
+
+            var targetProperty = evt.property;
+            if (targetProperty == 0)
+            {
+                // Owners receiving ConvertSelection requests with a property argument of None are talking to an obsolete client.
+                // They should choose the target atom as the property name to be used for the reply.
+                targetProperty = evt.target;
+            }
+
+            bool dataSent = ConvertOwnSelection(evt.requestor, evt.selection, evt.target, targetProperty);
+            var response = XEvent.CreateSelectionNotify(evt.requestor, evt.selection, evt.target, dataSent ? targetProperty : 0, evt.time);
+            LibX11.XSendEvent(display, evt.requestor, 0, XEventMask.NoEventMask, ref response);
+        }
+
+        private bool ConvertOwnSelection(ulong requestor, ulong selection, ulong targetType, ulong targetProperty)
+        {
+            if (selection != XA_CLIPBOARD)
+            {
+                return false;
+            }
+
+            string textToConvert;
+            lock (selectionConversionLock)
+            {
+                textToConvert = bufferText;
+                if (textToConvert == null)
+                {
+                    return false;
+                }
+            }
+
+            if (targetType == XA_TARGETS)
+            {
+                ulong[] targets = {XA_TARGETS, XA_UTF8_STRING};
+
+                LibX11.XChangeProperty
+                (
+                    display,
+                    requestor,
+                    targetProperty,
+                    XA_ATOM,
+                    XChangePropertyFormat.Atom,
+                    XChangePropertyMode.PropModeReplace,
+                    targets,
+                    targets.Length
+                );
+
+                return true;
+            }
+
+            if (targetType == XA_UTF8_STRING)
+            {
+                byte[] text = Encoding.UTF8.GetBytes(textToConvert);
+                LibX11.XChangeProperty
+                (
+                    display,
+                    requestor,
+                    targetProperty,
+                    XA_UTF8_STRING,
+                    XChangePropertyFormat.Byte,
+                    XChangePropertyMode.PropModeReplace,
+                    text,
+                    text.Length
+                );
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void HandleSelectionNotify(XSelectionEvent evt)
+        {
+            lock (selectionConversionLock)
+            {
+                if (evt.property == XA_NWINDOWS_CONVERTED_CLIPBOARD)
+                {
+                    // todo: handle INCR Properties
+                    byte[] data = ReadWindowProperty(display, windowId, XA_NWINDOWS_CONVERTED_CLIPBOARD);
+                    convertedText = Encoding.UTF8.GetString(data);
+                }
+                else
+                {
+                    convertedText = null;
+                }
+
+                selectionConvertedEvent.Set();
+            }
+        }
+
+        public void PutText(string text)
+        {
+            lock (selectionConversionLock)
+            {
+                bufferText = text;
+                LibX11.XSetSelectionOwner(display, XA_CLIPBOARD, windowId, 0);
+                LibX11.XFlush(display);
             }
         }
 
@@ -121,6 +240,8 @@ namespace NWindows.X11
             lock (selectionConversionLock)
             {
                 selectionConvertedEvent.Reset();
+
+                // todo: review usage of XLib under lock
 
                 LibX11.XConvertSelection
                 (

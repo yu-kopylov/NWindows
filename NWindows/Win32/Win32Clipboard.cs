@@ -9,6 +9,11 @@ namespace NWindows.Win32
     {
         static readonly int[] delays = {0, 10, 20, 20, 50, 100, 100, 100, 100};
 
+        public void PutText(string text)
+        {
+            // todo: implement
+        }
+
         public bool TryGetText(out string text)
         {
             if (!Open())

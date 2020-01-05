@@ -83,6 +83,9 @@ namespace NWindows.X11
         public static extern Atom XInternAtom(DisplayPtr display, string atom_name, Bool only_if_exists);
 
         [DllImport("libX11.so.6")]
+        public static extern IntPtr XGetAtomName(DisplayPtr display, Atom atom);
+
+        [DllImport("libX11.so.6")]
         public static extern int XChangeProperty(
             DisplayPtr display,
             Window w,
@@ -91,6 +94,18 @@ namespace NWindows.X11
             XChangePropertyFormat format,
             XChangePropertyMode mode,
             byte[] data,
+            int nelements
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XChangeProperty(
+            DisplayPtr display,
+            Window w,
+            Atom property,
+            Atom type,
+            XChangePropertyFormat format,
+            XChangePropertyMode mode,
+            ulong[] data,
             int nelements
         );
 
@@ -126,7 +141,7 @@ namespace NWindows.X11
         public static extern int XPending(DisplayPtr display);
 
         [DllImport("libX11.so.6")]
-        public static extern Status XSendEvent(DisplayPtr display, Window w, Bool propagate, long event_mask, ref XEvent event_send);
+        public static extern Status XSendEvent(DisplayPtr display, Window w, Bool propagate, XEventMask event_mask, ref XEvent event_send);
 
         [DllImport("libX11.so.6")]
         public static extern XImagePtr XCreateImage(
@@ -216,6 +231,14 @@ namespace NWindows.X11
             int bytes_buffer,
             out KeySym keysym_return,
             XComposeStatusPtr status_in_out
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XSetSelectionOwner(
+            DisplayPtr display,
+            Atom selection,
+            Window owner,
+            Time time
         );
 
         [DllImport("libX11.so.6")]
@@ -387,7 +410,9 @@ namespace NWindows.X11
         [FieldOffset(0)] public XExposeEvent ExposeEvent;
         [FieldOffset(0)] public XKeyEvent KeyEvent;
         [FieldOffset(0)] public XMotionEvent MotionEvent;
+        [FieldOffset(0)] public XSelectionClearEvent SelectionClearEvent;
         [FieldOffset(0)] public XSelectionEvent SelectionEvent;
+        [FieldOffset(0)] public XSelectionRequestEvent SelectionRequestEvent;
 
         public static XEvent CreateExpose(int x, int y, int width, int height)
         {
@@ -397,6 +422,18 @@ namespace NWindows.X11
             res.ExposeEvent.y = y;
             res.ExposeEvent.width = width;
             res.ExposeEvent.height = height;
+            return res;
+        }
+
+        public static XEvent CreateSelectionNotify(Window requestor, Atom selection, Atom target, Atom property, ulong time)
+        {
+            var res = new XEvent();
+            res.type = XEventType.SelectionNotify;
+            res.SelectionEvent.requestor = requestor;
+            res.SelectionEvent.selection = selection;
+            res.SelectionEvent.target = target;
+            res.SelectionEvent.property = property;
+            res.SelectionEvent.time = time;
             return res;
         }
     }
@@ -469,18 +506,46 @@ namespace NWindows.X11
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XSelectionClearEvent
+    {
+        public readonly int type;
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window window;
+        public readonly Atom selection;
+        public readonly Time time;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
     internal struct XSelectionEvent
     {
         public readonly int type;
         public readonly ulong serial; /* # of last request processed by server */
         public readonly Bool send_event; /* true if this came from a SendEvent request */
         public readonly DisplayPtr display; /* Display the event was read from */
+        public Window requestor;
+        public Atom selection;
+        public Atom target;
+        public Atom property; /* ATOM or None */
+        public Time time;
+    }
+
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XSelectionRequestEvent
+    {
+        public readonly int type;
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window owner;
         public readonly Window requestor;
         public readonly Atom selection;
         public readonly Atom target;
-        public readonly Atom property; /* ATOM or None */
+        public readonly Atom property;
         public readonly Time time;
-    }
+    };
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     internal struct XConfigureEvent
@@ -500,7 +565,8 @@ namespace NWindows.X11
 
     internal enum XChangePropertyFormat
     {
-        Byte = 8
+        Byte = 8,
+        Atom = 32
     }
 
     internal enum XChangePropertyMode

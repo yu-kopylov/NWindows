@@ -47,7 +47,7 @@ namespace NWindows.X11
         {
             // todo: check exact meaning of width / heght
             XEvent evt = XEvent.CreateExpose(area.X, area.Y, area.Width, area.Height);
-            LibX11.XSendEvent(display, windowId, 0, 0, ref evt);
+            LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref evt);
         }
     }
 }

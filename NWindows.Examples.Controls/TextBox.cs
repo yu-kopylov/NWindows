@@ -260,6 +260,24 @@ namespace NWindows.Examples.Controls
                 coordinatesCalculated = false;
                 Invalidate();
             }
+            else if (keyCode == NKeyCode.C && modifierKey == NModifierKey.Control)
+            {
+                if (state.HasSelection)
+                {
+                    Application.Clipboard.PutText(state.SelectedText);
+                }
+            }
+            else if (keyCode == NKeyCode.X && modifierKey == NModifierKey.Control)
+            {
+                if (state.HasSelection)
+                {
+                    Application.Clipboard.PutText(state.SelectedText);
+                    SaveState(ActionType.Undefined);
+                    state.DeleteRight();
+                    coordinatesCalculated = false;
+                    Invalidate();
+                }
+            }
             else if (keyCode == NKeyCode.V && modifierKey == NModifierKey.Control)
             {
                 if (Application.Clipboard.TryGetText(out var text))
@@ -309,6 +327,8 @@ namespace NWindows.Examples.Controls
             public int SelectionTo { get; set; }
 
             public bool HasSelection => SelectionFrom != SelectionTo;
+
+            public string SelectedText => HasSelection ? Text.Substring(SelectionFrom, SelectionTo - SelectionFrom) : string.Empty;
 
             public TextBoxState Copy()
             {

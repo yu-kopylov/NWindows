@@ -1,3 +1,4 @@
+using System;
 using NWindows.NativeApi;
 
 namespace NWindows
@@ -6,9 +7,19 @@ namespace NWindows
     {
         private readonly INativeClipboard nativeClipboard;
 
-        public NClipboard(INativeClipboard nativeClipboard)
+        internal NClipboard(INativeClipboard nativeClipboard)
         {
             this.nativeClipboard = nativeClipboard;
+        }
+
+        public void PutText(string text)
+        {
+            if (text == null)
+            {
+                throw new ArgumentNullException(nameof(text));
+            }
+
+            nativeClipboard.PutText(text);
         }
 
         public bool TryGetText(out string text)
