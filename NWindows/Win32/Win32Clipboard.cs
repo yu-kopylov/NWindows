@@ -5,7 +5,7 @@ using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
-    public class Win32Clipboard : INativeClipboard
+    internal class Win32Clipboard : INativeClipboard
     {
         static readonly int[] delays = {0, 10, 20, 20, 50, 100, 100, 100, 100};
 

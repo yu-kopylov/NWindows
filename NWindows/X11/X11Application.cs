@@ -25,6 +25,7 @@ namespace NWindows.X11
         {
             try
             {
+                LibX11.XInitThreads();
                 IntPtr display = LibX11.XOpenDisplay(null);
                 if (display == IntPtr.Zero)
                 {
@@ -46,6 +47,7 @@ namespace NWindows.X11
 
         public void Init()
         {
+            LibX11.XInitThreads();
             display = LibX11.XOpenDisplay(null);
             if (display == IntPtr.Zero)
             {
@@ -322,7 +324,7 @@ namespace NWindows.X11
 
         public INativeClipboard CreateClipboard()
         {
-            return new X11Clipboard();
+            return X11Clipboard.Create();
         }
     }
 }

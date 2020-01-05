@@ -23,6 +23,12 @@ namespace NWindows.X11
     internal static class LibX11
     {
         [DllImport("libX11.so.6")]
+        public static extern Status XInitThreads();
+
+        [DllImport("libX11.so.6")]
+        public static extern int XFree(IntPtr data);
+
+        [DllImport("libX11.so.6")]
         public static extern DisplayPtr XOpenDisplay(string display_name);
 
         [DllImport("libX11.so.6")]
@@ -33,6 +39,9 @@ namespace NWindows.X11
 
         [DllImport("libX11.so.6")]
         public static extern Window XDefaultRootWindow(DisplayPtr display);
+
+        [DllImport("libX11.so.6")]
+        public static extern VisualPtr XDefaultVisual(DisplayPtr display, int screen_number);
 
         [DllImport("libX11.so.6")]
         public static extern Status XMatchVisualInfo
@@ -68,6 +77,9 @@ namespace NWindows.X11
         );
 
         [DllImport("libX11.so.6", CharSet = CharSet.Ansi)]
+        public static extern int XDestroyWindow(DisplayPtr display, Window w);
+
+        [DllImport("libX11.so.6", CharSet = CharSet.Ansi)]
         public static extern Atom XInternAtom(DisplayPtr display, string atom_name, Bool only_if_exists);
 
         [DllImport("libX11.so.6")]
@@ -80,6 +92,22 @@ namespace NWindows.X11
             XChangePropertyMode mode,
             byte[] data,
             int nelements
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XGetWindowProperty(
+            DisplayPtr display,
+            Window w,
+            Atom property,
+            long long_offset,
+            long long_length,
+            Bool delete,
+            Atom req_type,
+            out Atom actual_type_return,
+            out int actual_format_return,
+            out ulong nitems_return,
+            out ulong bytes_after_return,
+            out IntPtr prop_return
         );
 
         [DllImport("libX11.so.6")]
@@ -188,6 +216,16 @@ namespace NWindows.X11
             int bytes_buffer,
             out KeySym keysym_return,
             XComposeStatusPtr status_in_out
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XConvertSelection(
+            DisplayPtr display,
+            Atom selection,
+            Atom target,
+            Atom property,
+            Window requestor,
+            Time time
         );
     }
 
@@ -349,6 +387,7 @@ namespace NWindows.X11
         [FieldOffset(0)] public XExposeEvent ExposeEvent;
         [FieldOffset(0)] public XKeyEvent KeyEvent;
         [FieldOffset(0)] public XMotionEvent MotionEvent;
+        [FieldOffset(0)] public XSelectionEvent SelectionEvent;
 
         public static XEvent CreateExpose(int x, int y, int width, int height)
         {
@@ -427,6 +466,20 @@ namespace NWindows.X11
         public readonly uint state; /* key or button mask */
         public readonly char is_hint; /* detail */
         public readonly Bool same_screen; /* same screen flag */
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XSelectionEvent
+    {
+        public readonly int type;
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window requestor;
+        public readonly Atom selection;
+        public readonly Atom target;
+        public readonly Atom property; /* ATOM or None */
+        public readonly Time time;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
