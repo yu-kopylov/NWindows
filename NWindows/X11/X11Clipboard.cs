@@ -116,7 +116,7 @@ namespace NWindows.X11
             }
         }
 
-        public bool GetText(out string text)
+        public bool TryGetText(out string text)
         {
             lock (selectionConversionLock)
             {

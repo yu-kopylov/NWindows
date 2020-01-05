@@ -262,7 +262,7 @@ namespace NWindows.Examples.Controls
             }
             else if (keyCode == NKeyCode.V && modifierKey == NModifierKey.Control)
             {
-                if (Application.Clipboard.GetText(out var text))
+                if (Application.Clipboard.TryGetText(out var text))
                 {
                     SaveState(ActionType.Undefined);
                     state.EnterText(text);

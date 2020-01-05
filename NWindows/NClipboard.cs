@@ -11,9 +11,9 @@ namespace NWindows
             this.nativeClipboard = nativeClipboard;
         }
 
-        public bool GetText(out string text)
+        public bool TryGetText(out string text)
         {
-            return nativeClipboard.GetText(out text);
+            return nativeClipboard.TryGetText(out text);
         }
     }
 }

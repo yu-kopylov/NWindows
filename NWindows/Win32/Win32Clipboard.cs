@@ -9,7 +9,7 @@ namespace NWindows.Win32
     {
         static readonly int[] delays = {0, 10, 20, 20, 50, 100, 100, 100, 100};
 
-        public bool GetText(out string text)
+        public bool TryGetText(out string text)
         {
             if (!Open())
             {
