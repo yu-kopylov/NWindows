@@ -42,6 +42,7 @@ namespace NWindows.Win32
     using LPARAM = System.IntPtr;
     using LPVOID = System.IntPtr;
     using LRESULT = System.IntPtr;
+    using SIZE_T = System.IntPtr;
     using ULONG_PTR = System.IntPtr;
     using WPARAM = System.IntPtr;
 
@@ -49,6 +50,12 @@ namespace NWindows.Win32
     {
         [DllImport("Kernel32.dll")]
         public static extern HMODULE GetModuleHandleW([MarshalAs(UnmanagedType.LPWStr)] string lpModuleName);
+
+        [DllImport("Kernel32.dll")]
+        public static extern HGLOBAL GlobalAlloc(GlobalAllocFlags uFlags, SIZE_T dwBytes);
+
+        [DllImport("Kernel32.dll")]
+        public static extern HGLOBAL GlobalFree(HGLOBAL hMem);
 
         [DllImport("Kernel32.dll")]
         public static extern LPVOID GlobalLock(HGLOBAL hMem);
@@ -182,10 +189,16 @@ namespace NWindows.Win32
         public static extern BOOL CloseClipboard();
 
         [DllImport("User32.dll")]
+        public static extern BOOL EmptyClipboard();
+
+        [DllImport("User32.dll")]
         public static extern int GetPriorityClipboardFormat(Win32ClipboardFormat[] paFormatPriorityList, int cFormats);
 
         [DllImport("User32.dll")]
         public static extern HANDLE GetClipboardData(Win32ClipboardFormat uFormat);
+
+        [DllImport("User32.dll")]
+        public static extern HANDLE SetClipboardData(Win32ClipboardFormat uFormat, HANDLE hMem);
     }
 
     internal static class Gdi32API
@@ -515,6 +528,12 @@ namespace NWindows.Win32
 
             return style;
         }
+    }
+
+    [Flags]
+    internal enum GlobalAllocFlags : UINT
+    {
+        GMEM_MOVEABLE = 0x0002
     }
 
     [StructLayout(LayoutKind.Sequential)]
