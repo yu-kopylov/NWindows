@@ -374,7 +374,7 @@ namespace NWindows.Examples.Controls
                 }
                 else if (CursorOffset > 0)
                 {
-                    CursorOffset--;
+                    CursorOffset = PrevCodepointOffset(CursorOffset);
                 }
             }
 
@@ -388,7 +388,7 @@ namespace NWindows.Examples.Controls
                 }
                 else if (CursorOffset < Text.Length)
                 {
-                    CursorOffset++;
+                    CursorOffset = NextCodepointOffset(CursorOffset);
                 }
             }
 
@@ -400,19 +400,19 @@ namespace NWindows.Examples.Controls
                     {
                         if (CursorOffset == SelectionFrom)
                         {
-                            CursorOffset--;
+                            CursorOffset = PrevCodepointOffset(CursorOffset);
                             SelectionFrom = CursorOffset;
                         }
                         else
                         {
-                            CursorOffset--;
+                            CursorOffset = PrevCodepointOffset(CursorOffset);
                             SelectionTo = CursorOffset;
                         }
                     }
                     else
                     {
                         SelectionTo = CursorOffset;
-                        CursorOffset--;
+                        CursorOffset = PrevCodepointOffset(CursorOffset);
                         SelectionFrom = CursorOffset;
                     }
                 }
@@ -426,19 +426,19 @@ namespace NWindows.Examples.Controls
                     {
                         if (CursorOffset == SelectionFrom)
                         {
-                            CursorOffset++;
+                            CursorOffset = NextCodepointOffset(CursorOffset);
                             SelectionFrom = CursorOffset;
                         }
                         else
                         {
-                            CursorOffset++;
+                            CursorOffset = NextCodepointOffset(CursorOffset);
                             SelectionTo = CursorOffset;
                         }
                     }
                     else
                     {
                         SelectionFrom = CursorOffset;
-                        CursorOffset++;
+                        CursorOffset = NextCodepointOffset(CursorOffset);
                         SelectionTo = CursorOffset;
                     }
                 }
@@ -485,8 +485,9 @@ namespace NWindows.Examples.Controls
                 {
                     if (CursorOffset > 0)
                     {
-                        Text = Text.Substring(0, CursorOffset - 1) + Text.Substring(CursorOffset);
-                        CursorOffset--;
+                        int newOffset = PrevCodepointOffset(CursorOffset);
+                        Text = Text.Substring(0, newOffset) + Text.Substring(CursorOffset);
+                        CursorOffset = newOffset;
                     }
                 }
             }
@@ -504,7 +505,7 @@ namespace NWindows.Examples.Controls
                 {
                     if (CursorOffset < Text.Length)
                     {
-                        Text = Text.Substring(0, CursorOffset) + Text.Substring(CursorOffset + 1);
+                        Text = Text.Substring(0, CursorOffset) + Text.Substring(NextCodepointOffset(CursorOffset));
                     }
                 }
             }
@@ -514,6 +515,25 @@ namespace NWindows.Examples.Controls
                 CursorOffset = offset;
                 SelectionFrom = -1;
                 SelectionTo = -1;
+            }
+
+            private int PrevCodepointOffset(int offset)
+            {
+                return offset - (HasSurrogatePairAt(offset - 2) ? 2 : 1);
+            }
+
+            private int NextCodepointOffset(int offset)
+            {
+                return offset + (HasSurrogatePairAt(offset) ? 2 : 1);
+            }
+
+            private bool HasSurrogatePairAt(int offset)
+            {
+                return
+                    offset >= 0 &&
+                    offset + 1 < Text.Length &&
+                    char.IsHighSurrogate(Text[offset]) &&
+                    char.IsLowSurrogate(Text[offset + 1]);
             }
         }
 
