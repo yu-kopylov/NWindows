@@ -32,7 +32,7 @@ namespace NWindows.Examples
 
         public void DrawImage(NImage image, int x, int y)
         {
-            canvas.DrawImage(image, x, y);
+            canvas.DrawImage(image, x + xOffset, y + yOffset);
         }
     }
 }
