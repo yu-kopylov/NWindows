@@ -124,13 +124,14 @@ namespace NWindows.Examples.Controls
 
         private int XToOffset(int x)
         {
-            int a = 0, b = state.Text.Length;
+            List<int> codepointOffsets = GetCodepointOffsets(state.Text);
+            codepointOffsets.Add(state.Text.Length);
+            int a = 0, b = codepointOffsets.Count - 1;
 
             while (a < b)
             {
-                // todo: handle surrogate pairs
                 int c = (a + b + 1) / 2;
-                int width = Application.Graphics.MeasureString(font, state.Text.Substring(0, c)).Width;
+                int width = Application.Graphics.MeasureString(font, state.Text.Substring(0, codepointOffsets[c])).Width;
 
                 if (x == width)
                 {
@@ -148,18 +149,33 @@ namespace NWindows.Examples.Controls
                 }
             }
 
-            if (a + 1 < state.Text.Length)
+            if (a + 1 < codepointOffsets.Count)
             {
-                // todo: handle surrogate pairs
-                int width1 = Application.Graphics.MeasureString(font, state.Text.Substring(0, a)).Width;
-                int width2 = Application.Graphics.MeasureString(font, state.Text.Substring(0, a + 1)).Width;
+                int width1 = Application.Graphics.MeasureString(font, state.Text.Substring(0, codepointOffsets[a])).Width;
+                int width2 = Application.Graphics.MeasureString(font, state.Text.Substring(0, codepointOffsets[a + 1])).Width;
                 if (x > (width1 + 2 * width2) / 3)
                 {
                     a++;
                 }
             }
 
-            return a;
+            return codepointOffsets[a];
+        }
+
+        private static List<int> GetCodepointOffsets(string text)
+        {
+            List<int> res = new List<int>();
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                res.Add(i);
+                if ((i + 1) < text.Length && char.IsHighSurrogate(text[i]) && char.IsLowSurrogate(text[i + 1]))
+                {
+                    i++;
+                }
+            }
+
+            return res;
         }
 
         public void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
