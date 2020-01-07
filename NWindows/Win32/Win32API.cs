@@ -155,6 +155,19 @@ namespace NWindows.Win32
         public static extern BOOL EndPaint(HWND hWnd, ref PAINTSTRUCT lpPaint);
 
         [DllImport("User32.dll")]
+        public static extern HANDLE LoadImageW(
+            HINSTANCE hInst,
+            IntPtr name,
+            Win32ImageType type,
+            int cx,
+            int cy,
+            Win32LoadImageFlags fuLoad
+        );
+
+        [DllImport("User32.dll")]
+        public static extern HCURSOR SetCursor(HCURSOR hCursor);
+
+        [DllImport("User32.dll")]
         public static extern BOOL InvalidateRect(HWND hWnd, ref RECT lpRect, BOOL bErase);
 
         [DllImport("User32.dll")]
@@ -603,6 +616,7 @@ namespace NWindows.Win32
         WM_DESTROY = 0x0002,
         WM_SIZE = 0x0005,
         WM_PAINT = 0x000F,
+        WM_SETCURSOR = 0x0020,
         WM_KEYDOWN = 0x0100,
         WM_KEYUP = 0x0101,
         WM_CHAR = 0x0102,
@@ -898,5 +912,53 @@ namespace NWindows.Win32
             iRightMargin = 0;
             uiLengthDrawn = 0;
         }
+    }
+
+    internal enum Win32HitTestResult
+    {
+        HTERROR = -2,
+        HTTRANSPARENT = -1,
+        HTNOWHERE = 0,
+        HTCLIENT = 1,
+        HTCAPTION = 2,
+        HTSYSMENU = 3,
+        HTGROWBOX = 4,
+        HTMENU = 5,
+        HTHSCROLL = 6,
+        HTVSCROLL = 7,
+        HTMINBUTTON = 8,
+        HTMAXBUTTON = 9,
+        HTLEFT = 10,
+        HTRIGHT = 11,
+        HTTOP = 12,
+        HTTOPLEFT = 13,
+        HTTOPRIGHT = 14,
+        HTBOTTOM = 15,
+        HTBOTTOMLEFT = 16,
+        HTBOTTOMRIGHT = 17,
+        HTBORDER = 18,
+        HTOBJECT = 19,
+        HTCLOSE = 20,
+        HTHELP = 21
+    }
+
+    internal enum Win32ImageType : UINT
+    {
+        IMAGE_BITMAP = 0,
+        IMAGE_ICON = 1,
+        IMAGE_CURSOR = 2
+    }
+
+    [Flags]
+    internal enum Win32LoadImageFlags : UINT
+    {
+        LR_DEFAULTSIZE = 0x00000040,
+        LR_SHARED = 0x00008000
+    }
+
+    internal static class Win32SystemResources
+    {
+        public static readonly IntPtr IDC_ARROW = (IntPtr) 32512;
+        public static readonly IntPtr IDC_IBEAM = (IntPtr) 32513;
     }
 }

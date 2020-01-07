@@ -118,6 +118,27 @@ namespace NWindows.Win32
                 return IntPtr.Zero;
             }
 
+            if (uMsg == Win32MessageType.WM_SETCURSOR)
+            {
+                uint lParam32 = (uint) lParam.ToInt64();
+                var hitTest = (Win32HitTestResult) (lParam32 & 0xFFFF);
+                if (hitTest == Win32HitTestResult.HTCLIENT)
+                {
+                    IntPtr cursor = Win32API.LoadImageW(
+                        IntPtr.Zero,
+                        Win32SystemResources.IDC_ARROW,
+                        Win32ImageType.IMAGE_CURSOR,
+                        0, 0,
+                        Win32LoadImageFlags.LR_DEFAULTSIZE | Win32LoadImageFlags.LR_SHARED
+                    );
+                    if (cursor != IntPtr.Zero)
+                    {
+                        Win32API.SetCursor(cursor);
+                        return IntPtr.Zero;
+                    }
+                }
+            }
+
             if (uMsg == Win32MessageType.WM_DESTROY)
             {
                 windows.Remove(hwnd);
