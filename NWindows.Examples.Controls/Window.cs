@@ -2,7 +2,7 @@
 
 namespace NWindows.Examples.Controls
 {
-    public class Window : NWindow, IControlHost
+    public class Window : NWindow
     {
         private Control content;
 
@@ -15,7 +15,7 @@ namespace NWindows.Examples.Controls
 
                 if (content != null)
                 {
-                    content.Host = this;
+                    content.SetTopLevelControlWindow(this);
                     content.Area = new Rectangle(Point.Empty, ClientArea);
                 }
             }
@@ -23,7 +23,7 @@ namespace NWindows.Examples.Controls
 
         protected override void OnAppInit()
         {
-            content?.OnAppInit();
+            content?.UpdateTopLevelControlApplication();
         }
 
         protected override void OnPaint(ICanvas canvas, Rectangle area)

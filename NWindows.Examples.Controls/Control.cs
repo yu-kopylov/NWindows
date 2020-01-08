@@ -1,28 +1,101 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace NWindows.Examples.Controls
 {
     public abstract class Control
     {
-        private IControlHost host;
+        private Control parent;
+        private Window window;
+        private NApplication application;
+        private readonly HashSet<Control> children = new HashSet<Control>(ReferenceEqualityComparer<Control>.Instance);
+
         private Rectangle area;
 
-        public virtual IControlHost Host
+        internal void SetTopLevelControlWindow(Window window)
         {
-            get { return host; }
-            internal set
+            if (Parent != null)
             {
-                host = value;
-                if (host?.Application != null)
+                throw new InvalidOperationException($"{nameof(Window)} can only be set directly only on a top level control.");
+            }
+
+            Window = window;
+        }
+
+        internal void UpdateTopLevelControlApplication()
+        {
+            if (Parent != null)
+            {
+                throw new InvalidOperationException($"{nameof(Application)} can only be set directly only on a top level control.");
+            }
+
+            Application = Window?.Application;
+        }
+
+        protected void AddChild(Control control)
+        {
+            if (children.Add(control))
+            {
+                control.Parent = this;
+            }
+        }
+
+        protected void RemoveChild(Control control)
+        {
+            if (children.Remove(control))
+            {
+                control.Parent = null;
+            }
+        }
+
+        public Control Parent
+        {
+            get { return parent; }
+            private set
+            {
+                if (parent != value)
                 {
-                    OnAppInit();
+                    parent = value;
+                    Window = parent?.Window;
+                }
+            }
+        }
+
+        public Window Window
+        {
+            get { return window; }
+            private set
+            {
+                if (window != value)
+                {
+                    window = value;
+
+                    foreach (var child in children)
+                    {
+                        child.Window = window;
+                    }
+
+                    Application = window?.Application;
                 }
             }
         }
 
         public NApplication Application
         {
-            get { return host?.Application; }
+            get { return application; }
+            private set
+            {
+                if (application != value)
+                {
+                    application = value;
+                    OnApplicationChanged();
+                    foreach (var child in children)
+                    {
+                        child.Application = application;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -37,7 +110,7 @@ namespace NWindows.Examples.Controls
                 if (area != value)
                 {
                     area = value;
-                    OnResize();
+                    OnAreaChanged();
                 }
             }
         }
@@ -49,13 +122,12 @@ namespace NWindows.Examples.Controls
 
         protected void Invalidate()
         {
-            Invalidate(Area);
+            Window?.Invalidate(Area);
         }
 
-        // todo: make protected
-        public void Invalidate(Rectangle area)
+        protected void Invalidate(Rectangle area)
         {
-            Host?.Invalidate(area);
+            Window?.Invalidate(area);
         }
 
         protected Point ToControlPoint(Point windowPoint)
@@ -63,9 +135,9 @@ namespace NWindows.Examples.Controls
             return new Point(windowPoint.X - Area.X, windowPoint.Y - Area.Y);
         }
 
-        public virtual void Paint(ICanvas canvas, Rectangle windowArea)
+        protected internal virtual void Paint(ICanvas canvas, Rectangle area)
         {
-            var controlArea = Rectangle.Intersect(windowArea, Area);
+            var controlArea = Rectangle.Intersect(area, Area);
             if (controlArea.IsEmpty)
             {
                 return;
@@ -74,14 +146,24 @@ namespace NWindows.Examples.Controls
             canvas.SetClipRectangle(controlArea.X, controlArea.Y, controlArea.Width, controlArea.Height);
             controlArea.Offset(-Area.X, -Area.Y);
             OnPaint(new OffsetCanvas(canvas, Area.X, Area.Y), controlArea);
+
+            PaintChildren(canvas, area);
+        }
+
+        protected virtual void PaintChildren(ICanvas canvas, Rectangle area)
+        {
+            foreach (Control child in children)
+            {
+                child.Paint(canvas, area);
+            }
         }
 
         public abstract void OnPaint(ICanvas canvas, Rectangle area);
 
-        public virtual void OnAppInit() {}
+        public virtual void OnApplicationChanged() {}
+
+        public virtual void OnAreaChanged() {}
 
         public virtual void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey) {}
-
-        public virtual void OnResize() {}
     }
 }

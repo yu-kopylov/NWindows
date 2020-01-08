@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace NWindows.Examples.Controls
 {
-    public class StackPanel : Control, IControlHost
+    public class StackPanel : Control
     {
         private readonly List<Control> controls = new List<Control>();
         private StackPanelOrientation orientation = StackPanelOrientation.Horizontal;
@@ -30,8 +30,7 @@ namespace NWindows.Examples.Controls
             }
 
             controls.Add(control);
-            // todo: either Host should be public or there should be a ControlCollection to allow implementation of container-controls in dependent libraries
-            control.Host = this;
+            AddChild(control);
 
             UpdateLayout();
         }
@@ -103,28 +102,6 @@ namespace NWindows.Examples.Controls
             ContentSize = new Size(contentWidth, contentHeight);
         }
 
-        public override void OnAppInit()
-        {
-            // todo: call base.OnAppInit ?
-            foreach (var control in controls)
-            {
-                control.OnAppInit();
-            }
-        }
-
-        public override void Paint(ICanvas canvas, Rectangle area)
-        {
-            base.Paint(canvas, area);
-
-            foreach (Control control in controls)
-            {
-                if (control.Area.IntersectsWith(area))
-                {
-                    control.Paint(canvas, area);
-                }
-            }
-        }
-
         public override void OnPaint(ICanvas canvas, Rectangle controlArea)
         {
             // Nothing to paint. Controls are painted separately. Free area does not have its own background.
@@ -142,7 +119,7 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public override void OnResize()
+        public override void OnAreaChanged()
         {
             UpdateLayout();
         }

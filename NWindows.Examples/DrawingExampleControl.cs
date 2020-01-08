@@ -7,8 +7,9 @@ namespace NWindows.Examples
     {
         private NImage arrow;
 
-        public override void OnAppInit()
+        public override void OnApplicationChanged()
         {
+            // todo: dispose image?
             var type = typeof(Program);
             using (var stream = type.Assembly.GetManifestResourceStream($"{type.Namespace}.Resources.Images.arrow.png"))
             {
