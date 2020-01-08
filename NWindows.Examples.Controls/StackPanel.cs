@@ -59,7 +59,7 @@ namespace NWindows.Examples.Controls
 
                 if (orientation == StackPanelOrientation.Horizontal)
                 {
-                    Rectangle controlArea = new Rectangle(contentWidth, 0, controlContentSize.Width, Area.Height);
+                    Rectangle controlArea = new Rectangle(Area.X + contentWidth, Area.Y, controlContentSize.Width, Area.Height);
                     if (control.Area != controlArea)
                     {
                         control.Area = controlArea;
@@ -71,7 +71,7 @@ namespace NWindows.Examples.Controls
                 }
                 else
                 {
-                    Rectangle controlArea = new Rectangle(0, contentHeight, Area.Width, controlContentSize.Height);
+                    Rectangle controlArea = new Rectangle(Area.X, Area.Y + contentHeight, Area.Width, controlContentSize.Height);
                     if (control.Area != controlArea)
                     {
                         control.Area = controlArea;
@@ -86,11 +86,11 @@ namespace NWindows.Examples.Controls
             Rectangle newFreeArea;
             if (orientation == StackPanelOrientation.Horizontal)
             {
-                newFreeArea = new Rectangle(contentWidth, 0, Math.Max(0, Area.Width - contentWidth), Area.Height);
+                newFreeArea = new Rectangle(contentWidth, Area.Y, Math.Max(0, Area.Width - contentWidth), Area.Height);
             }
             else
             {
-                newFreeArea = new Rectangle(0, contentHeight, Area.Width, Math.Max(0, Area.Height - contentHeight));
+                newFreeArea = new Rectangle(Area.X, contentHeight, Area.Width, Math.Max(0, Area.Height - contentHeight));
             }
 
             if (freeArea != newFreeArea)
@@ -114,22 +114,20 @@ namespace NWindows.Examples.Controls
 
         public override void Paint(ICanvas canvas, Rectangle area)
         {
+            base.Paint(canvas, area);
+
             foreach (Control control in controls)
             {
                 if (control.Area.IntersectsWith(area))
                 {
-                    Rectangle updatedControlArea = Rectangle.Intersect(area, control.Area);
-                    canvas.SetClipRectangle(updatedControlArea.X, updatedControlArea.Y, updatedControlArea.Width, updatedControlArea.Height);
-
-                    Rectangle controlArea = new Rectangle(
-                        updatedControlArea.X - control.Area.X,
-                        updatedControlArea.Y - control.Area.Y,
-                        updatedControlArea.Width,
-                        updatedControlArea.Height
-                    );
-                    control.Paint(new OffsetCanvas(canvas, control.Area.X, control.Area.Y), controlArea);
+                    control.Paint(canvas, area);
                 }
             }
+        }
+
+        public override void OnPaint(ICanvas canvas, Rectangle controlArea)
+        {
+            // Nothing to paint. Controls are painted separately. Free area does not have its own background.
         }
 
         public override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
@@ -139,10 +137,7 @@ namespace NWindows.Examples.Controls
             {
                 if (control.Area.Contains(point))
                 {
-                    var controlPoint = point;
-                    var offset = control.Area.Location;
-                    controlPoint.Offset(-offset.X, -offset.Y);
-                    control.OnMouseButtonDown(button, controlPoint, modifierKey);
+                    control.OnMouseButtonDown(button, point, modifierKey);
                 }
             }
         }
@@ -150,11 +145,6 @@ namespace NWindows.Examples.Controls
         public override void OnResize()
         {
             UpdateLayout();
-        }
-
-        public void Invalidate(Rectangle area)
-        {
-            Host?.Invalidate(new Rectangle(Area.Location + (Size) area.Location, area.Size));
         }
     }
 

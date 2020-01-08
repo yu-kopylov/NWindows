@@ -16,7 +16,7 @@ namespace NWindows.Examples
             }
         }
 
-        public override void Paint(ICanvas canvas, Rectangle area)
+        public override void OnPaint(ICanvas canvas, Rectangle area)
         {
             canvas.FillRectangle(Color.Blue, 0, 0, 200, 200);
             canvas.FillRectangle(Color.Lime, 1, 1, 198, 99);

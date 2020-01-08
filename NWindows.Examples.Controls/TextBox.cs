@@ -53,7 +53,7 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public override void Paint(ICanvas canvas, Rectangle area)
+        public override void OnPaint(ICanvas canvas, Rectangle area)
         {
             UpdateCoordinates();
 
@@ -108,8 +108,9 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        public override void OnMouseButtonDown(NMouseButton button, Point windowPoint, NModifierKey modifierKey)
         {
+            Point point = ToControlPoint(windowPoint);
             if (button == NMouseButton.Left)
             {
                 UpdateCoordinates();
