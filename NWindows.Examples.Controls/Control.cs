@@ -9,7 +9,7 @@ namespace NWindows.Examples.Controls
         private Control parent;
         private Window window;
         private NApplication application;
-        private readonly HashSet<Control> children = new HashSet<Control>(ReferenceEqualityComparer<Control>.Instance);
+        private readonly LinkedHashSet<Control> children = new LinkedHashSet<Control>(ReferenceEqualityComparer<Control>.Instance);
 
         private Rectangle area;
 
@@ -32,6 +32,8 @@ namespace NWindows.Examples.Controls
 
             Application = Window?.Application;
         }
+
+        protected IReadOnlyCollection<Control> Children => children;
 
         protected void AddChild(Control control)
         {

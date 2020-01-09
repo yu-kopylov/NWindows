@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
@@ -7,7 +6,6 @@ namespace NWindows.Examples.Controls
 {
     public class StackPanel : Control
     {
-        private readonly List<Control> controls = new List<Control>();
         private StackPanelOrientation orientation = StackPanelOrientation.Horizontal;
         private Rectangle freeArea;
 
@@ -29,7 +27,6 @@ namespace NWindows.Examples.Controls
                 throw new InvalidOperationException("Cannot add control to itself.");
             }
 
-            controls.Add(control);
             AddChild(control);
 
             UpdateLayout();
@@ -40,45 +37,45 @@ namespace NWindows.Examples.Controls
             int contentHeight = 0;
             int contentWidth = 0;
 
-            if (controls.Count != 0)
+            if (Children.Count != 0)
             {
                 if (orientation == StackPanelOrientation.Horizontal)
                 {
-                    contentHeight = controls.Max(c => c.ContentSize.Height);
+                    contentHeight = Children.Max(c => c.ContentSize.Height);
                 }
                 else
                 {
-                    contentWidth = controls.Max(c => c.ContentSize.Height);
+                    contentWidth = Children.Max(c => c.ContentSize.Height);
                 }
             }
 
-            foreach (Control control in controls)
+            foreach (Control child in Children)
             {
-                Size controlContentSize = control.ContentSize;
+                Size childContentSize = child.ContentSize;
 
                 if (orientation == StackPanelOrientation.Horizontal)
                 {
-                    Rectangle controlArea = new Rectangle(Area.X + contentWidth, Area.Y, controlContentSize.Width, Area.Height);
-                    if (control.Area != controlArea)
+                    Rectangle childArea = new Rectangle(Area.X + contentWidth, Area.Y, childContentSize.Width, Area.Height);
+                    if (child.Area != childArea)
                     {
-                        control.Area = controlArea;
-                        Invalidate(control.Area);
+                        child.Area = childArea;
+                        Invalidate(child.Area);
                     }
 
-                    contentWidth += controlContentSize.Width;
-                    contentHeight = Math.Max(contentHeight, controlContentSize.Height);
+                    contentWidth += childContentSize.Width;
+                    contentHeight = Math.Max(contentHeight, childContentSize.Height);
                 }
                 else
                 {
-                    Rectangle controlArea = new Rectangle(Area.X, Area.Y + contentHeight, Area.Width, controlContentSize.Height);
-                    if (control.Area != controlArea)
+                    Rectangle childArea = new Rectangle(Area.X, Area.Y + contentHeight, Area.Width, childContentSize.Height);
+                    if (child.Area != childArea)
                     {
-                        control.Area = controlArea;
-                        Invalidate(control.Area);
+                        child.Area = childArea;
+                        Invalidate(child.Area);
                     }
 
-                    contentHeight += controlContentSize.Height;
-                    contentWidth = Math.Max(contentWidth, controlContentSize.Width);
+                    contentHeight += childContentSize.Height;
+                    contentWidth = Math.Max(contentWidth, childContentSize.Width);
                 }
             }
 
@@ -110,11 +107,11 @@ namespace NWindows.Examples.Controls
         public override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
             // todo: make sure that layout is updated
-            foreach (var control in controls)
+            foreach (var child in Children)
             {
-                if (control.Area.Contains(point))
+                if (child.Area.Contains(point))
                 {
-                    control.OnMouseButtonDown(button, point, modifierKey);
+                    child.OnMouseButtonDown(button, point, modifierKey);
                 }
             }
         }
