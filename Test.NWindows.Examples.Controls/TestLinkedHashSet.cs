@@ -62,6 +62,99 @@ namespace Test.NWindows.Examples.Controls
             Assert.That(set.Count, Is.EqualTo(0));
         }
 
+        [Test]
+        public void TestFirstAndLast()
+        {
+            var set = new LinkedHashSet<string>(EqualityComparer<string>.Default);
+
+            set.Add("10");
+
+            Assert.That(set.First, Is.EqualTo("10"));
+            Assert.That(set.Last, Is.EqualTo("10"));
+
+            set.Add("20");
+            set.Add("30");
+
+            Assert.That(set.First, Is.EqualTo("10"));
+            Assert.That(set.Last, Is.EqualTo("30"));
+
+            set.Remove("10");
+            set.Remove("30");
+
+            Assert.That(set.First, Is.EqualTo("20"));
+            Assert.That(set.Last, Is.EqualTo("20"));
+
+            set.Add("10");
+
+            Assert.That(set.First, Is.EqualTo("20"));
+            Assert.That(set.Last, Is.EqualTo("10"));
+
+            set.Add("30");
+
+            Assert.That(set.First, Is.EqualTo("20"));
+            Assert.That(set.Last, Is.EqualTo("30"));
+        }
+
+        [Test]
+        public void TestTryGetNextValue()
+        {
+            var set = new LinkedHashSet<string>(EqualityComparer<string>.Default);
+
+            set.Add("1");
+
+            Assert.That(set.TryGetNextValue("1", out var nextValue), Is.False);
+            Assert.That(nextValue, Is.Null);
+
+            set.Add("3");
+
+            Assert.That(set.TryGetNextValue("1", out nextValue), Is.True);
+            Assert.That(nextValue, Is.EqualTo("3"));
+
+            Assert.That(set.TryGetNextValue("3", out nextValue), Is.False);
+            Assert.That(nextValue, Is.Null);
+
+            set.Add("2");
+
+            Assert.That(set.TryGetNextValue("1", out nextValue), Is.True);
+            Assert.That(nextValue, Is.EqualTo("3"));
+
+            Assert.That(set.TryGetNextValue("3", out nextValue), Is.True);
+            Assert.That(nextValue, Is.EqualTo("2"));
+
+            Assert.That(set.TryGetNextValue("2", out nextValue), Is.False);
+            Assert.That(nextValue, Is.Null);
+        }
+
+        [Test]
+        public void TestTryGetPreviousValue()
+        {
+            var set = new LinkedHashSet<string>(EqualityComparer<string>.Default);
+
+            set.Add("1");
+
+            Assert.That(set.TryGetPreviousValue("1", out var prevValue), Is.False);
+            Assert.That(prevValue, Is.Null);
+
+            set.Add("3");
+
+            Assert.That(set.TryGetPreviousValue("3", out prevValue), Is.True);
+            Assert.That(prevValue, Is.EqualTo("1"));
+
+            Assert.That(set.TryGetPreviousValue("1", out prevValue), Is.False);
+            Assert.That(prevValue, Is.Null);
+
+            set.Add("2");
+
+            Assert.That(set.TryGetPreviousValue("2", out prevValue), Is.True);
+            Assert.That(prevValue, Is.EqualTo("3"));
+
+            Assert.That(set.TryGetPreviousValue("3", out prevValue), Is.True);
+            Assert.That(prevValue, Is.EqualTo("1"));
+
+            Assert.That(set.TryGetPreviousValue("1", out prevValue), Is.False);
+            Assert.That(prevValue, Is.Null);
+        }
+
         private class AlwaysEqualEqualityComparer<T> : IEqualityComparer<T>
         {
             public static AlwaysEqualEqualityComparer<T> Instance { get; } = new AlwaysEqualEqualityComparer<T>();

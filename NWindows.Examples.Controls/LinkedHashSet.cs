@@ -1,9 +1,18 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace NWindows.Examples.Controls
 {
-    public class LinkedHashSet<T> : IReadOnlyCollection<T>
+    public interface IReadOnlyLinkedHashSet<T> : IReadOnlyCollection<T>
+    {
+        T First { get; }
+        T Last { get; }
+        bool TryGetNextValue(T value, out T nextValue);
+        bool TryGetPreviousValue(T value, out T prevValue);
+    }
+
+    public class LinkedHashSet<T> : IReadOnlyLinkedHashSet<T>
     {
         private readonly LinkedList<T> nodes;
         private readonly Dictionary<T, LinkedListNode<T>> nodesByValue;
@@ -50,6 +59,70 @@ namespace NWindows.Examples.Controls
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public T First
+        {
+            get
+            {
+                var firstNode = nodes.First;
+                if (firstNode == null)
+                {
+                    throw new InvalidOperationException($"Cannot get first element of an empty {nameof(LinkedHashSet<T>)}.");
+                }
+
+                return firstNode.Value;
+            }
+        }
+
+        public T Last
+        {
+            get
+            {
+                var lastNode = nodes.Last;
+                if (lastNode == null)
+                {
+                    throw new InvalidOperationException($"Cannot get last element of an empty {nameof(LinkedHashSet<T>)}.");
+                }
+
+                return lastNode.Value;
+            }
+        }
+
+        public bool TryGetNextValue(T value, out T nextValue)
+        {
+            if (!nodesByValue.TryGetValue(value, out var node))
+            {
+                throw new InvalidOperationException($"{nameof(LinkedHashSet<T>)} does not have the passed value.");
+            }
+
+            var nextNode = node.Next;
+            if (nextNode == null)
+            {
+                nextValue = default(T);
+                return false;
+            }
+
+            nextValue = nextNode.Value;
+            return true;
+        }
+
+        public bool TryGetPreviousValue(T value, out T prevValue)
+        {
+            if (!nodesByValue.TryGetValue(value, out var node))
+            {
+                throw new InvalidOperationException($"{nameof(LinkedHashSet<T>)} does not have the passed value.");
+            }
+
+            var prevNode = node.Previous;
+            if (prevNode == null)
+            {
+                prevValue = default(T);
+                return false;
+            }
+
+            prevValue = prevNode.Value;
+            return true;
         }
     }
 }

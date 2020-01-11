@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 namespace NWindows.Examples.Controls
@@ -33,7 +32,7 @@ namespace NWindows.Examples.Controls
             Application = Window?.Application;
         }
 
-        protected IReadOnlyCollection<Control> Children => children;
+        public IReadOnlyLinkedHashSet<Control> Children => children;
 
         protected void AddChild(Control control)
         {
