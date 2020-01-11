@@ -5,7 +5,7 @@ namespace NWindows.Examples
 {
     public class TextExampleControl : Control
     {
-        public override void OnPaint(ICanvas canvas, Rectangle area)
+        protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
             const string sampleText = "Sample Text [x-\u263A\u03BE\u2690\xD83C\xDFC1][\u96EA]";
 

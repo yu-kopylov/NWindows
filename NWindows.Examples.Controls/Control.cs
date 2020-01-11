@@ -42,12 +42,15 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        protected void RemoveChild(Control control)
+        protected bool RemoveChild(Control control)
         {
             if (children.Remove(control))
             {
                 control.Parent = null;
+                return true;
             }
+
+            return false;
         }
 
         public Control Parent
@@ -70,14 +73,17 @@ namespace NWindows.Examples.Controls
             {
                 if (window != value)
                 {
+                    window?.OnControlRemoved(this);
+
                     window = value;
+                    Application = window?.Application;
+
+                    window?.OnControlAdded(this);
 
                     foreach (var child in children)
                     {
                         child.Window = window;
                     }
-
-                    Application = window?.Application;
                 }
             }
         }
@@ -114,6 +120,28 @@ namespace NWindows.Examples.Controls
                     OnAreaChanged();
                 }
             }
+        }
+
+        public virtual bool TabStop => false;
+
+        public bool IsFocused
+        {
+            get { return isFocused; }
+            internal set
+            {
+                if (isFocused != value)
+                {
+                    isFocused = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        private bool isFocused;
+
+        public void Focus()
+        {
+            Window?.Focus(this);
         }
 
         /// <summary>
@@ -159,12 +187,28 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public abstract void OnPaint(ICanvas canvas, Rectangle area);
+        protected abstract void OnPaint(ICanvas canvas, Rectangle area);
+
+        // todo: fix access modifiers
 
         public virtual void OnApplicationChanged() {}
 
         public virtual void OnAreaChanged() {}
 
-        public virtual void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey) {}
+        internal void MouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        {
+            OnMouseButtonDown(button, point, modifierKey);
+        }
+
+        public virtual void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat) {}
+
+        internal void TextInput(string text)
+        {
+            OnTextInput(text);
+        }
+
+        protected virtual void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey) {}
+
+        protected virtual void OnTextInput(string text) {}
     }
 }

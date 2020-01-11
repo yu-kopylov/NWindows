@@ -53,20 +53,26 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public override void OnPaint(ICanvas canvas, Rectangle area)
+        public override bool TabStop => true;
+
+        protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
             UpdateCoordinates();
 
             // todo: use font to get height
             int textHeight = 18;
 
-            if (state.HasSelection)
+            if (IsFocused)
             {
-                // todo: check +/- 1 in width
-                canvas.FillRectangle(selectionColor, textOffsetX + selectionFromX, 0, selectionToX - selectionFromX, textHeight);
+                if (state.HasSelection)
+                {
+                    // todo: check +/- 1 in width
+                    canvas.FillRectangle(selectionColor, textOffsetX + selectionFromX, 0, selectionToX - selectionFromX, textHeight);
+                }
+
+                canvas.FillRectangle(cursorColor, textOffsetX + cursorX, 0, 1, textHeight);
             }
 
-            canvas.FillRectangle(cursorColor, textOffsetX + cursorX, 0, 1, textHeight);
             canvas.DrawString(textColor, font, textOffsetX, 0, state.Text);
         }
 
@@ -108,8 +114,10 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public override void OnMouseButtonDown(NMouseButton button, Point windowPoint, NModifierKey modifierKey)
+        protected override void OnMouseButtonDown(NMouseButton button, Point windowPoint, NModifierKey modifierKey)
         {
+            Focus();
+
             Point point = ToControlPoint(windowPoint);
             if (button == NMouseButton.Left)
             {
@@ -179,7 +187,7 @@ namespace NWindows.Examples.Controls
             return res;
         }
 
-        public void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
+        public override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
             if (keyCode == NKeyCode.A && modifierKey == NModifierKey.Control)
             {
@@ -307,7 +315,7 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public void OnTextInput(string text)
+        protected override void OnTextInput(string text)
         {
             // todo: limit text length
             SaveState(ActionType.Typing);

@@ -32,6 +32,14 @@ namespace NWindows.Examples.Controls
             UpdateLayout();
         }
 
+        public void Remove(Control control)
+        {
+            if (RemoveChild(control))
+            {
+                UpdateLayout();
+            }
+        }
+
         private void UpdateLayout()
         {
             int contentHeight = 0;
@@ -99,19 +107,19 @@ namespace NWindows.Examples.Controls
             ContentSize = new Size(contentWidth, contentHeight);
         }
 
-        public override void OnPaint(ICanvas canvas, Rectangle controlArea)
+        protected override void OnPaint(ICanvas canvas, Rectangle controlArea)
         {
             // Nothing to paint. Controls are painted separately. Free area does not have its own background.
         }
 
-        public override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
+        protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
             // todo: make sure that layout is updated
             foreach (var child in Children)
             {
                 if (child.Area.Contains(point))
                 {
-                    child.OnMouseButtonDown(button, point, modifierKey);
+                    child.MouseButtonDown(button, point, modifierKey);
                 }
             }
         }

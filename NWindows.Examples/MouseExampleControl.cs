@@ -17,7 +17,7 @@ namespace NWindows.Examples
             }
         }
 
-        public override void OnPaint(ICanvas canvas, Rectangle area)
+        protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
             FontConfig arial = new FontConfig("Arial", 16);
             canvas.FillRectangle(Color.LightBlue, 0, 0, 200, 25);

@@ -8,7 +8,7 @@ namespace NWindows.Examples
     {
         private readonly List<string> lastKeys = new List<string>();
 
-        public override void OnPaint(ICanvas canvas, Rectangle area)
+        protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
             canvas.FillRectangle(Color.LightBlue, 0, 0, Area.Width, Area.Height);
             FontConfig arial = new FontConfig("Arial", 16);
