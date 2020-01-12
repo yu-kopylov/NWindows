@@ -3,7 +3,7 @@ namespace NWindows.NativeApi
     internal interface INativeApplication
     {
         void Init();
-        void Run(INativeWindowStartupInfo window);
+        void Run(INativeWindowStartupInfo startupInfo);
 
         INativeGraphics CreateGraphics();
         INativeImageCodec CreateImageCodec();

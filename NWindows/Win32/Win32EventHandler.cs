@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
@@ -23,7 +22,7 @@ namespace NWindows.Win32
             eventHandlers[(int) Win32MessageType.WM_XBUTTONUP] = HandleXMouseButtonUp;
         }
 
-        public static bool HandleWindowEvent(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        public static bool HandleWindowEvent(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             int messageTypeIndex = (int) messageType;
             if (messageTypeIndex < 0 || messageTypeIndex >= eventHandlers.Length)
@@ -41,71 +40,80 @@ namespace NWindows.Win32
             return true;
         }
 
-        private delegate void HandleWin32Event(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam);
+        private delegate void HandleWin32Event(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam);
 
-        private static void HandleKeyDown(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleKeyDown(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             bool autoRepeat = (lParam & 0x40000000) != 0;
-            window.OnKeyDown(Win32KeyMap.GetKeyCode(lParam, wParam), GetModifierKey(), autoRepeat);
+            window.StartupInfo.OnKeyDown(Win32KeyMap.GetKeyCode(lParam, wParam), GetModifierKey(), autoRepeat);
         }
 
-        private static void HandleKeyUp(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleKeyUp(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
-            window.OnKeyUp(Win32KeyMap.GetKeyCode(lParam, wParam));
+            window.StartupInfo.OnKeyUp(Win32KeyMap.GetKeyCode(lParam, wParam));
         }
 
-        private static void HandleLeftMouseButtonDown(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleLeftMouseButtonDown(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonDown(NMouseButton.Left, window, messageType, wParam, lParam);
         }
 
-        private static void HandleRightMouseButtonDown(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleRightMouseButtonDown(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonDown(NMouseButton.Right, window, messageType, wParam, lParam);
         }
 
-        private static void HandleMiddleMouseButtonDown(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleMiddleMouseButtonDown(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonDown(NMouseButton.Middle, window, messageType, wParam, lParam);
         }
 
-        private static void HandleXMouseButtonDown(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleXMouseButtonDown(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonDown(GetXMouseButton(wParam), window, messageType, wParam, lParam);
         }
 
-        private static void HandleMouseButtonDown(NMouseButton mouseButton, INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleMouseButtonDown(NMouseButton mouseButton, Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             int x = (short) (lParam & 0xFFFF);
             int y = (short) ((lParam >> 16) & 0xFFFF);
-            window.OnMouseButtonDown(mouseButton, new Point(x, y), GetModifierKey());
+
+            Win32API.SetCapture(window.WindowHandle);
+
+            window.StartupInfo.OnMouseButtonDown(mouseButton, new Point(x, y), GetModifierKey());
         }
 
-        private static void HandleLeftMouseButtonUp(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleLeftMouseButtonUp(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonUp(NMouseButton.Left, window, messageType, wParam, lParam);
         }
 
-        private static void HandleRightMouseButtonUp(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleRightMouseButtonUp(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonUp(NMouseButton.Right, window, messageType, wParam, lParam);
         }
 
-        private static void HandleMiddleMouseButtonUp(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleMiddleMouseButtonUp(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonUp(NMouseButton.Middle, window, messageType, wParam, lParam);
         }
 
-        private static void HandleXMouseButtonUp(INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleXMouseButtonUp(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             HandleMouseButtonUp(GetXMouseButton(wParam), window, messageType, wParam, lParam);
         }
 
-        private static void HandleMouseButtonUp(NMouseButton mouseButton, INativeWindowStartupInfo window, Win32MessageType messageType, uint wParam, uint lParam)
+        private static void HandleMouseButtonUp(NMouseButton mouseButton, Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {
             int x = (short) (lParam & 0xFFFF);
             int y = (short) ((lParam >> 16) & 0xFFFF);
-            window.OnMouseButtonUp(mouseButton, new Point(x, y));
+
+            if (!AnyMouseButtonIsDown())
+            {
+                Win32API.ReleaseCapture();
+            }
+
+            window.StartupInfo.OnMouseButtonUp(mouseButton, new Point(x, y));
         }
 
         private static NMouseButton GetXMouseButton(uint wParam)
@@ -123,6 +131,36 @@ namespace NWindows.Win32
             }
 
             return NMouseButton.Unknown;
+        }
+
+        private static bool AnyMouseButtonIsDown()
+        {
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_LBUTTON) & 0x8000) != 0)
+            {
+                return true;
+            }
+
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_RBUTTON) & 0x8000) != 0)
+            {
+                return true;
+            }
+
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_MBUTTON) & 0x8000) != 0)
+            {
+                return true;
+            }
+
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_XBUTTON1) & 0x8000) != 0)
+            {
+                return true;
+            }
+
+            if ((Win32API.GetKeyState(W32VirtualKey.VK_XBUTTON2) & 0x8000) != 0)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private static NModifierKey GetModifierKey()

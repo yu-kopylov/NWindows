@@ -149,6 +149,12 @@ namespace NWindows.Win32
         public static extern SHORT GetKeyState(W32VirtualKey nVirtKey);
 
         [DllImport("User32.dll")]
+        public static extern HWND SetCapture(HWND hWnd);
+
+        [DllImport("User32.dll")]
+        public static extern BOOL ReleaseCapture();
+
+        [DllImport("User32.dll")]
         public static extern HDC BeginPaint(HWND hWnd, ref PAINTSTRUCT lpPaint);
 
         [DllImport("User32.dll")]
@@ -757,6 +763,11 @@ namespace NWindows.Win32
 
     internal enum W32VirtualKey
     {
+        VK_LBUTTON = 0x01,
+        VK_RBUTTON = 0x02,
+        VK_MBUTTON = 0x04,
+        VK_XBUTTON1 = 0x05,
+        VK_XBUTTON2 = 0x06,
         VK_SHIFT = 0x10,
         VK_CONTROL = 0x11,
         VK_MENU = 0x12

@@ -10,7 +10,7 @@ namespace NWindows.Win32
     {
         private const string WindowClassName = "DEFAULT";
 
-        private readonly Dictionary<IntPtr, INativeWindowStartupInfo> windows = new Dictionary<IntPtr, INativeWindowStartupInfo>();
+        private readonly Dictionary<IntPtr, Win32Window> windows = new Dictionary<IntPtr, Win32Window>();
 
         public static bool IsAvailable()
         {
@@ -32,7 +32,7 @@ namespace NWindows.Win32
 
         public void Init() {}
 
-        public void Run(INativeWindowStartupInfo window)
+        public void Run(INativeWindowStartupInfo startupInfo)
         {
             GdiplusStartupInput gdiPlusStartupInput = GdiplusStartupInput.CreateV1();
             GdiPlusAPI.CheckStatus(GdiPlusAPI.GdiplusStartup(out var gdiPlusToken, ref gdiPlusStartupInput, out _));
@@ -55,10 +55,10 @@ namespace NWindows.Win32
                 IntPtr hwnd = Win32API.CreateWindowExW(
                     0,
                     WindowClassName,
-                    window.Title,
+                    startupInfo.Title,
                     Win32WindowStyle.WS_OVERLAPPEDWINDOW,
                     CW_USEDEFAULT, CW_USEDEFAULT,
-                    window.Width, window.Height,
+                    startupInfo.Width, startupInfo.Height,
                     IntPtr.Zero,
                     IntPtr.Zero,
                     hInstance,
@@ -70,8 +70,9 @@ namespace NWindows.Win32
                     throw new InvalidOperationException("Failed to create a window.");
                 }
 
+                var window = new Win32Window(hwnd, startupInfo);
                 windows.Add(hwnd, window);
-                window.OnCreate(new Win32Window(hwnd));
+                startupInfo.OnCreate(window);
 
                 try
                 {
@@ -154,7 +155,7 @@ namespace NWindows.Win32
                     uint lParam32 = (uint) lParam.ToInt64();
                     int x = (short) (lParam32 & 0xFFFF);
                     int y = (short) ((lParam32 >> 16) & 0xFFFF);
-                    window.OnMouseMove(new Point(x, y));
+                    window.StartupInfo.OnMouseMove(new Point(x, y));
                 }
 
                 return IntPtr.Zero;
@@ -168,7 +169,7 @@ namespace NWindows.Win32
 
                     if (!char.IsControl(c))
                     {
-                        window.OnTextInput(c.ToString());
+                        window.StartupInfo.OnTextInput(c.ToString());
                     }
                 }
 
@@ -188,7 +189,7 @@ namespace NWindows.Win32
                         {
                             // todo: check that width and height are exact and aligned with other API
                             Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
-                            window.OnPaint(canvas, area);
+                            window.StartupInfo.OnPaint(canvas, area);
                         }
                     }
                 }
@@ -207,7 +208,7 @@ namespace NWindows.Win32
                     ulong lParam32 = (uint) lParam.ToInt64();
                     int width = (short) (lParam32 & 0xFFFF);
                     int height = (short) ((lParam32 >> 16) & 0xFFFF);
-                    window.OnResize(new Size(width, height));
+                    window.StartupInfo.OnResize(new Size(width, height));
                 }
 
                 return IntPtr.Zero;
