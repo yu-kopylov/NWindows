@@ -39,18 +39,19 @@ namespace NWindows.Examples.Controls
             if (children.Add(control))
             {
                 control.Parent = this;
+                InvalidateContentSize();
+                InvalidateLayout();
             }
         }
 
-        protected bool RemoveChild(Control control)
+        protected void RemoveChild(Control control)
         {
             if (children.Remove(control))
             {
                 control.Parent = null;
-                return true;
+                InvalidateContentSize();
+                InvalidateLayout();
             }
-
-            return false;
         }
 
         public Control Parent
@@ -117,6 +118,7 @@ namespace NWindows.Examples.Controls
                 if (area != value)
                 {
                     area = value;
+                    InvalidateLayout();
                     OnAreaChanged();
                 }
             }
@@ -160,11 +162,91 @@ namespace NWindows.Examples.Controls
         /// <summary>
         /// Minimum size of the control that allows fitting all its content without clipping or scaling.
         /// </summary>
-        public Size ContentSize { get; set; }
+        public Size ContentSize
+        {
+            get { return contentSize; }
+            set
+            {
+                contentSize = value;
+                Parent?.InvalidateContentSize();
+                Parent?.InvalidateLayout();
+            }
+        }
+
+        private Size contentSize;
+        private bool requiresContentSizeUpdate = true;
+        private bool requiresLayoutUpdate = true;
+        private bool childRequiresLayoutUpdate = true;
+
+        protected void InvalidateContentSize()
+        {
+            if (!requiresContentSizeUpdate)
+            {
+                requiresContentSizeUpdate = true;
+                Parent?.InvalidateContentSize();
+            }
+        }
+
+        private void UpdateContentSize()
+        {
+            if (!requiresContentSizeUpdate)
+            {
+                return;
+            }
+
+            foreach (var child in Children)
+            {
+                child.UpdateContentSize();
+            }
+
+            requiresContentSizeUpdate = false;
+            CalculateContentSize();
+        }
+
+        protected void InvalidateLayout()
+        {
+            if (!requiresLayoutUpdate)
+            {
+                requiresLayoutUpdate = true;
+                Parent?.InvalidateChildLayout();
+            }
+        }
+
+        private void InvalidateChildLayout()
+        {
+            if (!childRequiresLayoutUpdate)
+            {
+                childRequiresLayoutUpdate = true;
+                Parent?.InvalidateChildLayout();
+            }
+        }
+
+        internal void UpdateLayout()
+        {
+            UpdateContentSize();
+
+            if (requiresLayoutUpdate)
+            {
+                requiresLayoutUpdate = false;
+                PerformLayout();
+            }
+
+            if (childRequiresLayoutUpdate)
+            {
+                foreach (var child in Children)
+                {
+                    child.UpdateLayout();
+                }
+
+                childRequiresLayoutUpdate = false;
+            }
+        }
+
+        protected virtual void CalculateContentSize() {}
+        protected virtual void PerformLayout() {}
 
         public Control GetChildAtPoint(Point point)
         {
-            // todo: make sure that layout is updated
             foreach (var child in Children)
             {
                 if (child.Area.Contains(point))

@@ -49,7 +49,7 @@ namespace NWindows
 
         public Size ClientArea { get; internal set; }
 
-        public void Invalidate(Rectangle area)
+        protected void Invalidate(Rectangle area)
         {
             NativeWindow?.Invalidate(area);
         }

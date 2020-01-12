@@ -14,8 +14,12 @@ namespace NWindows.Examples.Controls
             get { return orientation; }
             set
             {
-                orientation = value;
-                UpdateLayout();
+                if (orientation != value)
+                {
+                    orientation = value;
+                    InvalidateContentSize();
+                    InvalidateLayout();
+                }
             }
         }
 
@@ -28,34 +32,34 @@ namespace NWindows.Examples.Controls
             }
 
             AddChild(control);
-
-            UpdateLayout();
         }
 
         public void Remove(Control control)
         {
-            if (RemoveChild(control))
+            RemoveChild(control);
+        }
+
+        protected override void CalculateContentSize()
+        {
+            if (Children.Count == 0)
             {
-                UpdateLayout();
+                ContentSize = Size.Empty;
+                return;
+            }
+
+            if (orientation == StackPanelOrientation.Horizontal)
+            {
+                ContentSize = new Size(Children.Sum(c => c.ContentSize.Width), Children.Max(c => c.ContentSize.Height));
+            }
+            else
+            {
+                ContentSize = new Size(Children.Max(c => c.ContentSize.Width), Children.Sum(c => c.ContentSize.Height));
             }
         }
 
-        private void UpdateLayout()
+        protected override void PerformLayout()
         {
-            int contentHeight = 0;
-            int contentWidth = 0;
-
-            if (Children.Count != 0)
-            {
-                if (orientation == StackPanelOrientation.Horizontal)
-                {
-                    contentHeight = Children.Max(c => c.ContentSize.Height);
-                }
-                else
-                {
-                    contentWidth = Children.Max(c => c.ContentSize.Height);
-                }
-            }
+            int offset = 0;
 
             foreach (Control child in Children)
             {
@@ -63,58 +67,42 @@ namespace NWindows.Examples.Controls
 
                 if (orientation == StackPanelOrientation.Horizontal)
                 {
-                    Rectangle childArea = new Rectangle(Area.X + contentWidth, Area.Y, childContentSize.Width, Area.Height);
-                    if (child.Area != childArea)
-                    {
-                        child.Area = childArea;
-                        Invalidate(child.Area);
-                    }
-
-                    contentWidth += childContentSize.Width;
-                    contentHeight = Math.Max(contentHeight, childContentSize.Height);
+                    Rectangle childArea = new Rectangle(Area.X + offset, Area.Y, childContentSize.Width, Area.Height);
+                    child.Area = childArea;
+                    offset += childContentSize.Width;
                 }
                 else
                 {
-                    Rectangle childArea = new Rectangle(Area.X, Area.Y + contentHeight, Area.Width, childContentSize.Height);
-                    if (child.Area != childArea)
-                    {
-                        child.Area = childArea;
-                        Invalidate(child.Area);
-                    }
-
-                    contentHeight += childContentSize.Height;
-                    contentWidth = Math.Max(contentWidth, childContentSize.Width);
+                    Rectangle childArea = new Rectangle(Area.X, Area.Y + offset, Area.Width, childContentSize.Height);
+                    child.Area = childArea;
+                    offset += childContentSize.Height;
                 }
             }
 
             Rectangle newFreeArea;
             if (orientation == StackPanelOrientation.Horizontal)
             {
-                newFreeArea = new Rectangle(contentWidth, Area.Y, Math.Max(0, Area.Width - contentWidth), Area.Height);
+                newFreeArea = new Rectangle(offset, Area.Y, Math.Max(0, Area.Width - offset), Area.Height);
             }
             else
             {
-                newFreeArea = new Rectangle(Area.X, contentHeight, Area.Width, Math.Max(0, Area.Height - contentHeight));
+                newFreeArea = new Rectangle(Area.X, offset, Area.Width, Math.Max(0, Area.Height - offset));
             }
 
             if (freeArea != newFreeArea)
             {
-                freeArea = newFreeArea;
-                Invalidate(freeArea);
-            }
+                if (!freeArea.Contains(newFreeArea))
+                {
+                    Invalidate(newFreeArea);
+                }
 
-            // todo: should ContentSize and Layout calculations be separate?
-            ContentSize = new Size(contentWidth, contentHeight);
+                freeArea = newFreeArea;
+            }
         }
 
         protected override void OnPaint(ICanvas canvas, Rectangle controlArea)
         {
             // Nothing to paint. Controls are painted separately. Free area does not have its own background.
-        }
-
-        protected override void OnAreaChanged()
-        {
-            UpdateLayout();
         }
     }
 

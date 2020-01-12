@@ -43,7 +43,7 @@ namespace NWindows.Examples.Controls
             canvas.FillRectangle(borderColor, 0, 0, ContentSize.Width, ContentSize.Height);
             canvas.FillRectangle(bgColor, 1, 1, ContentSize.Width - 2, ContentSize.Height - 2);
             var textSize = Application.Graphics.MeasureString(Font, Text);
-            canvas.SetClipRectangle(4, 4, ContentSize.Width - 8, ContentSize.Height - 8);
+            canvas.SetClipRectangle(2, 2, ContentSize.Width - 4, ContentSize.Height - 4);
             canvas.DrawString(Color.Black, Font, (ContentSize.Width - textSize.Width) / 2, (ContentSize.Height - textSize.Height) / 2, Text);
         }
 

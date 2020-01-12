@@ -127,27 +127,40 @@ namespace NWindows.Examples.Controls
         protected override void OnAppInit()
         {
             content?.UpdateTopLevelControlApplication();
+            content?.UpdateLayout();
+        }
+
+        internal void Invalidate(Rectangle area)
+        {
+            // todo: use composition for NWindow instead?
+            // todo: UpdateLayout?
+            base.Invalidate(area);
         }
 
         protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
+            content?.UpdateLayout();
             canvas.FillRectangle(Color.White, area.X, area.Y, area.Width, area.Height);
             content?.Paint(canvas, area);
+            content?.UpdateLayout();
         }
 
         protected override void OnMouseMove(Point point)
         {
             GetMouseEventTarget(point)?.MouseMove(point);
+            content?.UpdateLayout();
         }
 
         protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
             GetMouseEventTarget(point)?.MouseButtonDown(button, point, modifierKey);
+            content?.UpdateLayout();
         }
 
         protected override void OnMouseButtonUp(NMouseButton button, Point point)
         {
             GetMouseEventTarget(point)?.MouseButtonUp(button, point);
+            content?.UpdateLayout();
         }
 
         private Control GetMouseEventTarget(Point point)
@@ -178,26 +191,31 @@ namespace NWindows.Examples.Controls
             if (keyCode == NKeyCode.Tab && modifierKey == NModifierKey.None)
             {
                 MoveFocus(true);
+                content?.UpdateLayout();
                 return;
             }
 
             if (keyCode == NKeyCode.Tab && modifierKey == NModifierKey.Shift)
             {
                 MoveFocus(false);
+                content?.UpdateLayout();
                 return;
             }
 
             focusedControl?.KeyDown(keyCode, modifierKey, autoRepeat);
+            content?.UpdateLayout();
         }
 
         protected override void OnKeyUp(NKeyCode keyCode)
         {
             focusedControl?.KeyUp(keyCode);
+            content?.UpdateLayout();
         }
 
         protected override void OnTextInput(string text)
         {
             focusedControl?.TextInput(text);
+            content?.UpdateLayout();
         }
 
         protected override void OnResize(Size clientArea)
@@ -205,6 +223,7 @@ namespace NWindows.Examples.Controls
             if (content != null)
             {
                 content.Area = new Rectangle(Point.Empty, ClientArea);
+                content.UpdateLayout();
             }
         }
     }
