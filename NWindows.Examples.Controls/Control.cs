@@ -273,10 +273,10 @@ namespace NWindows.Examples.Controls
             return new Point(windowPoint.X - Area.X, windowPoint.Y - Area.Y);
         }
 
-        protected internal virtual void Paint(ICanvas canvas, Rectangle area)
+        protected internal void Paint(ICanvas canvas, Rectangle area)
         {
             var controlArea = Rectangle.Intersect(area, Area);
-            if (controlArea.IsEmpty)
+            if (controlArea.Width == 0 || controlArea.Height == 0)
             {
                 return;
             }

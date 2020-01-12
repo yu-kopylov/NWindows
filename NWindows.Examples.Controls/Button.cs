@@ -43,7 +43,10 @@ namespace NWindows.Examples.Controls
             canvas.FillRectangle(borderColor, 0, 0, ContentSize.Width, ContentSize.Height);
             canvas.FillRectangle(bgColor, 1, 1, ContentSize.Width - 2, ContentSize.Height - 2);
             var textSize = Application.Graphics.MeasureString(Font, Text);
-            canvas.SetClipRectangle(2, 2, ContentSize.Width - 4, ContentSize.Height - 4);
+
+            // todo: use ClippingCanvas instead of OffsetCanvas
+            Rectangle textArea = Rectangle.Intersect(area, new Rectangle(2, 2, ContentSize.Width - 4, ContentSize.Height - 4));
+            canvas.SetClipRectangle(textArea.X, textArea.Y, textArea.Width, textArea.Height);
             canvas.DrawString(Color.Black, Font, (ContentSize.Width - textSize.Width) / 2, (ContentSize.Height - textSize.Height) / 2, Text);
         }
 
