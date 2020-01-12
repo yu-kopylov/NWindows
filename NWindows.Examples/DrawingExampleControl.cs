@@ -7,7 +7,7 @@ namespace NWindows.Examples
     {
         private NImage arrow;
 
-        public override void OnApplicationChanged()
+        protected override void OnApplicationChanged()
         {
             // todo: dispose image?
             var type = typeof(Program);

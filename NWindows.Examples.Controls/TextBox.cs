@@ -16,7 +16,7 @@ namespace NWindows.Examples.Controls
 
         private readonly LinkedList<TextBoxState> undoLog = new LinkedList<TextBoxState>();
         private readonly LinkedList<TextBoxState> redoLog = new LinkedList<TextBoxState>();
-        private TextBoxState state = new TextBoxState {Text = "TextBox Test", CursorOffset = 4, SelectionFrom = 4, SelectionTo = 4 + 5};
+        private TextBoxState state = new TextBoxState(string.Empty);
         private ActionType lastActionType = ActionType.Undefined;
 
         private bool coordinatesCalculated;
@@ -50,6 +50,18 @@ namespace NWindows.Examples.Controls
                     coordinatesCalculated = false;
                     Invalidate();
                 }
+            }
+        }
+
+        public string Text
+        {
+            get { return state.Text; }
+            set
+            {
+                SaveState(ActionType.Undefined);
+                state = new TextBoxState(value);
+                coordinatesCalculated = false;
+                Invalidate();
             }
         }
 
@@ -187,7 +199,7 @@ namespace NWindows.Examples.Controls
             return res;
         }
 
-        public override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
+        protected override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
             if (keyCode == NKeyCode.A && modifierKey == NModifierKey.Control)
             {
@@ -345,25 +357,34 @@ namespace NWindows.Examples.Controls
 
         private class TextBoxState
         {
-            // todo: make sure that text is never null
-            public string Text { get; set; } = string.Empty;
-            public int CursorOffset { get; set; }
-            public int SelectionFrom { get; set; }
-            public int SelectionTo { get; set; }
+            public string Text { get; private set; }
+            public int CursorOffset { get; private set; }
+            public int SelectionFrom { get; private set; }
+            public int SelectionTo { get; private set; }
 
             public bool HasSelection => SelectionFrom != SelectionTo;
 
             public string SelectedText => HasSelection ? Text.Substring(SelectionFrom, SelectionTo - SelectionFrom) : string.Empty;
 
+            public TextBoxState(string text)
+            {
+                Text = text ?? string.Empty;
+                CursorOffset = Text.Length;
+                SelectionFrom = 0;
+                SelectionTo = Text.Length;
+            }
+
+            private TextBoxState(string text, int cursorOffset, int selectionFrom, int selectionTo)
+            {
+                Text = text;
+                CursorOffset = cursorOffset;
+                SelectionFrom = selectionFrom;
+                SelectionTo = selectionTo;
+            }
+
             public TextBoxState Copy()
             {
-                return new TextBoxState
-                {
-                    Text = Text,
-                    CursorOffset = CursorOffset,
-                    SelectionFrom = SelectionFrom,
-                    SelectionTo = SelectionTo
-                };
+                return new TextBoxState(Text, CursorOffset, SelectionFrom, SelectionTo);
             }
 
             public void EnterText(string text)

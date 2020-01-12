@@ -30,12 +30,18 @@ namespace NWindows.Examples
             hPanel2.Add(inputExampleControl);
             var vPanel2 = new StackPanel {Orientation = StackPanelOrientation.Vertical};
             hPanel2.Add(vPanel2);
-            vPanel2.Add(new TextBox {ContentSize = new Size(200, 20)});
-            vPanel2.Add(new TextBox {ContentSize = new Size(200, 20)});
+            vPanel2.Add(new TextBox {ContentSize = new Size(200, 20), Text = "TextBox Test 1"});
+            var textBox2 = new TextBox {ContentSize = new Size(200, 20), Text = "TextBox Test 2"};
+            vPanel2.Add(textBox2);
+            var hPanel3 = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
+            vPanel2.Add(hPanel3);
+            hPanel3.Add(new Button("+A", (_, __) => textBox2.Text += "A"));
+            hPanel3.Add(new Button("+B", (_, __) => textBox2.Text += "B"));
         }
 
         protected override void OnMouseMove(Point point)
         {
+            base.OnMouseMove(point);
             mouseExampleControl.MousePosition = point;
         }
 
@@ -47,6 +53,7 @@ namespace NWindows.Examples
 
         protected override void OnMouseButtonUp(NMouseButton button, Point point)
         {
+            base.OnMouseButtonUp(button, point);
             inputExampleControl.HandleMouseButtonUp(button, point);
         }
 
@@ -58,6 +65,7 @@ namespace NWindows.Examples
 
         protected override void OnKeyUp(NKeyCode keyCode)
         {
+            base.OnKeyUp(keyCode);
             inputExampleControl.HandleKeyUp(keyCode);
         }
 

@@ -38,6 +38,11 @@ namespace NWindows.Examples.Controls
             {
                 FocusedControl = null;
             }
+
+            if (MouseFocus == control)
+            {
+                MouseFocus = null;
+            }
         }
 
         public Control FocusedControl
@@ -89,7 +94,7 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        public void Focus(Control control)
+        internal void Focus(Control control)
         {
             if (control.Window != this)
             {
@@ -97,6 +102,26 @@ namespace NWindows.Examples.Controls
             }
 
             FocusedControl = control;
+        }
+
+        internal Control MouseFocus { get; private set; }
+
+        internal void CaptureMouse(Control control)
+        {
+            if (control.Window != this)
+            {
+                throw new InvalidOperationException("Control that does not belong to this window cannot capture mouse.");
+            }
+
+            MouseFocus = control;
+        }
+
+        internal void ReleaseMouse(Control control)
+        {
+            if (control == MouseFocus)
+            {
+                MouseFocus = null;
+            }
         }
 
         protected override void OnAppInit()
@@ -110,9 +135,42 @@ namespace NWindows.Examples.Controls
             content?.Paint(canvas, area);
         }
 
+        protected override void OnMouseMove(Point point)
+        {
+            GetMouseEventTarget(point)?.MouseMove(point);
+        }
+
         protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
-            content?.MouseButtonDown(button, point, modifierKey);
+            GetMouseEventTarget(point)?.MouseButtonDown(button, point, modifierKey);
+        }
+
+        protected override void OnMouseButtonUp(NMouseButton button, Point point)
+        {
+            GetMouseEventTarget(point)?.MouseButtonUp(button, point);
+        }
+
+        private Control GetMouseEventTarget(Point point)
+        {
+            if (MouseFocus != null)
+            {
+                return MouseFocus;
+            }
+
+            if (Content == null)
+            {
+                return null;
+            }
+
+            Control target = Content;
+            Control child = target.GetChildAtPoint(point);
+            while (child != null)
+            {
+                target = child;
+                child = target.GetChildAtPoint(point);
+            }
+
+            return target;
         }
 
         protected override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
@@ -129,7 +187,12 @@ namespace NWindows.Examples.Controls
                 return;
             }
 
-            focusedControl?.OnKeyDown(keyCode, modifierKey, autoRepeat);
+            focusedControl?.KeyDown(keyCode, modifierKey, autoRepeat);
+        }
+
+        protected override void OnKeyUp(NKeyCode keyCode)
+        {
+            focusedControl?.KeyUp(keyCode);
         }
 
         protected override void OnTextInput(string text)

@@ -112,19 +112,7 @@ namespace NWindows.Examples.Controls
             // Nothing to paint. Controls are painted separately. Free area does not have its own background.
         }
 
-        protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
-        {
-            // todo: make sure that layout is updated
-            foreach (var child in Children)
-            {
-                if (child.Area.Contains(point))
-                {
-                    child.MouseButtonDown(button, point, modifierKey);
-                }
-            }
-        }
-
-        public override void OnAreaChanged()
+        protected override void OnAreaChanged()
         {
             UpdateLayout();
         }

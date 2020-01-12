@@ -133,6 +133,7 @@ namespace NWindows.Examples.Controls
                 {
                     isFocused = value;
                     Invalidate();
+                    OnIsFocusedChanged();
                 }
             }
         }
@@ -144,10 +145,36 @@ namespace NWindows.Examples.Controls
             Window?.Focus(this);
         }
 
+        public void CaptureMouse()
+        {
+            Window?.CaptureMouse(this);
+        }
+
+        public void ReleaseMouse()
+        {
+            Window?.ReleaseMouse(this);
+        }
+
+        public bool HasMouseCaptured => Window?.MouseFocus == this;
+
         /// <summary>
         /// Minimum size of the control that allows fitting all its content without clipping or scaling.
         /// </summary>
         public Size ContentSize { get; set; }
+
+        public Control GetChildAtPoint(Point point)
+        {
+            // todo: make sure that layout is updated
+            foreach (var child in Children)
+            {
+                if (child.Area.Contains(point))
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
 
         protected void Invalidate()
         {
@@ -189,25 +216,51 @@ namespace NWindows.Examples.Controls
 
         protected abstract void OnPaint(ICanvas canvas, Rectangle area);
 
-        // todo: fix access modifiers
+        protected virtual void OnApplicationChanged() {}
 
-        public virtual void OnApplicationChanged() {}
+        protected virtual void OnAreaChanged() {}
 
-        public virtual void OnAreaChanged() {}
+        protected virtual void OnIsFocusedChanged() {}
+
+        internal void MouseMove(Point point)
+        {
+            OnMouseMove(point);
+        }
 
         internal void MouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
             OnMouseButtonDown(button, point, modifierKey);
         }
 
-        public virtual void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat) {}
+        internal void MouseButtonUp(NMouseButton button, Point point)
+        {
+            OnMouseButtonUp(button, point);
+        }
+
+        internal void KeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
+        {
+            OnKeyDown(keyCode, modifierKey, autoRepeat);
+        }
+
+        internal void KeyUp(NKeyCode keyCode)
+        {
+            OnKeyUp(keyCode);
+        }
 
         internal void TextInput(string text)
         {
             OnTextInput(text);
         }
 
+        protected virtual void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat) {}
+
+        protected virtual void OnKeyUp(NKeyCode keyCode) {}
+
+        protected virtual void OnMouseMove(Point point) {}
+
         protected virtual void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey) {}
+
+        protected virtual void OnMouseButtonUp(NMouseButton button, Point point) {}
 
         protected virtual void OnTextInput(string text) {}
     }
