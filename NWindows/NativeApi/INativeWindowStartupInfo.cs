@@ -9,6 +9,8 @@ namespace NWindows.NativeApi
         int Height { get; }
 
         void OnCreate(INativeWindow nativeWindow);
+        void OnActivated();
+        void OnDeactivated();
         void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat);
         void OnKeyUp(NKeyCode keyCode);
         void OnTextInput(string text);

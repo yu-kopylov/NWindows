@@ -4,7 +4,7 @@ using NWindows.Examples.Controls;
 
 namespace NWindows.Examples
 {
-    public class InputExampleControl : Control
+    public class EventsExampleControl : Control
     {
         private readonly List<string> lastKeys = new List<string>();
 
@@ -49,6 +49,20 @@ namespace NWindows.Examples
         public void HandleMouseButtonUp(NMouseButton button, Point point)
         {
             lastKeys.Add($"[U][M] {button} at {point}");
+            TruncateList();
+            Invalidate();
+        }
+
+        public void HandleWindowActivated()
+        {
+            lastKeys.Add("[W][+] Activated");
+            TruncateList();
+            Invalidate();
+        }
+
+        public void HandleWindowDeactivated()
+        {
+            lastKeys.Add("[W][-] Deactivated");
             TruncateList();
             Invalidate();
         }

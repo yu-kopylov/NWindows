@@ -41,6 +41,8 @@ namespace NWindows
             }
         }
 
+        public bool IsActive { get; private set; }
+
         // todo: setter should update existing window
         public int Width { get; set; } = 800;
 
@@ -57,6 +59,10 @@ namespace NWindows
         protected abstract void OnPaint(ICanvas canvas, Rectangle area);
 
         protected virtual void OnAppInit() {}
+
+        protected virtual void OnActivated() {}
+
+        protected virtual void OnDeactivated() {}
 
         protected virtual void OnMouseMove(Point point) {}
 
@@ -88,6 +94,18 @@ namespace NWindows
             public void OnCreate(INativeWindow nativeWindow)
             {
                 window.NativeWindow = nativeWindow;
+            }
+
+            public void OnActivated()
+            {
+                window.IsActive = true;
+                window.OnActivated();
+            }
+
+            public void OnDeactivated()
+            {
+                window.IsActive = false;
+                window.OnDeactivated();
             }
 
             public void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)

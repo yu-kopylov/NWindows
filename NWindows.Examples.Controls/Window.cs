@@ -145,6 +145,11 @@ namespace NWindows.Examples.Controls
             content?.UpdateLayout();
         }
 
+        protected override void OnDeactivated()
+        {
+            MouseFocus = null;
+        }
+
         protected override void OnMouseMove(Point point)
         {
             GetMouseEventTarget(point)?.MouseMove(point);

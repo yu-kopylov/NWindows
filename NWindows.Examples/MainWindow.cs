@@ -6,7 +6,7 @@ namespace NWindows.Examples
     public class MainWindow : Window
     {
         private readonly MouseExampleControl mouseExampleControl;
-        private readonly InputExampleControl inputExampleControl;
+        private readonly EventsExampleControl eventsExampleControl;
 
         public MainWindow()
         {
@@ -22,12 +22,12 @@ namespace NWindows.Examples
 
             var drawingExampleControl = new DrawingExampleControl {ContentSize = new Size(200, 250)};
             mouseExampleControl = new MouseExampleControl {ContentSize = new Size(200, 25)};
-            inputExampleControl = new InputExampleControl {ContentSize = new Size(350, 250)};
+            eventsExampleControl = new EventsExampleControl {ContentSize = new Size(350, 250)};
 
             hPanel1.Add(drawingExampleControl);
             hPanel1.Add(new TextExampleControl {ContentSize = new Size(600, 250)});
             hPanel2.Add(mouseExampleControl);
-            hPanel2.Add(inputExampleControl);
+            hPanel2.Add(eventsExampleControl);
             var vPanel2 = new StackPanel {Orientation = StackPanelOrientation.Vertical};
             hPanel2.Add(vPanel2);
             vPanel2.Add(new TextBox {ContentSize = new Size(200, 20), Text = "TextBox Test 1"});
@@ -39,6 +39,18 @@ namespace NWindows.Examples
             hPanel3.Add(new Button("+B", (_, __) => textBox2.Text += "B"));
         }
 
+        protected override void OnActivated()
+        {
+            base.OnActivated();
+            eventsExampleControl.HandleWindowActivated();
+        }
+
+        protected override void OnDeactivated()
+        {
+            base.OnDeactivated();
+            eventsExampleControl.HandleWindowDeactivated();
+        }
+
         protected override void OnMouseMove(Point point)
         {
             base.OnMouseMove(point);
@@ -48,31 +60,31 @@ namespace NWindows.Examples
         protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
             base.OnMouseButtonDown(button, point, modifierKey);
-            inputExampleControl.HandleMouseButtonDown(button, point, modifierKey);
+            eventsExampleControl.HandleMouseButtonDown(button, point, modifierKey);
         }
 
         protected override void OnMouseButtonUp(NMouseButton button, Point point)
         {
             base.OnMouseButtonUp(button, point);
-            inputExampleControl.HandleMouseButtonUp(button, point);
+            eventsExampleControl.HandleMouseButtonUp(button, point);
         }
 
         protected override void OnKeyDown(NKeyCode keyCode, NModifierKey modifierKey, bool autoRepeat)
         {
             base.OnKeyDown(keyCode, modifierKey, autoRepeat);
-            inputExampleControl.HandleKeyDown(keyCode, modifierKey, autoRepeat);
+            eventsExampleControl.HandleKeyDown(keyCode, modifierKey, autoRepeat);
         }
 
         protected override void OnKeyUp(NKeyCode keyCode)
         {
             base.OnKeyUp(keyCode);
-            inputExampleControl.HandleKeyUp(keyCode);
+            eventsExampleControl.HandleKeyUp(keyCode);
         }
 
         protected override void OnTextInput(string text)
         {
             base.OnTextInput(text);
-            inputExampleControl.HandleTextInput(text);
+            eventsExampleControl.HandleTextInput(text);
         }
     }
 }

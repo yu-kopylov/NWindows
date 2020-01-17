@@ -144,6 +144,9 @@ namespace NWindows.X11
         public static extern Status XSendEvent(DisplayPtr display, Window w, Bool propagate, XEventMask event_mask, ref XEvent event_send);
 
         [DllImport("libX11.so.6")]
+        public static extern int XUngrabPointer(DisplayPtr display, Time time);
+
+        [DllImport("libX11.so.6")]
         public static extern XImagePtr XCreateImage(
             DisplayPtr display,
             VisualPtr visual,
@@ -408,8 +411,10 @@ namespace NWindows.X11
         [FieldOffset(0)] public XButtonEvent ButtonEvent;
         [FieldOffset(0)] public XConfigureEvent ConfigureEvent;
         [FieldOffset(0)] public XExposeEvent ExposeEvent;
+        [FieldOffset(0)] public XFocusChangeEvent FocusChangeEvent;
         [FieldOffset(0)] public XKeyEvent KeyEvent;
         [FieldOffset(0)] public XMotionEvent MotionEvent;
+        [FieldOffset(0)] public XPropertyEvent PropertyEvent;
         [FieldOffset(0)] public XSelectionClearEvent SelectionClearEvent;
         [FieldOffset(0)] public XSelectionEvent SelectionEvent;
         [FieldOffset(0)] public XSelectionRequestEvent SelectionRequestEvent;
@@ -470,6 +475,46 @@ namespace NWindows.X11
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XFocusChangeEvent
+    {
+        public readonly int type; /* FocusIn or FocusOut */
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window window; /* window of event */
+
+        public readonly FocusNotifyMode mode; /* NotifyNormal, NotifyWhileGrabbed,
+				       NotifyGrab, NotifyUngrab */
+
+        public readonly FocusNotifyDetail detail;
+        /*
+         * NotifyAncestor, NotifyVirtual, NotifyInferior,
+         * NotifyNonlinear,NotifyNonlinearVirtual, NotifyPointer,
+         * NotifyPointerRoot, NotifyDetailNone
+         */
+    }
+
+    internal enum FocusNotifyMode
+    {
+        NotifyNormal = 0,
+        NotifyGrab = 1,
+        NotifyUngrab = 2,
+        NotifyWhileGrabbed = 3
+    }
+
+    internal enum FocusNotifyDetail
+    {
+        NotifyAncestor = 0,
+        NotifyVirtual = 1,
+        NotifyInferior = 2,
+        NotifyNonlinear = 3,
+        NotifyNonlinearVirtual = 4,
+        NotifyPointer = 5,
+        NotifyPointerRoot = 6,
+        NotifyDetailNone = 7
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
     internal struct XKeyEvent
     {
         public readonly int type; /* KeyPress or KeyRelease */
@@ -503,6 +548,19 @@ namespace NWindows.X11
         public readonly uint state; /* key or button mask */
         public readonly char is_hint; /* detail */
         public readonly Bool same_screen; /* same screen flag */
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XPropertyEvent
+    {
+        public readonly int type;
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public readonly Window window;
+        public readonly Atom atom;
+        public readonly Time time;
+        public readonly int state; /* NewValue, Deleted */
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]

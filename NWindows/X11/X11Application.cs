@@ -97,6 +97,7 @@ namespace NWindows.X11
             attr.event_mask = XEventMask.ExposureMask |
                               XEventMask.ButtonPressMask |
                               XEventMask.ButtonReleaseMask |
+                              XEventMask.FocusChangeMask |
                               XEventMask.KeyPressMask |
                               XEventMask.KeyReleaseMask |
                               XEventMask.PointerMotionMask |
@@ -233,6 +234,20 @@ namespace NWindows.X11
                         window.OnKeyUp(keyCode);
                     }
                 }
+                else if (evt.type == XEventType.FocusIn)
+                {
+                    if (IsWindowActivationEvent(evt.FocusChangeEvent.mode, evt.FocusChangeEvent.detail))
+                    {
+                        window.OnActivated();
+                    }
+                }
+                else if (evt.type == XEventType.FocusOut)
+                {
+                    if (IsWindowActivationEvent(evt.FocusChangeEvent.mode, evt.FocusChangeEvent.detail))
+                    {
+                        window.OnDeactivated();
+                    }
+                }
 
                 if (pendingRedraw != null && LibX11.XPending(display) == 0)
                 {
@@ -258,6 +273,21 @@ namespace NWindows.X11
             //todo: free colormap?
 
             LibX11.XCloseDisplay(display);
+        }
+
+        private static bool IsWindowActivationEvent(FocusNotifyMode mode, FocusNotifyDetail detail)
+        {
+            bool isWindowActivation = true;
+
+            isWindowActivation &= mode == FocusNotifyMode.NotifyNormal ||
+                                  mode == FocusNotifyMode.NotifyWhileGrabbed;
+
+            isWindowActivation &= detail == FocusNotifyDetail.NotifyAncestor ||
+                                  detail == FocusNotifyDetail.NotifyVirtual ||
+                                  detail == FocusNotifyDetail.NotifyNonlinear ||
+                                  detail == FocusNotifyDetail.NotifyNonlinearVirtual;
+
+            return isWindowActivation;
         }
 
         private NMouseButton GetMouseButton(uint button)
