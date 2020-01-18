@@ -39,22 +39,19 @@ namespace NWindows.Examples.Controls
             RemoveChild(control);
         }
 
-        protected override void CalculateContentSize()
+        protected override Size CalculateContentSize()
         {
             if (Children.Count == 0)
             {
-                ContentSize = Size.Empty;
-                return;
+                return Size.Empty;
             }
 
             if (orientation == StackPanelOrientation.Horizontal)
             {
-                ContentSize = new Size(Children.Sum(c => c.ContentSize.Width), Children.Max(c => c.ContentSize.Height));
+                return new Size(Children.Sum(c => c.ContentSize.Width), Children.Max(c => c.ContentSize.Height));
             }
-            else
-            {
-                ContentSize = new Size(Children.Max(c => c.ContentSize.Width), Children.Sum(c => c.ContentSize.Height));
-            }
+
+            return new Size(Children.Max(c => c.ContentSize.Width), Children.Sum(c => c.ContentSize.Height));
         }
 
         protected override void PerformLayout()

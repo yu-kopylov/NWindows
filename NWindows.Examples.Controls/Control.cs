@@ -194,13 +194,13 @@ namespace NWindows.Examples.Controls
                 return;
             }
 
-            foreach (var child in Children)
+            foreach (var child in children)
             {
                 child.UpdateContentSize();
             }
 
             requiresContentSizeUpdate = false;
-            CalculateContentSize();
+            ContentSize = CalculateContentSize();
         }
 
         protected void InvalidateLayout()
@@ -233,7 +233,7 @@ namespace NWindows.Examples.Controls
 
             if (childRequiresLayoutUpdate)
             {
-                foreach (var child in Children)
+                foreach (var child in children)
                 {
                     child.UpdateLayout();
                 }
@@ -242,12 +242,18 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        protected virtual void CalculateContentSize() {}
+        protected virtual Size CalculateContentSize()
+        {
+            return ContentSize;
+        }
+
         protected virtual void PerformLayout() {}
 
         public Control GetChildAtPoint(Point point)
         {
-            foreach (var child in Children)
+            Control res = null;
+
+            foreach (var child in children)
             {
                 if (child.Area.Contains(point))
                 {
@@ -255,7 +261,7 @@ namespace NWindows.Examples.Controls
                 }
             }
 
-            return null;
+            return res;
         }
 
         protected void InvalidatePainting()
@@ -288,9 +294,9 @@ namespace NWindows.Examples.Controls
             PaintChildren(canvas, area);
         }
 
-        protected virtual void PaintChildren(ICanvas canvas, Rectangle area)
+        protected void PaintChildren(ICanvas canvas, Rectangle area)
         {
-            foreach (Control child in children)
+            foreach (var child in children)
             {
                 child.Paint(canvas, area);
             }
