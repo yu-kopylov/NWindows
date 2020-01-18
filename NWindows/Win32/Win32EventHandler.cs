@@ -8,6 +8,7 @@ namespace NWindows.Win32
 
         static Win32EventHandler()
         {
+            eventHandlers[(int) Win32MessageType.WM_ACTIVATE] = HandleActivate;
             eventHandlers[(int) Win32MessageType.WM_KEYDOWN] = HandleKeyDown;
             eventHandlers[(int) Win32MessageType.WM_SYSKEYDOWN] = HandleKeyDown;
             eventHandlers[(int) Win32MessageType.WM_KEYUP] = HandleKeyUp;
@@ -41,6 +42,19 @@ namespace NWindows.Win32
         }
 
         private delegate void HandleWin32Event(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam);
+
+        private static void HandleActivate(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
+        {
+            bool activated = (wParam & 0xFFFF) != 0;
+            if (activated)
+            {
+                window.StartupInfo.OnActivated();
+            }
+            else
+            {
+                window.StartupInfo.OnDeactivated();
+            }
+        }
 
         private static void HandleKeyDown(Win32Window window, Win32MessageType messageType, uint wParam, uint lParam)
         {

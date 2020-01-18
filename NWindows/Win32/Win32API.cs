@@ -621,6 +621,7 @@ namespace NWindows.Win32
     {
         WM_DESTROY = 0x0002,
         WM_SIZE = 0x0005,
+        WM_ACTIVATE = 0x0006,
         WM_PAINT = 0x000F,
         WM_SETCURSOR = 0x0020,
         WM_KEYDOWN = 0x0100,
