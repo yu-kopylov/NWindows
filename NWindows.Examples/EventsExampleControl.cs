@@ -22,49 +22,49 @@ namespace NWindows.Examples
         {
             lastKeys.Add($"[D][K] {keyCode}{(autoRepeat ? " (R)" : "")}({modifierKey})");
             TruncateList();
-            Invalidate();
+            InvalidatePainting();
         }
 
         public void HandleKeyUp(NKeyCode keyCode)
         {
             lastKeys.Add($"[U][K] {keyCode}");
             TruncateList();
-            Invalidate();
+            InvalidatePainting();
         }
 
         public void HandleTextInput(string text)
         {
             lastKeys.Add($"[T][X] {text}");
             TruncateList();
-            Invalidate();
+            InvalidatePainting();
         }
 
         public void HandleMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
             lastKeys.Add($"[D][M] {button} at {point} ({modifierKey})");
             TruncateList();
-            Invalidate();
+            InvalidatePainting();
         }
 
         public void HandleMouseButtonUp(NMouseButton button, Point point)
         {
             lastKeys.Add($"[U][M] {button} at {point}");
             TruncateList();
-            Invalidate();
+            InvalidatePainting();
         }
 
         public void HandleWindowActivated()
         {
             lastKeys.Add("[W][+] Activated");
             TruncateList();
-            Invalidate();
+            InvalidatePainting();
         }
 
         public void HandleWindowDeactivated()
         {
             lastKeys.Add("[W][-] Deactivated");
             TruncateList();
-            Invalidate();
+            InvalidatePainting();
         }
 
         private void TruncateList()

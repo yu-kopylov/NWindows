@@ -93,7 +93,7 @@ namespace NWindows.Examples.Controls
             {
                 if (!freeArea.Contains(newFreeArea))
                 {
-                    Invalidate(newFreeArea);
+                    InvalidatePainting(newFreeArea);
                 }
 
                 freeArea = newFreeArea;

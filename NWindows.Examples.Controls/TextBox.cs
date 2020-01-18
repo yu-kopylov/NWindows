@@ -33,7 +33,7 @@ namespace NWindows.Examples.Controls
                 if (textColor != value)
                 {
                     textColor = value;
-                    Invalidate();
+                    InvalidatePainting();
                 }
             }
         }
@@ -48,7 +48,7 @@ namespace NWindows.Examples.Controls
                 {
                     font = value;
                     coordinatesCalculated = false;
-                    Invalidate();
+                    InvalidatePainting();
                 }
             }
         }
@@ -61,7 +61,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state = new TextBoxState(value);
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
         }
 
@@ -139,7 +139,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state.SetCursorOffset(offset);
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
         }
 
@@ -205,7 +205,7 @@ namespace NWindows.Examples.Controls
             {
                 state.SelectAll();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.Z && modifierKey == NModifierKey.Control)
             {
@@ -218,7 +218,7 @@ namespace NWindows.Examples.Controls
 
                 lastActionType = ActionType.Undefined;
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.Z && modifierKey == (NModifierKey.Control | NModifierKey.Shift))
             {
@@ -231,7 +231,7 @@ namespace NWindows.Examples.Controls
 
                 lastActionType = ActionType.Undefined;
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.LeftArrow && modifierKey == NModifierKey.None)
             {
@@ -239,7 +239,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state.MoveCursorLeft();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.RightArrow && modifierKey == NModifierKey.None)
             {
@@ -247,7 +247,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state.MoveCursorRight();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.LeftArrow && modifierKey == NModifierKey.Shift)
             {
@@ -255,7 +255,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state.SelectLeft();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.RightArrow && modifierKey == NModifierKey.Shift)
             {
@@ -263,7 +263,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state.SelectRight();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.Home && modifierKey == NModifierKey.None)
             {
@@ -271,7 +271,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state.GoHome();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.End && modifierKey == NModifierKey.None)
             {
@@ -279,7 +279,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Undefined);
                 state.GoEnd();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.Backspace && modifierKey == NModifierKey.None)
             {
@@ -287,7 +287,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Deletion);
                 state.DeleteLeft();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.Delete && modifierKey == NModifierKey.None)
             {
@@ -295,7 +295,7 @@ namespace NWindows.Examples.Controls
                 SaveState(ActionType.Deletion);
                 state.DeleteRight();
                 coordinatesCalculated = false;
-                Invalidate();
+                InvalidatePainting();
             }
             else if (keyCode == NKeyCode.C && modifierKey == NModifierKey.Control)
             {
@@ -312,7 +312,7 @@ namespace NWindows.Examples.Controls
                     SaveState(ActionType.Undefined);
                     state.DeleteRight();
                     coordinatesCalculated = false;
-                    Invalidate();
+                    InvalidatePainting();
                 }
             }
             else if (keyCode == NKeyCode.V && modifierKey == NModifierKey.Control)
@@ -322,7 +322,7 @@ namespace NWindows.Examples.Controls
                     SaveState(ActionType.Undefined);
                     state.EnterText(text);
                     coordinatesCalculated = false;
-                    Invalidate();
+                    InvalidatePainting();
                 }
             }
         }
@@ -333,7 +333,7 @@ namespace NWindows.Examples.Controls
             SaveState(ActionType.Typing);
             state.EnterText(text);
             coordinatesCalculated = false;
-            Invalidate();
+            InvalidatePainting();
         }
 
         private void SaveState(ActionType actionType)

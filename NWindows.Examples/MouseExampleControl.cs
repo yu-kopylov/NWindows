@@ -13,7 +13,7 @@ namespace NWindows.Examples
             set
             {
                 mousePosition = value;
-                Invalidate();
+                InvalidatePainting();
             }
         }
 

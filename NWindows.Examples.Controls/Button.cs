@@ -26,7 +26,7 @@ namespace NWindows.Examples.Controls
                 if (pressed != value)
                 {
                     pressed = value;
-                    Invalidate();
+                    InvalidatePainting();
                 }
             }
         }

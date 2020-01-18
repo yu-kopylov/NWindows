@@ -134,7 +134,7 @@ namespace NWindows.Examples.Controls
                 if (isFocused != value)
                 {
                     isFocused = value;
-                    Invalidate();
+                    InvalidatePainting();
                     OnIsFocusedChanged();
                 }
             }
@@ -258,12 +258,12 @@ namespace NWindows.Examples.Controls
             return null;
         }
 
-        protected void Invalidate()
+        protected void InvalidatePainting()
         {
-            Window?.Invalidate(Area);
+            InvalidatePainting(Area);
         }
 
-        protected void Invalidate(Rectangle area)
+        protected void InvalidatePainting(Rectangle area)
         {
             Window?.Invalidate(area);
         }
