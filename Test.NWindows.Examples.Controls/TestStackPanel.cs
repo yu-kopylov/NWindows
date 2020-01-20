@@ -23,9 +23,9 @@ namespace Test.NWindows.Examples.Controls
             var root = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
             var p1 = new StackPanel {Orientation = StackPanelOrientation.Vertical};
             var p2 = new StackPanel {Orientation = StackPanelOrientation.Vertical};
-            var textBox1 = new TextBox {ContentSize = new Size(100, 20)};
-            var textBox2 = new TextBox {ContentSize = new Size(100, 20)};
-            var textBox3 = new TextBox {ContentSize = new Size(100, 20)};
+            var textBox1 = new TextBox {PreferredSize = new Size(100, 20)};
+            var textBox2 = new TextBox {PreferredSize = new Size(100, 20)};
+            var textBox3 = new TextBox {PreferredSize = new Size(100, 20)};
 
             root.Add(p1);
             root.Add(p2);
@@ -54,7 +54,7 @@ namespace Test.NWindows.Examples.Controls
             Assert.That(textBox3.ContentSize, Is.EqualTo(new Size(100, 20)));
             Assert.That(textBox3.Area, Is.EqualTo(new Rectangle(200, 100, 100, 20)));
 
-            textBox1.ContentSize = new Size(150, 30);
+            textBox1.PreferredSize = new Size(150, 30);
             root.UpdateLayout();
 
             Assert.That(root.ContentSize, Is.EqualTo(new Size(250, 50)));
@@ -101,7 +101,7 @@ namespace Test.NWindows.Examples.Controls
         public void TestOrientationChanged()
         {
             var root = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
-            var textBox = new TextBox {ContentSize = new Size(100, 20)};
+            var textBox = new TextBox {PreferredSize = new Size(100, 20)};
 
             root.Area = new Rectangle(0, 0, 2000, 1000);
             root.Add(textBox);

@@ -8,7 +8,7 @@ namespace NWindows.Examples.Controls
         public Button(string text, EventHandler clickHandler)
         {
             Text = text;
-            ContentSize = new Size(80, 25);
+            PreferredSize = new Size(80, 25);
             Click += clickHandler;
         }
 

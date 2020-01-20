@@ -63,6 +63,7 @@ namespace NWindows.Examples.Controls
                 {
                     parent = value;
                     Window = parent?.Window;
+                    EffectiveVisibility = CalculateEffectiveVisibility();
                 }
             }
         }
@@ -159,13 +160,88 @@ namespace NWindows.Examples.Controls
 
         public bool HasMouseCaptured => Window?.MouseFocus == this;
 
+        private ControlVisibility visibility = ControlVisibility.Visible;
+        private ControlVisibility effectiveVisibility = ControlVisibility.Visible;
+
+        public ControlVisibility Visibility
+        {
+            get { return visibility; }
+            set
+            {
+                if (visibility != value)
+                {
+                    visibility = value;
+                    EffectiveVisibility = CalculateEffectiveVisibility();
+                }
+            }
+        }
+
+        public ControlVisibility EffectiveVisibility
+        {
+            get { return effectiveVisibility; }
+            private set
+            {
+                if (effectiveVisibility != value)
+                {
+                    bool wasCollapsed = effectiveVisibility == ControlVisibility.Collapsed;
+                    bool wasVisible = effectiveVisibility == ControlVisibility.Visible;
+
+                    effectiveVisibility = value;
+
+                    bool isCollapsed = effectiveVisibility == ControlVisibility.Collapsed;
+                    bool isVisible = effectiveVisibility == ControlVisibility.Visible;
+
+                    if (isCollapsed != wasCollapsed)
+                    {
+                        InvalidateContentSize();
+                    }
+
+                    if (isVisible != wasVisible)
+                    {
+                        InvalidatePainting();
+                    }
+
+                    foreach (var child in children)
+                    {
+                        child.EffectiveVisibility = child.CalculateEffectiveVisibility();
+                    }
+                }
+            }
+        }
+
+        private ControlVisibility CalculateEffectiveVisibility()
+        {
+            if (Parent == null)
+            {
+                return Visibility;
+            }
+
+            return Visibility.Combine(Parent.EffectiveVisibility);
+        }
+
+        /// <summary>
+        /// Overrides <see cref="ContentSize"/> calculated by <see cref="CalculateContentSize"/>.
+        /// </summary>
+        public Size? PreferredSize
+        {
+            get { return preferredSize; }
+            set
+            {
+                if (preferredSize != value)
+                {
+                    preferredSize = value;
+                    InvalidateContentSize();
+                }
+            }
+        }
+
         /// <summary>
         /// Minimum size of the control that allows fitting all its content without clipping or scaling.
         /// </summary>
         public Size ContentSize
         {
             get { return contentSize; }
-            set
+            private set
             {
                 contentSize = value;
                 Parent?.InvalidateContentSize();
@@ -173,6 +249,7 @@ namespace NWindows.Examples.Controls
             }
         }
 
+        private Size? preferredSize;
         private Size contentSize;
         private bool requiresContentSizeUpdate = true;
         private bool requiresLayoutUpdate = true;
@@ -200,7 +277,8 @@ namespace NWindows.Examples.Controls
             }
 
             requiresContentSizeUpdate = false;
-            ContentSize = CalculateContentSize();
+
+            ContentSize = EffectiveVisibility == ControlVisibility.Collapsed ? Size.Empty : (preferredSize ?? CalculateContentSize());
         }
 
         protected void InvalidateLayout()
@@ -247,7 +325,10 @@ namespace NWindows.Examples.Controls
             return ContentSize;
         }
 
-        protected virtual void PerformLayout() {}
+        protected virtual void PerformLayout()
+        {
+            InvalidatePainting(Area);
+        }
 
         public Control GetChildAtPoint(Point point)
         {
@@ -255,7 +336,7 @@ namespace NWindows.Examples.Controls
 
             foreach (var child in children)
             {
-                if (child.Area.Contains(point))
+                if (child.EffectiveVisibility == ControlVisibility.Visible && child.Area.Contains(point))
                 {
                     return child;
                 }
@@ -281,6 +362,11 @@ namespace NWindows.Examples.Controls
 
         protected internal void Paint(ICanvas canvas, Rectangle area)
         {
+            if (EffectiveVisibility != ControlVisibility.Visible)
+            {
+                return;
+            }
+
             var controlArea = Rectangle.Intersect(area, Area);
             if (controlArea.Width == 0 || controlArea.Height == 0)
             {

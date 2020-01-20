@@ -79,11 +79,11 @@ namespace NWindows.Examples.Controls
             Rectangle newFreeArea;
             if (orientation == StackPanelOrientation.Horizontal)
             {
-                newFreeArea = new Rectangle(offset, Area.Y, Math.Max(0, Area.Width - offset), Area.Height);
+                newFreeArea = new Rectangle(Area.X + offset, Area.Y, Math.Max(0, Area.Width - offset), Area.Height);
             }
             else
             {
-                newFreeArea = new Rectangle(Area.X, offset, Area.Width, Math.Max(0, Area.Height - offset));
+                newFreeArea = new Rectangle(Area.X, Area.Y + offset, Area.Width, Math.Max(0, Area.Height - offset));
             }
 
             if (freeArea != newFreeArea)
@@ -97,7 +97,7 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        protected override void OnPaint(ICanvas canvas, Rectangle controlArea)
+        protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
             // Nothing to paint. Controls are painted separately. Free area does not have its own background.
         }

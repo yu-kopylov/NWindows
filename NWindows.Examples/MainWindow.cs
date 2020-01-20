@@ -20,18 +20,23 @@ namespace NWindows.Examples
 
             Content = vPanel;
 
-            var drawingExampleControl = new DrawingExampleControl {ContentSize = new Size(200, 250)};
-            mouseExampleControl = new MouseExampleControl {ContentSize = new Size(200, 25)};
-            eventsExampleControl = new EventsExampleControl {ContentSize = new Size(350, 250)};
+            var drawingExampleControl = new DrawingExampleControl {PreferredSize = new Size(200, 250)};
+            mouseExampleControl = new MouseExampleControl {PreferredSize = new Size(200, 25)};
+            eventsExampleControl = new EventsExampleControl {PreferredSize = new Size(350, 250)};
 
             hPanel1.Add(drawingExampleControl);
-            hPanel1.Add(new TextExampleControl {ContentSize = new Size(600, 250)});
+
+            var vPanel3 = new StackPanel {Orientation = StackPanelOrientation.Vertical};
+            vPanel3.Add(new VisibilityExampleControl());
+            vPanel3.Add(new TextExampleControl {PreferredSize = new Size(600, 220)});
+            hPanel1.Add(vPanel3);
+
             hPanel2.Add(mouseExampleControl);
             hPanel2.Add(eventsExampleControl);
             var vPanel2 = new StackPanel {Orientation = StackPanelOrientation.Vertical};
             hPanel2.Add(vPanel2);
-            vPanel2.Add(new TextBox {ContentSize = new Size(200, 20), Text = "TextBox Test 1"});
-            var textBox2 = new TextBox {ContentSize = new Size(200, 20), Text = "TextBox Test 2"};
+            vPanel2.Add(new TextBox {PreferredSize = new Size(200, 20), Text = "TextBox Test 1"});
+            var textBox2 = new TextBox {PreferredSize = new Size(200, 20), Text = "TextBox Test 2"};
             vPanel2.Add(textBox2);
             var hPanel3 = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
             vPanel2.Add(hPanel3);
