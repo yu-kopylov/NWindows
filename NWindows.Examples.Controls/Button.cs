@@ -7,6 +7,7 @@ namespace NWindows.Examples.Controls
     {
         public Button(string text, EventHandler clickHandler)
         {
+            RepaintMode = ControlRepaintMode.Always;
             Text = text;
             PreferredSize = new Size(80, 25);
             Click += clickHandler;
@@ -40,14 +41,14 @@ namespace NWindows.Examples.Controls
             Color borderColor = Pressed ? Color.DarkBlue : IsFocused ? Color.RoyalBlue : Color.LightGray;
             Color bgColor = Pressed ? Color.LightSkyBlue : Color.LightSteelBlue;
 
-            canvas.FillRectangle(borderColor, 0, 0, ContentSize.Width, ContentSize.Height);
-            canvas.FillRectangle(bgColor, 1, 1, ContentSize.Width - 2, ContentSize.Height - 2);
+            canvas.FillRectangle(borderColor, 0, 0, Area.Width, Area.Height);
+            canvas.FillRectangle(bgColor, 1, 1, Area.Width - 2, Area.Height - 2);
             var textSize = Application.Graphics.MeasureString(Font, Text);
 
             // todo: use ClippingCanvas instead of OffsetCanvas
-            Rectangle textArea = Rectangle.Intersect(area, new Rectangle(2, 2, ContentSize.Width - 4, ContentSize.Height - 4));
+            Rectangle textArea = Rectangle.Intersect(area, new Rectangle(2, 2, Area.Width - 4, Area.Height - 4));
             canvas.SetClipRectangle(textArea.X, textArea.Y, textArea.Width, textArea.Height);
-            canvas.DrawString(Color.Black, Font, (ContentSize.Width - textSize.Width) / 2, (ContentSize.Height - textSize.Height) / 2, Text);
+            canvas.DrawString(Color.Black, Font, (Area.Width - textSize.Width) / 2, (Area.Height - textSize.Height) / 2, Text);
         }
 
         protected override void OnIsFocusedChanged()

@@ -10,10 +10,13 @@ namespace NWindows.Examples
         protected override void OnApplicationChanged()
         {
             // todo: dispose image?
-            var type = typeof(Program);
-            using (var stream = type.Assembly.GetManifestResourceStream($"{type.Namespace}.Resources.Images.arrow.png"))
+            if (arrow == null)
             {
-                arrow = Application.ImageCodec.LoadImageFromStream(stream);
+                var type = typeof(Program);
+                using (var stream = type.Assembly.GetManifestResourceStream($"{type.Namespace}.Resources.Images.arrow.png"))
+                {
+                    arrow = Application.ImageCodec.LoadImageFromStream(stream);
+                }
             }
         }
 

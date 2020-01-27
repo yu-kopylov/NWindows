@@ -20,6 +20,10 @@ namespace NWindows.Examples.Controls
 
         private Rectangle area;
         private Rectangle paintedArea;
+        private ControlRepaintMode repaintMode = ControlRepaintMode.IncrementalGrowth;
+
+        private ControlVisibility visibility = ControlVisibility.Visible;
+        private ControlVisibility effectiveVisibility = ControlVisibility.Visible;
 
         private bool isFocused;
 
@@ -132,6 +136,11 @@ namespace NWindows.Examples.Controls
             get { return area; }
             set
             {
+                if (value.HasZeroArea())
+                {
+                    value = Rectangle.Empty;
+                }
+
                 if (area != value)
                 {
                     area = value;
@@ -146,6 +155,19 @@ namespace NWindows.Examples.Controls
         {
             get { return paintedArea; }
             set { paintedArea = value; }
+        }
+
+        public ControlRepaintMode RepaintMode
+        {
+            get { return repaintMode; }
+            protected set
+            {
+                if (repaintMode != value)
+                {
+                    InvalidatePainting();
+                    repaintMode = value;
+                }
+            }
         }
 
         public virtual bool TabStop => false;
@@ -180,9 +202,6 @@ namespace NWindows.Examples.Controls
         }
 
         public bool HasMouseCaptured => Window?.MouseFocus == this;
-
-        private ControlVisibility visibility = ControlVisibility.Visible;
-        private ControlVisibility effectiveVisibility = ControlVisibility.Visible;
 
         public ControlVisibility Visibility
         {
@@ -386,7 +405,11 @@ namespace NWindows.Examples.Controls
             {
                 requiresPaintingUpdate = false;
 
-                if (PaintedArea.Location == Area.Location)
+                if (RepaintMode == ControlRepaintMode.Never)
+                {
+                    // nothing to do
+                }
+                else if (RepaintMode == ControlRepaintMode.IncrementalGrowth && PaintedArea.Location == Area.Location)
                 {
                     if (Area.Width > PaintedArea.Width)
                     {
@@ -427,16 +450,10 @@ namespace NWindows.Examples.Controls
 
         protected virtual Size CalculateContentSize()
         {
-            return ContentSize;
+            return Size.Empty;
         }
 
-        protected virtual void PerformLayout()
-        {
-            foreach (var child in children)
-            {
-                child.Area = Area;
-            }
-        }
+        protected virtual void PerformLayout() {}
 
         public Control GetChildAtPoint(Point point)
         {
@@ -486,7 +503,7 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        protected abstract void OnPaint(ICanvas canvas, Rectangle area);
+        protected virtual void OnPaint(ICanvas canvas, Rectangle area) {}
 
         protected virtual void OnApplicationChanged() {}
 

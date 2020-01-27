@@ -8,6 +8,11 @@ namespace NWindows.Examples.Controls
     {
         private StackPanelOrientation orientation = StackPanelOrientation.Horizontal;
 
+        public StackPanel()
+        {
+            RepaintMode = ControlRepaintMode.Never;
+        }
+
         public StackPanelOrientation Orientation
         {
             get { return orientation; }
@@ -74,11 +79,6 @@ namespace NWindows.Examples.Controls
                     offset += childContentSize.Height;
                 }
             }
-        }
-
-        protected override void OnPaint(ICanvas canvas, Rectangle area)
-        {
-            // Nothing to paint. Controls are painted separately. Free area does not have its own background.
         }
     }
 

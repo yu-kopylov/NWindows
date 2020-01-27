@@ -12,17 +12,32 @@ namespace NWindows.Examples
         {
             Title = "Examples \u2690-\xD83C\xDFC1-\u2690";
 
+            mouseExampleControl = new MouseExampleControl {PreferredSize = new Size(200, 25)};
+            eventsExampleControl = new EventsExampleControl {PreferredSize = new Size(350, 250)};
+
+            var dockPanel = new DockPanel();
+            var menuPanel = new StackPanel {Orientation = StackPanelOrientation.Vertical};
+
+            dockPanel.Left = menuPanel;
+
+            var mainContent = CreateMainContent();
+            dockPanel.Center = mainContent;
+
+            menuPanel.Add(new Button("Main", (_, __) => dockPanel.Center = mainContent));
+            menuPanel.Add(new Button("Button", (_, __) => dockPanel.Center = new Button("Button", (___, ____) => {})));
+
+            Content = dockPanel;
+        }
+
+        private Control CreateMainContent()
+        {
             StackPanel hPanel1 = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
             StackPanel hPanel2 = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
             StackPanel vPanel = new StackPanel {Orientation = StackPanelOrientation.Vertical};
             vPanel.Add(hPanel1);
             vPanel.Add(hPanel2);
 
-            Content = vPanel;
-
             var drawingExampleControl = new DrawingExampleControl {PreferredSize = new Size(200, 250)};
-            mouseExampleControl = new MouseExampleControl {PreferredSize = new Size(200, 25)};
-            eventsExampleControl = new EventsExampleControl {PreferredSize = new Size(350, 250)};
 
             hPanel1.Add(drawingExampleControl);
 
@@ -42,6 +57,8 @@ namespace NWindows.Examples
             vPanel2.Add(hPanel3);
             hPanel3.Add(new Button("+A", (_, __) => textBox2.Text += "A"));
             hPanel3.Add(new Button("+B", (_, __) => textBox2.Text += "B"));
+
+            return vPanel;
         }
 
         protected override void OnActivated()

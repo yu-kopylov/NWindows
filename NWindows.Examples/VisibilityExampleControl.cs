@@ -7,6 +7,7 @@ namespace NWindows.Examples
     {
         public VisibilityExampleControl()
         {
+            RepaintMode = ControlRepaintMode.IncrementalGrowth;
             Orientation = StackPanelOrientation.Vertical;
             var p1b = new StackPanel {Orientation = StackPanelOrientation.Horizontal};
             var p2 = new StackPanel {Orientation = StackPanelOrientation.Vertical};
