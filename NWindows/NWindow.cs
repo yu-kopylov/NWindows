@@ -53,6 +53,7 @@ namespace NWindows
 
         protected void Invalidate(Rectangle area)
         {
+            // todo: check for empty / negative ?
             NativeWindow?.Invalidate(area);
         }
 

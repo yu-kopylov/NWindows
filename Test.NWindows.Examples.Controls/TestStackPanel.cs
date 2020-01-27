@@ -11,7 +11,7 @@ namespace Test.NWindows.Examples.Controls
         {
             var root = new StackPanel();
             root.Area = new Rectangle(100, 100, 2000, 1000);
-            root.UpdateLayout();
+            root.Update();
 
             Assert.That(root.ContentSize, Is.EqualTo(Size.Empty));
             Assert.That(root.Area, Is.EqualTo(new Rectangle(100, 100, 2000, 1000)));
@@ -34,7 +34,7 @@ namespace Test.NWindows.Examples.Controls
             p2.Add(textBox3);
 
             root.Area = new Rectangle(100, 100, 2000, 1000);
-            root.UpdateLayout();
+            root.Update();
 
             Assert.That(root.ContentSize, Is.EqualTo(new Size(200, 40)));
             Assert.That(root.Area, Is.EqualTo(new Rectangle(100, 100, 2000, 1000)));
@@ -55,7 +55,7 @@ namespace Test.NWindows.Examples.Controls
             Assert.That(textBox3.Area, Is.EqualTo(new Rectangle(200, 100, 100, 20)));
 
             textBox1.PreferredSize = new Size(150, 30);
-            root.UpdateLayout();
+            root.Update();
 
             Assert.That(root.ContentSize, Is.EqualTo(new Size(250, 50)));
             Assert.That(root.Area, Is.EqualTo(new Rectangle(100, 100, 2000, 1000)));
@@ -76,7 +76,7 @@ namespace Test.NWindows.Examples.Controls
             Assert.That(textBox3.Area, Is.EqualTo(new Rectangle(250, 100, 100, 20)));
 
             p1.Orientation = StackPanelOrientation.Horizontal;
-            root.UpdateLayout();
+            root.Update();
 
             Assert.That(root.ContentSize, Is.EqualTo(new Size(350, 30)));
             Assert.That(root.Area, Is.EqualTo(new Rectangle(100, 100, 2000, 1000)));
@@ -106,7 +106,7 @@ namespace Test.NWindows.Examples.Controls
             root.Area = new Rectangle(0, 0, 2000, 1000);
             root.Add(textBox);
 
-            root.UpdateLayout();
+            root.Update();
 
             Assert.That(root.ContentSize, Is.EqualTo(new Size(100, 20)));
             Assert.That(root.Area, Is.EqualTo(new Rectangle(0, 0, 2000, 1000)));
@@ -115,7 +115,7 @@ namespace Test.NWindows.Examples.Controls
             Assert.That(textBox.Area, Is.EqualTo(new Rectangle(0, 0, 100, 1000)));
 
             root.Orientation = StackPanelOrientation.Vertical;
-            root.UpdateLayout();
+            root.Update();
 
             Assert.That(root.ContentSize, Is.EqualTo(new Size(100, 20)));
             Assert.That(root.Area, Is.EqualTo(new Rectangle(0, 0, 2000, 1000)));

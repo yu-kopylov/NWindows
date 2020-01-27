@@ -127,22 +127,22 @@ namespace NWindows.Examples.Controls
         protected override void OnAppInit()
         {
             content?.UpdateTopLevelControlApplication();
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         internal void Invalidate(Rectangle area)
         {
             // todo: use composition for NWindow instead?
-            // todo: UpdateLayout?
+            // todo: Update?
             base.Invalidate(area);
         }
 
         protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
-            content?.UpdateLayout();
+            content?.Update();
             canvas.FillRectangle(Color.White, area.X, area.Y, area.Width, area.Height);
             content?.Paint(canvas, area);
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         protected override void OnDeactivated()
@@ -153,19 +153,19 @@ namespace NWindows.Examples.Controls
         protected override void OnMouseMove(Point point)
         {
             GetMouseEventTarget(point)?.MouseMove(point);
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         protected override void OnMouseButtonDown(NMouseButton button, Point point, NModifierKey modifierKey)
         {
             GetMouseEventTarget(point)?.MouseButtonDown(button, point, modifierKey);
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         protected override void OnMouseButtonUp(NMouseButton button, Point point)
         {
             GetMouseEventTarget(point)?.MouseButtonUp(button, point);
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         private Control GetMouseEventTarget(Point point)
@@ -196,31 +196,31 @@ namespace NWindows.Examples.Controls
             if (keyCode == NKeyCode.Tab && modifierKey == NModifierKey.None)
             {
                 MoveFocus(true);
-                content?.UpdateLayout();
+                content?.Update();
                 return;
             }
 
             if (keyCode == NKeyCode.Tab && modifierKey == NModifierKey.Shift)
             {
                 MoveFocus(false);
-                content?.UpdateLayout();
+                content?.Update();
                 return;
             }
 
             focusedControl?.KeyDown(keyCode, modifierKey, autoRepeat);
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         protected override void OnKeyUp(NKeyCode keyCode)
         {
             focusedControl?.KeyUp(keyCode);
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         protected override void OnTextInput(string text)
         {
             focusedControl?.TextInput(text);
-            content?.UpdateLayout();
+            content?.Update();
         }
 
         protected override void OnResize(Size clientArea)
@@ -228,7 +228,7 @@ namespace NWindows.Examples.Controls
             if (content != null)
             {
                 content.Area = new Rectangle(Point.Empty, ClientArea);
-                content.UpdateLayout();
+                content.Update();
             }
         }
     }

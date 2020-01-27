@@ -10,7 +10,18 @@ namespace NWindows.Examples.Controls
         private NApplication application;
         private readonly LinkedHashSet<Control> children = new LinkedHashSet<Control>(ReferenceEqualityComparer<Control>.Instance);
 
+        private Size? preferredSize;
+        private Size contentSize;
+
+        private bool childrenRequireUpdate;
+        private bool requiresContentSizeUpdate;
+        private bool requiresLayoutUpdate;
+        private bool requiresPaintingUpdate;
+
         private Rectangle area;
+        private Rectangle paintedArea;
+
+        private bool isFocused;
 
         internal void SetTopLevelControlWindow(Window window)
         {
@@ -39,8 +50,9 @@ namespace NWindows.Examples.Controls
             if (children.Add(control))
             {
                 control.Parent = this;
-                InvalidateContentSize();
-                InvalidateLayout();
+                RequestChildrenUpdate();
+                RequestContentSizeUpdate();
+                RequestLayoutUpdate();
             }
         }
 
@@ -48,9 +60,10 @@ namespace NWindows.Examples.Controls
         {
             if (children.Remove(control))
             {
+                control.InvalidatePainting();
                 control.Parent = null;
-                InvalidateContentSize();
-                InvalidateLayout();
+                RequestContentSizeUpdate();
+                RequestLayoutUpdate();
             }
         }
 
@@ -75,6 +88,9 @@ namespace NWindows.Examples.Controls
             {
                 if (window != value)
                 {
+                    PaintedArea = Rectangle.Empty;
+                    RequestPaintingUpdate();
+
                     window?.OnControlRemoved(this);
 
                     window = value;
@@ -119,10 +135,17 @@ namespace NWindows.Examples.Controls
                 if (area != value)
                 {
                     area = value;
-                    InvalidateLayout();
+                    RequestLayoutUpdate();
+                    RequestPaintingUpdate();
                     OnAreaChanged();
                 }
             }
+        }
+
+        private Rectangle PaintedArea
+        {
+            get { return paintedArea; }
+            set { paintedArea = value; }
         }
 
         public virtual bool TabStop => false;
@@ -140,8 +163,6 @@ namespace NWindows.Examples.Controls
                 }
             }
         }
-
-        private bool isFocused;
 
         public void Focus()
         {
@@ -193,7 +214,7 @@ namespace NWindows.Examples.Controls
 
                     if (isCollapsed != wasCollapsed)
                     {
-                        InvalidateContentSize();
+                        RequestContentSizeUpdate();
                     }
 
                     if (isVisible != wasVisible)
@@ -230,7 +251,10 @@ namespace NWindows.Examples.Controls
                 if (preferredSize != value)
                 {
                     preferredSize = value;
-                    InvalidateContentSize();
+                    if (EffectiveVisibility != ControlVisibility.Collapsed)
+                    {
+                        RequestContentSizeUpdate();
+                    }
                 }
             }
         }
@@ -243,80 +267,161 @@ namespace NWindows.Examples.Controls
             get { return contentSize; }
             private set
             {
-                contentSize = value;
-                Parent?.InvalidateContentSize();
-                Parent?.InvalidateLayout();
+                if (contentSize != value)
+                {
+                    contentSize = value;
+                    Parent?.InvalidateContentSize();
+                    Parent?.InvalidateLayout();
+                }
             }
         }
 
-        private Size? preferredSize;
-        private Size contentSize;
-        private bool requiresContentSizeUpdate = true;
-        private bool requiresLayoutUpdate = true;
-        private bool childRequiresLayoutUpdate = true;
+        private void RequestChildrenUpdate()
+        {
+            if (!childrenRequireUpdate)
+            {
+                childrenRequireUpdate = true;
+                Parent?.RequestChildrenUpdate();
+            }
+        }
 
         protected void InvalidateContentSize()
+        {
+            if (PreferredSize == null && EffectiveVisibility != ControlVisibility.Collapsed)
+            {
+                RequestContentSizeUpdate();
+            }
+        }
+
+        private void RequestContentSizeUpdate()
         {
             if (!requiresContentSizeUpdate)
             {
                 requiresContentSizeUpdate = true;
-                Parent?.InvalidateContentSize();
+                Parent?.RequestChildrenUpdate();
             }
-        }
-
-        private void UpdateContentSize()
-        {
-            if (!requiresContentSizeUpdate)
-            {
-                return;
-            }
-
-            foreach (var child in children)
-            {
-                child.UpdateContentSize();
-            }
-
-            requiresContentSizeUpdate = false;
-
-            ContentSize = EffectiveVisibility == ControlVisibility.Collapsed ? Size.Empty : (preferredSize ?? CalculateContentSize());
         }
 
         protected void InvalidateLayout()
         {
+            RequestLayoutUpdate();
+        }
+
+        private void RequestLayoutUpdate()
+        {
             if (!requiresLayoutUpdate)
             {
                 requiresLayoutUpdate = true;
-                Parent?.InvalidateChildLayout();
+                Parent?.RequestChildrenUpdate();
             }
         }
 
-        private void InvalidateChildLayout()
+        protected void InvalidatePainting()
         {
-            if (!childRequiresLayoutUpdate)
+            Window?.Invalidate(PaintedArea);
+        }
+
+        private void RequestPaintingUpdate()
+        {
+            if (!requiresPaintingUpdate)
             {
-                childRequiresLayoutUpdate = true;
-                Parent?.InvalidateChildLayout();
+                requiresPaintingUpdate = true;
+                Parent?.RequestChildrenUpdate();
             }
         }
 
-        internal void UpdateLayout()
+        internal void Update()
         {
             UpdateContentSize();
+            UpdateLayout();
+            UpdatePainting();
+            ClearChildrenUpdateRequests();
+        }
 
+        private void UpdateContentSize()
+        {
+            if (childrenRequireUpdate)
+            {
+                foreach (var child in children)
+                {
+                    child.UpdateContentSize();
+                }
+            }
+
+            if (requiresContentSizeUpdate)
+            {
+                requiresContentSizeUpdate = false;
+                ContentSize = EffectiveVisibility == ControlVisibility.Collapsed ? Size.Empty : (preferredSize ?? CalculateContentSize());
+            }
+        }
+
+        private void UpdateLayout()
+        {
             if (requiresLayoutUpdate)
             {
                 requiresLayoutUpdate = false;
                 PerformLayout();
             }
 
-            if (childRequiresLayoutUpdate)
+            if (childrenRequireUpdate)
             {
                 foreach (var child in children)
                 {
                     child.UpdateLayout();
                 }
+            }
+        }
 
-                childRequiresLayoutUpdate = false;
+        private void UpdatePainting()
+        {
+            if (childrenRequireUpdate)
+            {
+                foreach (var child in children)
+                {
+                    child.UpdatePainting();
+                }
+            }
+
+            if (requiresPaintingUpdate)
+            {
+                requiresPaintingUpdate = false;
+
+                if (PaintedArea.Location == Area.Location)
+                {
+                    if (Area.Width > PaintedArea.Width)
+                    {
+                        Window?.Invalidate(new Rectangle(Area.X + PaintedArea.Width, Area.Y, Area.Width - PaintedArea.Width, Area.Height));
+                    }
+
+                    if (Area.Height > PaintedArea.Height)
+                    {
+                        Window?.Invalidate(new Rectangle(Area.X, Area.Y + PaintedArea.Height, Area.Width, Area.Height - PaintedArea.Height));
+                    }
+                }
+                else
+                {
+                    Window?.Invalidate(PaintedArea);
+                    Window?.Invalidate(Area);
+                }
+
+                PaintedArea = Area;
+            }
+        }
+
+        private void ClearChildrenUpdateRequests()
+        {
+            if (childrenRequireUpdate)
+            {
+                childrenRequireUpdate = false;
+                foreach (var child in children)
+                {
+                    child.ClearChildrenUpdateRequests();
+                }
+            }
+
+            if (requiresContentSizeUpdate || requiresLayoutUpdate || requiresPaintingUpdate)
+            {
+                Parent?.RequestChildrenUpdate();
             }
         }
 
@@ -327,7 +432,10 @@ namespace NWindows.Examples.Controls
 
         protected virtual void PerformLayout()
         {
-            InvalidatePainting(Area);
+            foreach (var child in children)
+            {
+                child.Area = Area;
+            }
         }
 
         public Control GetChildAtPoint(Point point)
@@ -345,16 +453,6 @@ namespace NWindows.Examples.Controls
             return res;
         }
 
-        protected void InvalidatePainting()
-        {
-            InvalidatePainting(Area);
-        }
-
-        protected void InvalidatePainting(Rectangle area)
-        {
-            Window?.Invalidate(area);
-        }
-
         protected Point ToControlPoint(Point windowPoint)
         {
             return new Point(windowPoint.X - Area.X, windowPoint.Y - Area.Y);
@@ -368,7 +466,7 @@ namespace NWindows.Examples.Controls
             }
 
             var controlArea = Rectangle.Intersect(area, Area);
-            if (controlArea.Width == 0 || controlArea.Height == 0)
+            if (controlArea.HasZeroArea())
             {
                 return;
             }

@@ -7,7 +7,6 @@ namespace NWindows.Examples.Controls
     public class StackPanel : Control
     {
         private StackPanelOrientation orientation = StackPanelOrientation.Horizontal;
-        private Rectangle freeArea;
 
         public StackPanelOrientation Orientation
         {
@@ -74,26 +73,6 @@ namespace NWindows.Examples.Controls
                     child.Area = childArea;
                     offset += childContentSize.Height;
                 }
-            }
-
-            Rectangle newFreeArea;
-            if (orientation == StackPanelOrientation.Horizontal)
-            {
-                newFreeArea = new Rectangle(Area.X + offset, Area.Y, Math.Max(0, Area.Width - offset), Area.Height);
-            }
-            else
-            {
-                newFreeArea = new Rectangle(Area.X, Area.Y + offset, Area.Width, Math.Max(0, Area.Height - offset));
-            }
-
-            if (freeArea != newFreeArea)
-            {
-                if (!freeArea.Contains(newFreeArea))
-                {
-                    InvalidatePainting(newFreeArea);
-                }
-
-                freeArea = newFreeArea;
             }
         }
 
