@@ -1,12 +1,60 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 using NWindows.Examples.Controls;
 
 namespace Test.NWindows.Examples.Controls
 {
-    public class TestControlVisibility
+    public class TestControl
     {
         [Test]
-        public void TestCascade()
+        public void TestLoopDetection()
+        {
+            var c1 = new StackPanel();
+            var c2 = new StackPanel();
+            var c3 = new StackPanel();
+
+            c1.Add(c2);
+            c2.Add(c3);
+
+            Assert.That(() => c1.Add(c1), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("Control cannot contain itself or its own parent."));
+            Assert.That(() => c2.Add(c1), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("Control cannot contain itself or its own parent."));
+            Assert.That(() => c3.Add(c1), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("Control cannot contain itself or its own parent."));
+
+            Assert.That(() => c1.Add(c2), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control already has parent."));
+            Assert.That(() => c1.Add(c3), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control already has parent."));
+            Assert.That(() => c2.Add(c2), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control already has parent."));
+            Assert.That(() => c2.Add(c3), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control already has parent."));
+        }
+
+        [Test]
+        public void TestRemoveChildValidation()
+        {
+            var c1 = new StackPanel();
+            var c2 = new StackPanel();
+            var c3 = new StackPanel();
+
+            c1.Add(c2);
+            c2.Add(c3);
+
+            Assert.That(() => c1.Remove(c1), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+            Assert.That(() => c1.Remove(c3), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+
+            Assert.That(() => c2.Remove(c1), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+            Assert.That(() => c2.Remove(c2), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+
+            Assert.That(() => c3.Remove(c1), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+            Assert.That(() => c3.Remove(c2), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+            Assert.That(() => c3.Remove(c3), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+
+            c1.Remove(c2);
+            c2.Remove(c3);
+
+            Assert.That(() => c1.Remove(c2), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+            Assert.That(() => c2.Remove(c3), Throws.Exception.TypeOf<InvalidOperationException>().And.Message.EqualTo("The given control is not a child of this control."));
+        }
+
+        [Test]
+        public void TestVisibilityCascade()
         {
             var p1 = new StackPanel();
             var p2 = new StackPanel();

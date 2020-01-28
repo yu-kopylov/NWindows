@@ -14,7 +14,7 @@ namespace NWindows.Examples.Controls
         private Size contentSize;
 
         private bool childrenRequireUpdate;
-        private bool requiresContentSizeUpdate;
+        private bool requiresContentSizeUpdate = true;
         private bool requiresLayoutUpdate;
         private bool requiresPaintingUpdate;
 
@@ -51,24 +51,42 @@ namespace NWindows.Examples.Controls
 
         protected void AddChild(Control control)
         {
-            if (children.Add(control))
+            if (control.Parent != null)
             {
-                control.Parent = this;
-                RequestChildrenUpdate();
-                RequestContentSizeUpdate();
-                RequestLayoutUpdate();
+                throw new InvalidOperationException("The given control already has parent.");
             }
+
+            for (var p = this; p != null; p = p.Parent)
+            {
+                if (p == control)
+                {
+                    throw new InvalidOperationException("Control cannot contain itself or its own parent.");
+                }
+            }
+
+            if (!children.Add(control))
+            {
+                // This exception should never be thrown, because it requires control to have a parent and that case was excluded earlier.
+                throw new InvalidOperationException("The given control was already added as a child of this control.");
+            }
+
+            control.Parent = this;
+            RequestChildrenUpdate();
+            RequestContentSizeUpdate();
+            RequestLayoutUpdate();
         }
 
         protected void RemoveChild(Control control)
         {
-            if (children.Remove(control))
+            if (!children.Remove(control))
             {
-                control.InvalidatePainting();
-                control.Parent = null;
-                RequestContentSizeUpdate();
-                RequestLayoutUpdate();
+                throw new InvalidOperationException("The given control is not a child of this control.");
             }
+
+            control.InvalidatePainting();
+            control.Parent = null;
+            RequestContentSizeUpdate();
+            RequestLayoutUpdate();
         }
 
         public Control Parent
@@ -405,29 +423,32 @@ namespace NWindows.Examples.Controls
             {
                 requiresPaintingUpdate = false;
 
-                if (RepaintMode == ControlRepaintMode.Never)
+                if (PaintedArea != Area)
                 {
-                    // nothing to do
-                }
-                else if (RepaintMode == ControlRepaintMode.IncrementalGrowth && PaintedArea.Location == Area.Location)
-                {
-                    if (Area.Width > PaintedArea.Width)
+                    if (RepaintMode == ControlRepaintMode.Never)
                     {
-                        Window?.Invalidate(new Rectangle(Area.X + PaintedArea.Width, Area.Y, Area.Width - PaintedArea.Width, Area.Height));
+                        // nothing to do
+                    }
+                    else if (RepaintMode == ControlRepaintMode.IncrementalGrowth && PaintedArea.Location == Area.Location)
+                    {
+                        if (Area.Width > PaintedArea.Width)
+                        {
+                            Window?.Invalidate(new Rectangle(Area.X + PaintedArea.Width, Area.Y, Area.Width - PaintedArea.Width, Area.Height));
+                        }
+
+                        if (Area.Height > PaintedArea.Height)
+                        {
+                            Window?.Invalidate(new Rectangle(Area.X, Area.Y + PaintedArea.Height, Area.Width, Area.Height - PaintedArea.Height));
+                        }
+                    }
+                    else
+                    {
+                        Window?.Invalidate(PaintedArea);
+                        Window?.Invalidate(Area);
                     }
 
-                    if (Area.Height > PaintedArea.Height)
-                    {
-                        Window?.Invalidate(new Rectangle(Area.X, Area.Y + PaintedArea.Height, Area.Width, Area.Height - PaintedArea.Height));
-                    }
+                    PaintedArea = Area;
                 }
-                else
-                {
-                    Window?.Invalidate(PaintedArea);
-                    Window?.Invalidate(Area);
-                }
-
-                PaintedArea = Area;
             }
         }
 

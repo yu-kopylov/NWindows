@@ -29,12 +29,6 @@ namespace NWindows.Examples.Controls
 
         public void Add(Control control)
         {
-            if (control == this)
-            {
-                // todo: also check for loops
-                throw new InvalidOperationException("Cannot add control to itself.");
-            }
-
             AddChild(control);
         }
 
