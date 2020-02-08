@@ -19,12 +19,14 @@ namespace NWindows.Examples
             var menuPanel = new StackPanel {Orientation = StackPanelOrientation.Vertical};
 
             dockPanel.Left = menuPanel;
+            var scrollView = new ScrollView();
+            dockPanel.Center = scrollView;
 
             var mainContent = CreateMainContent();
-            dockPanel.Center = mainContent;
+            scrollView.Content = mainContent;
 
-            menuPanel.Add(new Button("Main", (_, __) => dockPanel.Center = mainContent));
-            menuPanel.Add(new Button("Button", (_, __) => dockPanel.Center = new Button("Button", (___, ____) => {})));
+            menuPanel.Add(new Button("Main", (_, __) => scrollView.Content = mainContent));
+            menuPanel.Add(new Button("Button", (_, __) => scrollView.Content = new Button("Button", (___, ____) => {})));
 
             Content = dockPanel;
         }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Linq;
 
 namespace NWindows.Examples.Controls
@@ -22,7 +21,7 @@ namespace NWindows.Examples.Controls
                 {
                     orientation = value;
                     InvalidateContentSize();
-                    InvalidateLayout();
+                    InvalidateChildrenArea();
                 }
             }
         }
@@ -74,11 +73,5 @@ namespace NWindows.Examples.Controls
                 }
             }
         }
-    }
-
-    public enum StackPanelOrientation
-    {
-        Horizontal,
-        Vertical
     }
 }

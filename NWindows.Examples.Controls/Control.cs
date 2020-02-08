@@ -14,12 +14,15 @@ namespace NWindows.Examples.Controls
         private Size contentSize;
 
         private bool childrenRequireUpdate;
-        private bool requiresContentSizeUpdate = true;
-        private bool requiresLayoutUpdate;
+        private bool requiresContentSizeUpdate;
+        private bool requiresChildrenAreaUpdate;
+        private bool requiresChildrenVisibleAreaUpdate;
         private bool requiresPaintingUpdate;
 
         private Rectangle area;
+        private Rectangle visibleArea;
         private Rectangle paintedArea;
+        private Rectangle paintedVisibleArea;
         private ControlRepaintMode repaintMode = ControlRepaintMode.IncrementalGrowth;
 
         private ControlVisibility visibility = ControlVisibility.Visible;
@@ -73,7 +76,7 @@ namespace NWindows.Examples.Controls
             control.Parent = this;
             RequestChildrenUpdate();
             RequestContentSizeUpdate();
-            RequestLayoutUpdate();
+            RequestChildrenAreaUpdate();
         }
 
         protected void RemoveChild(Control control)
@@ -86,7 +89,7 @@ namespace NWindows.Examples.Controls
             control.InvalidatePainting();
             control.Parent = null;
             RequestContentSizeUpdate();
-            RequestLayoutUpdate();
+            RequestChildrenAreaUpdate();
         }
 
         public Control Parent
@@ -99,6 +102,7 @@ namespace NWindows.Examples.Controls
                     parent = value;
                     Window = parent?.Window;
                     EffectiveVisibility = CalculateEffectiveVisibility();
+                    RequestContentSizeUpdate();
                 }
             }
         }
@@ -110,13 +114,15 @@ namespace NWindows.Examples.Controls
             {
                 if (window != value)
                 {
-                    PaintedArea = Rectangle.Empty;
-                    RequestPaintingUpdate();
-
                     window?.OnControlRemoved(this);
 
                     window = value;
+
                     Application = window?.Application;
+
+                    PaintedArea = Rectangle.Empty;
+                    PaintedVisibleArea = Rectangle.Empty;
+                    RequestPaintingUpdate();
 
                     window?.OnControlAdded(this);
 
@@ -162,9 +168,24 @@ namespace NWindows.Examples.Controls
                 if (area != value)
                 {
                     area = value;
-                    RequestLayoutUpdate();
+                    RequestChildrenAreaUpdate();
                     RequestPaintingUpdate();
+                    RequestVisibleAreaUpdate();
                     OnAreaChanged();
+                }
+            }
+        }
+
+        public Rectangle VisibleArea
+        {
+            get { return visibleArea; }
+            private set
+            {
+                if (visibleArea != value)
+                {
+                    visibleArea = value;
+                    RequestChildrenVisibleAreaUpdate();
+                    RequestPaintingUpdate();
                 }
             }
         }
@@ -173,6 +194,12 @@ namespace NWindows.Examples.Controls
         {
             get { return paintedArea; }
             set { paintedArea = value; }
+        }
+
+        private Rectangle PaintedVisibleArea
+        {
+            get { return paintedVisibleArea; }
+            set { paintedVisibleArea = value; }
         }
 
         public ControlRepaintMode RepaintMode
@@ -308,7 +335,8 @@ namespace NWindows.Examples.Controls
                 {
                     contentSize = value;
                     Parent?.InvalidateContentSize();
-                    Parent?.InvalidateLayout();
+                    Parent?.InvalidateChildrenArea();
+                    OnContentSizeChanged();
                 }
             }
         }
@@ -339,23 +367,44 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        protected void InvalidateLayout()
+        protected void InvalidateChildrenArea()
         {
-            RequestLayoutUpdate();
+            RequestChildrenAreaUpdate();
         }
 
-        private void RequestLayoutUpdate()
+        private void RequestChildrenAreaUpdate()
         {
-            if (!requiresLayoutUpdate)
+            if (!requiresChildrenAreaUpdate)
             {
-                requiresLayoutUpdate = true;
+                requiresChildrenAreaUpdate = true;
+                Parent?.RequestChildrenUpdate();
+            }
+        }
+
+        private void RequestVisibleAreaUpdate()
+        {
+            if (Parent == null)
+            {
+                VisibleArea = Area;
+            }
+            else
+            {
+                Parent?.RequestChildrenVisibleAreaUpdate();
+            }
+        }
+
+        private void RequestChildrenVisibleAreaUpdate()
+        {
+            if (!requiresChildrenVisibleAreaUpdate)
+            {
+                requiresChildrenVisibleAreaUpdate = true;
                 Parent?.RequestChildrenUpdate();
             }
         }
 
         protected void InvalidatePainting()
         {
-            Window?.Invalidate(PaintedArea);
+            Window?.Invalidate(PaintedVisibleArea);
         }
 
         private void RequestPaintingUpdate()
@@ -370,9 +419,10 @@ namespace NWindows.Examples.Controls
         internal void Update()
         {
             UpdateContentSize();
-            UpdateLayout();
+            UpdateChildrenArea();
+            UpdateChildrenVisibleArea();
             UpdatePainting();
-            ClearChildrenUpdateRequests();
+            ResetChildrenUpdateRequests();
         }
 
         private void UpdateContentSize()
@@ -392,11 +442,11 @@ namespace NWindows.Examples.Controls
             }
         }
 
-        private void UpdateLayout()
+        private void UpdateChildrenArea()
         {
-            if (requiresLayoutUpdate)
+            if (requiresChildrenAreaUpdate)
             {
-                requiresLayoutUpdate = false;
+                requiresChildrenAreaUpdate = false;
                 PerformLayout();
             }
 
@@ -404,7 +454,27 @@ namespace NWindows.Examples.Controls
             {
                 foreach (var child in children)
                 {
-                    child.UpdateLayout();
+                    child.UpdateChildrenArea();
+                }
+            }
+        }
+
+        private void UpdateChildrenVisibleArea()
+        {
+            if (requiresChildrenVisibleAreaUpdate)
+            {
+                requiresChildrenVisibleAreaUpdate = false;
+                foreach (var child in children)
+                {
+                    child.VisibleArea = Rectangle.Intersect(child.Area, VisibleArea);
+                }
+            }
+
+            if (childrenRequireUpdate)
+            {
+                foreach (var child in children)
+                {
+                    child.UpdateChildrenVisibleArea();
                 }
             }
         }
@@ -423,7 +493,7 @@ namespace NWindows.Examples.Controls
             {
                 requiresPaintingUpdate = false;
 
-                if (PaintedArea != Area)
+                if (PaintedArea != Area || PaintedVisibleArea != VisibleArea)
                 {
                     if (RepaintMode == ControlRepaintMode.Never)
                     {
@@ -431,39 +501,40 @@ namespace NWindows.Examples.Controls
                     }
                     else if (RepaintMode == ControlRepaintMode.IncrementalGrowth && PaintedArea.Location == Area.Location)
                     {
-                        if (Area.Width > PaintedArea.Width)
+                        foreach (var rect in PaintedVisibleArea.Exclude(VisibleArea))
                         {
-                            Window?.Invalidate(new Rectangle(Area.X + PaintedArea.Width, Area.Y, Area.Width - PaintedArea.Width, Area.Height));
+                            Window?.Invalidate(rect);
                         }
 
-                        if (Area.Height > PaintedArea.Height)
+                        foreach (var rect in VisibleArea.Exclude(PaintedVisibleArea))
                         {
-                            Window?.Invalidate(new Rectangle(Area.X, Area.Y + PaintedArea.Height, Area.Width, Area.Height - PaintedArea.Height));
+                            Window?.Invalidate(rect);
                         }
                     }
                     else
                     {
-                        Window?.Invalidate(PaintedArea);
-                        Window?.Invalidate(Area);
+                        Window?.Invalidate(PaintedVisibleArea);
+                        Window?.Invalidate(VisibleArea);
                     }
 
                     PaintedArea = Area;
+                    PaintedVisibleArea = VisibleArea;
                 }
             }
         }
 
-        private void ClearChildrenUpdateRequests()
+        private void ResetChildrenUpdateRequests()
         {
             if (childrenRequireUpdate)
             {
                 childrenRequireUpdate = false;
                 foreach (var child in children)
                 {
-                    child.ClearChildrenUpdateRequests();
+                    child.ResetChildrenUpdateRequests();
                 }
             }
 
-            if (requiresContentSizeUpdate || requiresLayoutUpdate || requiresPaintingUpdate)
+            if (requiresContentSizeUpdate || requiresChildrenAreaUpdate || requiresChildrenVisibleAreaUpdate || requiresPaintingUpdate)
             {
                 Parent?.RequestChildrenUpdate();
             }
@@ -503,15 +574,15 @@ namespace NWindows.Examples.Controls
                 return;
             }
 
-            var controlArea = Rectangle.Intersect(area, Area);
+            var controlArea = Rectangle.Intersect(area, VisibleArea);
             if (controlArea.HasZeroArea())
             {
                 return;
             }
 
-            canvas.SetClipRectangle(controlArea.X, controlArea.Y, controlArea.Width, controlArea.Height);
-            controlArea.Offset(-Area.X, -Area.Y);
-            OnPaint(new OffsetCanvas(canvas, Area.X, Area.Y), controlArea);
+            var clippedCanvas = new ClippedCanvas(canvas, controlArea);
+            var offsetCanvas = new OffsetCanvas(clippedCanvas, Area.X, Area.Y);
+            OnPaint(offsetCanvas, new Rectangle(controlArea.X - Area.X, controlArea.Y - Area.Y, controlArea.Width, controlArea.Height));
 
             PaintChildren(canvas, area);
         }
@@ -529,6 +600,8 @@ namespace NWindows.Examples.Controls
         protected virtual void OnApplicationChanged() {}
 
         protected virtual void OnAreaChanged() {}
+
+        protected virtual void OnContentSizeChanged() {}
 
         protected virtual void OnIsFocusedChanged() {}
 
