@@ -4,9 +4,11 @@
     {
         static void Main(string[] args)
         {
-            var app = new NApplication();
-            app.Init();
-            app.Run(new MainWindow());
+            using (var app = new NApplication())
+            {
+                app.Init();
+                app.Run(new MainWindow());
+            }
         }
     }
 }

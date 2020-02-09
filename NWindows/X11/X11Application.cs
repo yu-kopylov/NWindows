@@ -21,6 +21,8 @@ namespace NWindows.X11
 
         private Rectangle? pendingRedraw;
 
+        public void Dispose() {}
+
         public static bool IsAvailable()
         {
             try

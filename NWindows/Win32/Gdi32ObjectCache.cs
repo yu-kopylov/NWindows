@@ -1,60 +1,63 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using NWindows.Utils;
 
 namespace NWindows.Win32
 {
-    internal class Gdi32ObjectCache : IDisposable
+    internal class Gdi32ObjectCache
     {
-        private readonly Dictionary<uint, IntPtr> pens = new Dictionary<uint, IntPtr>();
-        private readonly Dictionary<uint, IntPtr> brushes = new Dictionary<uint, IntPtr>();
-        private readonly Dictionary<FontConfig, IntPtr> fonts = new Dictionary<FontConfig, IntPtr>(Gdi32FontConfigComparer.Instance);
+        private readonly Cache<uint, IntPtr> pens;
+        private readonly Cache<uint, IntPtr> brushes;
+        private readonly Cache<FontConfig, IntPtr> fonts;
 
-        public void Dispose()
+        public Gdi32ObjectCache()
         {
-            foreach (IntPtr penPtr in pens.Values)
-            {
-                Gdi32API.DeleteObject(penPtr);
-            }
+            pens = new Cache<uint, IntPtr>(64, CreateSolidPen, GdiDeleteObject, EqualityComparer<uint>.Default);
+            brushes = new Cache<uint, IntPtr>(64, CreateSolidBrush, GdiDeleteObject, EqualityComparer<uint>.Default);
+            fonts = new Cache<FontConfig, IntPtr>(64, CreateFont, GdiDeleteObject, Gdi32FontConfigComparer.Instance);
+        }
 
-            foreach (IntPtr brushPtr in brushes.Values)
-            {
-                Gdi32API.DeleteObject(brushPtr);
-            }
+        public void Clear()
+        {
+            pens.Clear();
+            brushes.Clear();
+            fonts.Clear();
+        }
 
-            foreach (IntPtr fontPtr in fonts.Values)
-            {
-                Gdi32API.DeleteObject(fontPtr);
-            }
+        private void GdiDeleteObject(IntPtr ptr)
+        {
+            Gdi32API.DeleteObject(ptr);
         }
 
         public IntPtr GetSolidPen(Color color)
         {
             uint cref = Gdi32API.ToCOLORREF(color);
-            if (pens.TryGetValue(cref, out IntPtr pen))
-            {
-                return pen;
-            }
+            return pens.Get(cref);
+        }
 
-            pen = Gdi32API.CreatePen(GdiPenStyle.PS_SOLID, 0, cref);
-            pens.Add(cref, pen);
-            return pen;
+        private IntPtr CreateSolidPen(uint color)
+        {
+            return Gdi32API.CreatePen(GdiPenStyle.PS_SOLID, 0, color);
         }
 
         public IntPtr GetSolidBrush(Color color)
         {
             uint cref = Gdi32API.ToCOLORREF(color);
-            if (brushes.TryGetValue(cref, out IntPtr brush))
-            {
-                return brush;
-            }
-
-            brush = Gdi32API.CreateSolidBrush(cref);
-            brushes.Add(cref, brush);
-            return brush;
+            return brushes.Get(cref);
         }
-        
+
+        private IntPtr CreateSolidBrush(uint color)
+        {
+            return Gdi32API.CreateSolidBrush(color);
+        }
+
         public IntPtr GetFont(FontConfig font)
+        {
+            return fonts.Get(font);
+        }
+
+        private IntPtr CreateFont(FontConfig font)
         {
             const uint DEFAULT_CHARSET = 1;
             const uint OUT_DEFAULT_PRECIS = 0;
@@ -62,12 +65,7 @@ namespace NWindows.Win32
             const uint CLEARTYPE_QUALITY = 5;
             const uint DEFAULT_PITCH = 0;
 
-            if (fonts.TryGetValue(font, out IntPtr fontPtr))
-            {
-                return fontPtr;
-            }
-
-            fontPtr = Gdi32API.CreateFontW(
+            IntPtr fontPtr = Gdi32API.CreateFontW(
                 //todo: use int?
                 -Convert.ToInt32(font.Size),
                 0, 0, 0,
@@ -87,8 +85,6 @@ namespace NWindows.Win32
             {
                 throw new InvalidOperationException($"Failed to create font: '{font.FontFamily}', {font.Size:0.0}.");
             }
-
-            fonts.Add(font, fontPtr);
 
             return fontPtr;
         }

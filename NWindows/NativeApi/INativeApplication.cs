@@ -1,6 +1,8 @@
+using System;
+
 namespace NWindows.NativeApi
 {
-    internal interface INativeApplication
+    internal interface INativeApplication : IDisposable
     {
         void Init();
         void Run(INativeWindowStartupInfo startupInfo);

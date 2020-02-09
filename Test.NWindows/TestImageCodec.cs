@@ -22,7 +22,7 @@ namespace Test.NWindows
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            // todo: dispose?
+            app.Dispose();
         }
 
         [Test]

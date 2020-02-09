@@ -11,6 +11,12 @@ namespace NWindows.Win32
         private const string WindowClassName = "DEFAULT";
 
         private readonly Dictionary<IntPtr, Win32Window> windows = new Dictionary<IntPtr, Win32Window>();
+        private readonly Gdi32ObjectCache gdiObjectCache = new Gdi32ObjectCache();
+
+        public void Dispose()
+        {
+            gdiObjectCache.Clear();
+        }
 
         public static bool IsAvailable()
         {
@@ -184,10 +190,8 @@ namespace NWindows.Win32
                 {
                     if (windows.TryGetValue(hwnd, out var window))
                     {
-                        using (Gdi32ObjectCache objectCache = new Gdi32ObjectCache())
-                        using (Win32Canvas canvas = new Win32Canvas(hdc, objectCache))
+                        using (Win32Canvas canvas = new Win32Canvas(hdc, gdiObjectCache))
                         {
-                            // todo: check that width and height are exact and aligned with other API
                             Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
                             window.StartupInfo.OnPaint(canvas, area);
                         }
@@ -232,7 +236,7 @@ namespace NWindows.Win32
 
         public INativeGraphics CreateGraphics()
         {
-            return new Win32Graphics();
+            return new Win32Graphics(gdiObjectCache);
         }
 
         public INativeImageCodec CreateImageCodec()

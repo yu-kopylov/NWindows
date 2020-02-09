@@ -5,9 +5,18 @@ using NWindows.X11;
 
 namespace NWindows
 {
-    public class NApplication
+    public class NApplication : IDisposable
     {
         private INativeApplication NativeApp { get; set; }
+
+        public NGraphics Graphics { get; private set; }
+        public NImageCodec ImageCodec { get; private set; }
+        public NClipboard Clipboard { get; private set; }
+
+        public void Dispose()
+        {
+            NativeApp?.Dispose();
+        }
 
         public void Init()
         {
@@ -46,9 +55,5 @@ namespace NWindows
             window.Application = this;
             NativeApp.Run(window.StartupInfo);
         }
-
-        public NGraphics Graphics { get; private set; }
-        public NImageCodec ImageCodec { get; private set; }
-        public NClipboard Clipboard { get; private set; }
     }
 }
