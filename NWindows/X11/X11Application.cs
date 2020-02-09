@@ -19,9 +19,14 @@ namespace NWindows.X11
         private XVisualInfo visualInfo;
         private ulong colormap;
 
+        private X11ObjectCache x11ObjectCache;
+
         private Rectangle? pendingRedraw;
 
-        public void Dispose() {}
+        public void Dispose()
+        {
+            x11ObjectCache?.Clear();
+        }
 
         public static bool IsAvailable()
         {
@@ -89,6 +94,8 @@ namespace NWindows.X11
                 visualInfo.visual,
                 CreateColormapOption.AllocNone
             );
+
+            x11ObjectCache = new X11ObjectCache(display, defaultScreen);
         }
 
         public void Run(INativeWindowStartupInfo window)
@@ -253,11 +260,10 @@ namespace NWindows.X11
 
                 if (pendingRedraw != null && LibX11.XPending(display) == 0)
                 {
-                    using (X11ObjectCache objectCache = new X11ObjectCache(display, defaultScreen))
                     using (X11Canvas canvas = X11Canvas.CreateForWindow(
                         display,
                         defaultScreen,
-                        objectCache,
+                        x11ObjectCache,
                         visualInfo.visual,
                         colormap,
                         pictFormatPtr,
@@ -346,7 +352,7 @@ namespace NWindows.X11
 
         public INativeGraphics CreateGraphics()
         {
-            return new X11Graphics(display, defaultScreen);
+            return new X11Graphics(display, x11ObjectCache);
         }
 
         public INativeImageCodec CreateImageCodec()
