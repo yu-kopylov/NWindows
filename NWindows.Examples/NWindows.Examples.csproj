@@ -3,6 +3,7 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net472</TargetFramework>
+        <ApplicationManifest>NWindows.Examples.manifest</ApplicationManifest>
     </PropertyGroup>
 
     <ItemGroup>
