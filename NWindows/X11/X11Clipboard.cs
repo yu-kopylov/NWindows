@@ -12,15 +12,17 @@ namespace NWindows.X11
 
         private readonly IntPtr display;
         private readonly ulong windowId;
+
         private readonly ulong XA_ATOM;
         private readonly ulong XA_CLIPBOARD;
         private readonly ulong XA_TARGETS;
         private readonly ulong XA_UTF8_STRING;
         private readonly ulong XA_NWINDOWS_CONVERTED_CLIPBOARD;
+        private readonly ulong XA_NWINDOWS_CLIPBOARD_STOP;
 
-        // todo: make this class disposable
         private readonly object selectionConversionLock = new object();
         private readonly AutoResetEvent selectionConvertedEvent = new AutoResetEvent(false);
+        private readonly Thread thread;
 
         private string convertedText;
         private string bufferText;
@@ -30,11 +32,16 @@ namespace NWindows.X11
             this.display = display;
             this.windowId = windowId;
 
+            thread = new Thread(Run);
+            thread.Name = nameof(X11Clipboard);
+            thread.IsBackground = true;
+
             XA_ATOM = LibX11.XInternAtom(display, "ATOM", 0);
             XA_CLIPBOARD = LibX11.XInternAtom(display, "CLIPBOARD", 0);
             XA_TARGETS = LibX11.XInternAtom(display, "TARGETS", 0);
             XA_UTF8_STRING = LibX11.XInternAtom(display, "UTF8_STRING", 0);
             XA_NWINDOWS_CONVERTED_CLIPBOARD = LibX11.XInternAtom(display, "NWINDOWS_CONVERTED_CLIPBOARD", 0);
+            XA_NWINDOWS_CLIPBOARD_STOP = LibX11.XInternAtom(display, "NWINDOWS_CLIPBOARD_STOP", 0);
         }
 
         public static X11Clipboard Create()
@@ -72,9 +79,7 @@ namespace NWindows.X11
                 LibX11.XFlush(display);
 
                 X11Clipboard clipboard = new X11Clipboard(display, windowId);
-                Thread thread = new Thread(clipboard.Run);
-                thread.IsBackground = true;
-                thread.Start();
+                clipboard.Start();
                 windowId = 0;
                 display = IntPtr.Zero;
                 return clipboard;
@@ -94,10 +99,27 @@ namespace NWindows.X11
             }
         }
 
+        public void Start()
+        {
+            thread.Start();
+        }
+
+        public void Stop()
+        {
+            lock (selectionConversionLock)
+            {
+                var message = XEvent.CreateClientMessage(windowId, XA_NWINDOWS_CLIPBOARD_STOP);
+                LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref message);
+                LibX11.XFlush(display);
+            }
+
+            thread.Join(TimeSpan.FromSeconds(30));
+        }
+
         private void Run()
         {
-            // todo: stop correctly
-            while (true)
+            bool stopped = false;
+            while (!stopped)
             {
                 LibX11.XNextEvent(display, out XEvent evt);
                 // todo: log and handle exceptions
@@ -113,7 +135,16 @@ namespace NWindows.X11
                 {
                     HandleSelectionNotify(evt.SelectionEvent);
                 }
+                else if (evt.type == XEventType.ClientMessage)
+                {
+                    if (evt.ClientMessageEvent.message_type == XA_NWINDOWS_CLIPBOARD_STOP)
+                    {
+                        stopped = true;
+                    }
+                }
             }
+
+            LibX11.XCloseDisplay(display);
         }
 
         private void HandleSelectionClear(XSelectionClearEvent evt)

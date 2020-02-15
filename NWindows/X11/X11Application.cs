@@ -20,12 +20,18 @@ namespace NWindows.X11
         private ulong colormap;
 
         private X11ObjectCache x11ObjectCache;
+        private X11Clipboard clipboard;
 
         private Rectangle? pendingRedraw;
 
+        private ulong WM_PROTOCOLS;
+        private ulong WM_DELETE_WINDOW;
+
         public void Dispose()
         {
+            clipboard.Stop();
             x11ObjectCache?.Clear();
+            LibX11.XCloseDisplay(display);
         }
 
         public static bool IsAvailable()
@@ -96,6 +102,11 @@ namespace NWindows.X11
             );
 
             x11ObjectCache = new X11ObjectCache(display, defaultScreen);
+
+            WM_PROTOCOLS = LibX11.XInternAtom(display, "WM_PROTOCOLS", 0);
+            WM_DELETE_WINDOW = LibX11.XInternAtom(display, "WM_DELETE_WINDOW", 0);
+
+            clipboard = X11Clipboard.Create();
         }
 
         public void Run(INativeWindowStartupInfo window)
@@ -134,13 +145,18 @@ namespace NWindows.X11
             window.OnCreate(nativeWindow);
             nativeWindow.SetTitle(window.Title);
 
+            var protocols = new[] {WM_DELETE_WINDOW};
+            LibX11.XSetWMProtocols(display, windowId, protocols, protocols.Length);
+
             LibX11.XMapWindow(display, windowId);
             LibX11.XFlush(display);
 
             byte[] textBuffer = new byte[32];
             bool autoRepeat = false;
 
-            while (true)
+            bool windowClosed = false;
+
+            while (!windowClosed)
             {
                 LibX11.XNextEvent(display, out XEvent evt);
                 if (evt.type == XEventType.Expose)
@@ -257,6 +273,14 @@ namespace NWindows.X11
                         window.OnDeactivated();
                     }
                 }
+                else if (evt.type == XEventType.ClientMessage)
+                {
+                    var cevt = evt.ClientMessageEvent;
+                    if (cevt.message_type == WM_PROTOCOLS && cevt.data0 == WM_DELETE_WINDOW)
+                    {
+                        windowClosed = true;
+                    }
+                }
 
                 if (pendingRedraw != null && LibX11.XPending(display) == 0)
                 {
@@ -278,9 +302,6 @@ namespace NWindows.X11
             }
 
             //todo: close window
-            //todo: free colormap?
-
-            LibX11.XCloseDisplay(display);
         }
 
         private static bool IsWindowActivationEvent(FocusNotifyMode mode, FocusNotifyDetail detail)
@@ -362,7 +383,7 @@ namespace NWindows.X11
 
         public INativeClipboard CreateClipboard()
         {
-            return X11Clipboard.Create();
+            return clipboard;
         }
     }
 }

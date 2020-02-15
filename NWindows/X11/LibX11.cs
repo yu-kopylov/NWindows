@@ -83,7 +83,21 @@ namespace NWindows.X11
         public static extern Atom XInternAtom(DisplayPtr display, string atom_name, Bool only_if_exists);
 
         [DllImport("libX11.so.6")]
-        public static extern IntPtr XGetAtomName(DisplayPtr display, Atom atom);
+        private static extern IntPtr XGetAtomName(DisplayPtr display, Atom atom);
+
+        public static string GetAtomName(DisplayPtr display, Atom atom)
+        {
+            IntPtr namePtr = XGetAtomName(display, atom);
+
+            if (namePtr == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            string name = Marshal.PtrToStringAnsi(namePtr);
+            XFree(namePtr);
+            return name;
+        }
 
         [DllImport("libX11.so.6")]
         public static extern int XChangeProperty(
@@ -124,6 +138,9 @@ namespace NWindows.X11
             out ulong bytes_after_return,
             out IntPtr prop_return
         );
+
+        [DllImport("libX11.so.6")]
+        public static extern Status XSetWMProtocols(DisplayPtr display, Window w, Atom[] protocols, int count);
 
         [DllImport("libX11.so.6")]
         public static extern int XMapWindow(DisplayPtr display, Window w);
@@ -409,6 +426,7 @@ namespace NWindows.X11
         // todo: should event size be 96 or 192 (24*4 or 24 *8)
         [FieldOffset(0)] public XEventType type;
         [FieldOffset(0)] public XButtonEvent ButtonEvent;
+        [FieldOffset(0)] public XClientMessageEvent ClientMessageEvent;
         [FieldOffset(0)] public XConfigureEvent ConfigureEvent;
         [FieldOffset(0)] public XExposeEvent ExposeEvent;
         [FieldOffset(0)] public XFocusChangeEvent FocusChangeEvent;
@@ -418,6 +436,16 @@ namespace NWindows.X11
         [FieldOffset(0)] public XSelectionClearEvent SelectionClearEvent;
         [FieldOffset(0)] public XSelectionEvent SelectionEvent;
         [FieldOffset(0)] public XSelectionRequestEvent SelectionRequestEvent;
+
+        public static XEvent CreateClientMessage(Window window, Atom messageType)
+        {
+            var res = new XEvent();
+            res.type = XEventType.ClientMessage;
+            res.ClientMessageEvent.window = window;
+            res.ClientMessageEvent.format = 32;
+            res.ClientMessageEvent.message_type = messageType;
+            return res;
+        }
 
         public static XEvent CreateExpose(int x, int y, int width, int height)
         {
@@ -459,6 +487,26 @@ namespace NWindows.X11
         public readonly uint state; /* key or button mask */
         public readonly uint button; /* detail */
         public readonly Bool same_screen; /* same screen flag */
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XClientMessageEvent
+    {
+        public readonly int type;
+        public readonly ulong serial; /* # of last request processed by server */
+        public readonly Bool send_event; /* true if this came from a SendEvent request */
+        public readonly DisplayPtr display; /* Display the event was read from */
+        public Window window;
+        public Atom message_type;
+
+        public int format;
+
+        // todo: how much data are really available (20 bytes or 5*8 = 40 bytes)?
+        public readonly ulong data0;
+        public readonly ulong data1;
+        public readonly ulong data2;
+        public readonly ulong data3;
+        public readonly ulong data4;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
