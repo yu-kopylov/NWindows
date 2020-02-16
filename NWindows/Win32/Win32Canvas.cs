@@ -8,6 +8,7 @@ namespace NWindows.Win32
     internal class Win32Canvas : INativeCanvas, IDisposable
     {
         private readonly IntPtr hdc;
+        private readonly Point offset;
 
         private IntPtr graphics;
         private IntPtr defaultStringFormat;
@@ -18,9 +19,10 @@ namespace NWindows.Win32
         private IntPtr originalBrush;
         private IntPtr originalFont;
 
-        public Win32Canvas(IntPtr hdc, Gdi32ObjectCache objectCache)
+        public Win32Canvas(IntPtr hdc, Point offset, Gdi32ObjectCache objectCache)
         {
             this.hdc = hdc;
+            this.offset = offset;
             this.objectCache = objectCache;
         }
 
@@ -72,6 +74,9 @@ namespace NWindows.Win32
 
         public void SetClipRectangle(int x, int y, int width, int height)
         {
+            x += offset.X;
+            y += offset.Y;
+
             var region = Gdi32API.CreateRectRgnChecked(x, y, x + width, y + height);
             try
             {
@@ -90,6 +95,9 @@ namespace NWindows.Win32
                 return;
             }
 
+            x += offset.X;
+            y += offset.Y;
+
             // todo: choose W32/GDI/GDI+ method
 //            FillRectangleW32(color, x, y, width, height);
             FillRectangleGDI(color, x, y, width, height);
@@ -98,6 +106,9 @@ namespace NWindows.Win32
 
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
         {
+            x += offset.X;
+            y += offset.Y;
+
             // todo: pick
             DrawStringGDI(color, font, x, y, text);
             // DrawStringGDIPlus(color, font, x, y, text);
@@ -105,6 +116,9 @@ namespace NWindows.Win32
 
         public void DrawImage(INativeImage image, int x, int y)
         {
+            x += offset.X;
+            y += offset.Y;
+
             // todo: allow null?
             Win32Image win32Image = (Win32Image) image;
 
@@ -134,7 +148,7 @@ namespace NWindows.Win32
             }
         }
 
-        public void DrawStringGDI(Color color, FontConfig font, int x, int y, string text)
+        private void DrawStringGDI(Color color, FontConfig font, int x, int y, string text)
         {
             if (color.IsFullyOpaque())
             {
@@ -173,7 +187,7 @@ namespace NWindows.Win32
             Gdi32API.TextOutW(hdc, x, y, text, text.Length);
         }
 
-        public void DrawStringGDIPlus(Color color, FontConfig font, int x, int y, string text)
+        private void DrawStringGDIPlus(Color color, FontConfig font, int x, int y, string text)
         {
             PrepareGraphics();
             PrepareDefaultStringFormat();
@@ -309,7 +323,7 @@ namespace NWindows.Win32
                             Gdi32API.BitBlt(memoryHdc, 0, 0, rect.Width, rect.Height, hdc, rect.X, rect.Y, GDI32RasterOperation.SRCCOPY);
                         }
 
-                        using (Win32Canvas memoryCanvas = new Win32Canvas(memoryHdc, objectCache))
+                        using (Win32Canvas memoryCanvas = new Win32Canvas(memoryHdc, offset, objectCache))
                         {
                             action(memoryCanvas);
                         }

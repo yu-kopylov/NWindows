@@ -190,10 +190,15 @@ namespace NWindows.Win32
                 {
                     if (windows.TryGetValue(hwnd, out var window))
                     {
-                        using (Win32Canvas canvas = new Win32Canvas(hdc, gdiObjectCache))
+                        Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
+                        using (Win32Bitmap bitmap = Win32Bitmap.Create(hdc, area.Width, area.Height))
                         {
-                            Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
-                            window.StartupInfo.OnPaint(canvas, area);
+                            using (Win32Canvas canvas = bitmap.CreateCanvas(new Point(-area.X, -area.Y), gdiObjectCache))
+                            {
+                                window.StartupInfo.OnPaint(canvas, area);
+                            }
+
+                            bitmap.CopyTo(hdc, area.X, area.Y);
                         }
                     }
                 }
