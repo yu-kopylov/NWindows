@@ -9,11 +9,13 @@ namespace NWindows.X11
     {
         private readonly IntPtr display;
         private readonly ulong windowId;
+        private readonly Action<Rectangle> invalidate;
 
-        public X11Window(IntPtr display, ulong windowId)
+        public X11Window(IntPtr display, ulong windowId, Action<Rectangle> invalidate)
         {
             this.display = display;
             this.windowId = windowId;
+            this.invalidate = invalidate;
         }
 
         public void SetTitle(string title)
@@ -45,9 +47,7 @@ namespace NWindows.X11
 
         public void Invalidate(Rectangle area)
         {
-            // todo: check exact meaning of width / heght
-            XEvent evt = XEvent.CreateExpose(area.X, area.Y, area.Width, area.Height);
-            LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref evt);
+            invalidate(area);           
         }
     }
 }

@@ -23,9 +23,11 @@ namespace NWindows.X11
         private X11Clipboard clipboard;
 
         private Rectangle? pendingRedraw;
+        private Rectangle? pendingInvalidate;
 
         private ulong WM_PROTOCOLS;
         private ulong WM_DELETE_WINDOW;
+        private ulong XA_NWINDOWS_REDRAW;
 
         public void Dispose()
         {
@@ -141,7 +143,7 @@ namespace NWindows.X11
                 ref attr
             );
 
-            X11Window nativeWindow = new X11Window(display, windowId);
+            X11Window nativeWindow = new X11Window(display, windowId, Invalidate);
             window.OnCreate(nativeWindow);
             nativeWindow.SetTitle(window.Title);
 
@@ -161,29 +163,25 @@ namespace NWindows.X11
                 LibX11.XNextEvent(display, out XEvent evt);
                 if (evt.type == XEventType.Expose)
                 {
-                    // System.Console.WriteLine($"Expose: {evt.ExposeEvent.x} x {evt.ExposeEvent.y} .. {evt.ExposeEvent.width} x {evt.ExposeEvent.height}");
                     var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
                     if (pendingRedraw == null)
                     {
                         pendingRedraw = rect;
+                        // todo: does X11 guarantee that event will be delivered?
+                        var message = XEvent.CreateClientMessage(windowId, XA_NWINDOWS_REDRAW);
+                        LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref message);
                     }
                     else
                     {
-                        int left = Math.Min(pendingRedraw.Value.Left, rect.Left);
-                        int top = Math.Min(pendingRedraw.Value.Top, rect.Top);
-                        int right = Math.Max(pendingRedraw.Value.Right, rect.Right);
-                        int bottom = Math.Max(pendingRedraw.Value.Bottom, rect.Bottom);
-                        pendingRedraw = new Rectangle(left, top, right - left, bottom - top);
+                        pendingRedraw = Rectangle.Union(pendingRedraw.Value, rect);
                     }
                 }
                 else if (evt.type == XEventType.MotionNotify)
                 {
-                    // System.Console.WriteLine($"MotionNotify: {evt.MotionEvent.x} x {evt.MotionEvent.y}");
                     window.OnMouseMove(new Point(evt.MotionEvent.x, evt.MotionEvent.y));
                 }
                 else if (evt.type == XEventType.ConfigureNotify)
                 {
-                    // System.Console.WriteLine($"ConfigureNotify: {evt.ConfigureEvent.width} x {evt.ConfigureEvent.height}");
                     Size clientArea = new Size(evt.ConfigureEvent.width, evt.ConfigureEvent.height);
                     window.OnResize(clientArea);
                 }
@@ -280,28 +278,40 @@ namespace NWindows.X11
                     {
                         windowClosed = true;
                     }
+                    else if (cevt.message_type == XA_NWINDOWS_REDRAW && pendingRedraw != null)
+                    {
+                        using (X11Canvas canvas = X11Canvas.CreateForWindow(
+                            display,
+                            defaultScreen,
+                            x11ObjectCache,
+                            visualInfo.visual,
+                            colormap,
+                            pictFormatPtr,
+                            windowId
+                        ))
+                        {
+                            window.OnPaint(canvas, pendingRedraw.Value);
+                        }
+
+                        pendingRedraw = null;
+                    }
                 }
 
-                if (pendingRedraw != null && LibX11.XPending(display) == 0)
+                if (pendingInvalidate != null)
                 {
-                    using (X11Canvas canvas = X11Canvas.CreateForWindow(
-                        display,
-                        defaultScreen,
-                        x11ObjectCache,
-                        visualInfo.visual,
-                        colormap,
-                        pictFormatPtr,
-                        windowId
-                    ))
-                    {
-                        window.OnPaint(canvas, pendingRedraw.Value);
-                    }
-
-                    pendingRedraw = null;
+                    var area = pendingInvalidate.Value;
+                    XEvent invEvt = XEvent.CreateExpose(area.X, area.Y, area.Width, area.Height);
+                    LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref invEvt);
+                    pendingInvalidate = null;
                 }
             }
 
             //todo: close window
+        }
+
+        private void Invalidate(Rectangle rect)
+        {
+            pendingInvalidate = pendingInvalidate == null ? rect : Rectangle.Union(pendingInvalidate.Value, rect);
         }
 
         private static bool IsWindowActivationEvent(FocusNotifyMode mode, FocusNotifyDetail detail)
