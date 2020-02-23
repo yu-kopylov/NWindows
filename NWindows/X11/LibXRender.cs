@@ -45,7 +45,7 @@ namespace NWindows.X11
             DisplayPtr dpy,
             PictOp op,
             Picture dst,
-            ref XRenderColor color,
+            [In] ref XRenderColor color,
             int x,
             int y,
             uint width,

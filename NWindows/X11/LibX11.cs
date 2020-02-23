@@ -242,11 +242,11 @@ namespace NWindows.X11
         public static extern int XFreePixmap(DisplayPtr display, Pixmap pixmap);
 
         [DllImport("libX11.so.6")]
-        public static extern KeySym XLookupKeysym([MarshalAs(UnmanagedType.LPStruct)] XKeyEvent key_event, int index);
+        public static extern KeySym XLookupKeysym([In] ref XKeyEvent key_event, int index);
 
         [DllImport("libX11.so.6")]
         public static extern int XLookupString(
-            [MarshalAs(UnmanagedType.LPStruct)] XKeyEvent event_struct,
+            [In] ref XKeyEvent event_struct,
             byte[] buffer_return,
             int bytes_buffer,
             out KeySym keysym_return,

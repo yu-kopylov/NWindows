@@ -120,7 +120,7 @@ namespace NWindows.X11
                     display,
                     visual,
                     colormap,
-                    xColor,
+                    ref xColor,
                     xftColorPtr
                 );
 

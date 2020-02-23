@@ -34,7 +34,7 @@ namespace NWindows.X11
             Display_ptr dpy,
             Visual_ptr visual,
             Colormap colormap,
-            [MarshalAs(UnmanagedType.LPStruct)] XRenderColor color,
+            [In] ref XRenderColor color,
             XftColor_ptr xftColor
         );
 

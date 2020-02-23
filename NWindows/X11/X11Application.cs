@@ -203,11 +203,11 @@ namespace NWindows.X11
                 else if (evt.type == XEventType.KeyPress)
                 {
                     // XLookupString returns no more than the requested number of characters, but it also writes a zero-byte after them
-                    int charCount = LibX11.XLookupString(evt.KeyEvent, textBuffer, textBuffer.Length - 1, out var keySym, IntPtr.Zero);
+                    int charCount = LibX11.XLookupString(ref evt.KeyEvent, textBuffer, textBuffer.Length - 1, out var keySym, IntPtr.Zero);
                     var keyCode = X11KeyMap.GetKeyCode(keySym);
                     if (keyCode == NKeyCode.Unknown)
                     {
-                        keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
+                        keySym = LibX11.XLookupKeysym(ref evt.KeyEvent, 0);
                         keyCode = X11KeyMap.GetKeyCode(keySym);
                     }
 
@@ -246,11 +246,11 @@ namespace NWindows.X11
                     if (!autoRepeat)
                     {
                         // XLookupString returns no more than the requested number of characters, but it also writes a zero-byte after them
-                        LibX11.XLookupString(evt.KeyEvent, textBuffer, textBuffer.Length - 1, out var keySym, IntPtr.Zero);
+                        LibX11.XLookupString(ref evt.KeyEvent, textBuffer, textBuffer.Length - 1, out var keySym, IntPtr.Zero);
                         var keyCode = X11KeyMap.GetKeyCode(keySym);
                         if (keyCode == NKeyCode.Unknown)
                         {
-                            keySym = LibX11.XLookupKeysym(evt.KeyEvent, 0);
+                            keySym = LibX11.XLookupKeysym(ref evt.KeyEvent, 0);
                             keyCode = X11KeyMap.GetKeyCode(keySym);
                         }
 
