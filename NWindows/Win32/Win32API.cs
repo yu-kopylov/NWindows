@@ -375,6 +375,18 @@ namespace NWindows.Win32
         public static extern BOOL Rectangle(HDC hdc, int left, int top, int right, int bottom);
 
         [DllImport("Gdi32.dll")]
+        public static extern BOOL MoveToEx(HDC hdc, int x, int y, IntPtr lppt);
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL LineTo(HDC hdc, int x, int y);
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL Polyline(HDC hdc, [In] POINT[] apt, int cpt);
+
+        [DllImport("Gdi32.dll")]
+        public static extern BOOL Ellipse(HDC hdc, int left, int top, int right, int bottom);
+
+        [DllImport("Gdi32.dll")]
         private static extern HRGN CreateRectRgn(int x1, int y1, int x2, int y2);
 
         public static HRGN CreateRectRgnChecked(int x1, int y1, int x2, int y2)
@@ -613,6 +625,12 @@ namespace NWindows.Win32
     [StructLayout(LayoutKind.Sequential)]
     internal struct POINT
     {
+        public POINT(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+
         public readonly LONG x;
         public readonly LONG y;
     }

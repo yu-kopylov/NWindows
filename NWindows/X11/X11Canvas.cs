@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using NWindows.NativeApi;
@@ -14,9 +15,11 @@ namespace NWindows.X11
         private readonly IntPtr visual;
         private readonly ulong colormap;
         private readonly IntPtr pictFormatPtr;
-        private readonly ulong windowId;
+        private readonly ulong drawableId;
         private readonly ulong pictureId;
         private readonly IntPtr xftDraw;
+
+        private XRectangle[] clipRectangles;
 
         private X11Canvas(
             IntPtr display,
@@ -25,7 +28,7 @@ namespace NWindows.X11
             IntPtr visual,
             ulong colormap,
             IntPtr pictFormatPtr,
-            ulong windowId,
+            ulong drawableId,
             ulong pictureId,
             IntPtr xftDraw
         )
@@ -36,26 +39,26 @@ namespace NWindows.X11
             this.visual = visual;
             this.colormap = colormap;
             this.pictFormatPtr = pictFormatPtr;
-            this.windowId = windowId;
+            this.drawableId = drawableId;
             this.pictureId = pictureId;
             this.xftDraw = xftDraw;
         }
 
-        public static X11Canvas CreateForWindow(
+        public static X11Canvas CreateForDrawable(
             IntPtr display,
             int screenNum,
             X11ObjectCache objectCache,
             IntPtr visual,
             ulong colormap,
             IntPtr pictFormatPtr,
-            ulong windowId
+            ulong drawableId
         )
         {
             XRenderPictureAttributes attr = new XRenderPictureAttributes();
             ulong pictureId = LibXRender.XRenderCreatePicture
             (
                 display,
-                windowId,
+                drawableId,
                 pictFormatPtr,
                 0,
                 ref attr
@@ -66,8 +69,8 @@ namespace NWindows.X11
 
             try
             {
-                xftDraw = LibXft.XftDrawCreate(display, windowId, visual, colormap);
-                canvas = new X11Canvas(display, screenNum, objectCache, visual, colormap, pictFormatPtr, windowId, pictureId, xftDraw);
+                xftDraw = LibXft.XftDrawCreate(display, drawableId, visual, colormap);
+                canvas = new X11Canvas(display, screenNum, objectCache, visual, colormap, pictFormatPtr, drawableId, pictureId, xftDraw);
                 xftDraw = IntPtr.Zero;
             }
             finally
@@ -94,9 +97,9 @@ namespace NWindows.X11
 
         public void SetClipRectangle(int x, int y, int width, int height)
         {
-            XRectangle[] rectangles = {new XRectangle(x, y, width, height)};
-            LibXRender.XRenderSetPictureClipRectangles(display, pictureId, 0, 0, rectangles, 1);
-            LibXft.XftDrawSetClipRectangles(xftDraw, 0, 0, rectangles, 1);
+            clipRectangles = new[] {new XRectangle(x, y, width, height)};
+            LibXRender.XRenderSetPictureClipRectangles(display, pictureId, 0, 0, clipRectangles, 1);
+            LibXft.XftDrawSetClipRectangles(xftDraw, 0, 0, clipRectangles, 1);
         }
 
         public void FillRectangle(Color color, int x, int y, int width, int height)
@@ -245,6 +248,144 @@ namespace NWindows.X11
             {
                 LibXRender.XRenderFreePicture(display, tempPictureId);
             }
+        }
+
+        public void DrawPath(Color color, int width, Point[] points)
+        {
+            if (color.IsFullyOpaque())
+            {
+                DrawPathXLib(color, width, points);
+                return;
+            }
+
+            // todo: handle points.Length <= 1
+
+            int minX = points.Min(p => p.X) - width;
+            int minY = points.Min(p => p.Y) - width;
+            int maxX = points.Max(p => p.X) + width;
+            int maxY = points.Max(p => p.Y) + width;
+
+            var relativePoints = new Point[points.Length];
+            for (int i = 0; i < points.Length; i++)
+            {
+                var point = points[i];
+                relativePoints[i] = new Point(point.X - minX, point.Y - minY);
+            }
+
+            WithTransparentCanvas
+            (
+                new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1),
+                color.A,
+                canvas => canvas.DrawPathXLib(color, width, relativePoints)
+            );
+        }
+
+        private void DrawPathXLib(Color color, int width, Point[] points)
+        {
+            var gcValues = new XGCValues();
+            gcValues.cap_style = X11CapStyle.CapRound;
+            gcValues.join_style = X11JoinStyle.JoinRound;
+            gcValues.foreground = ToPArgb(color);
+            gcValues.line_width = width;
+
+            var gcValueMask = XGCValueMask.GCCapStyle | XGCValueMask.GCForeground | XGCValueMask.GCJoinStyle | XGCValueMask.GCLineWidth;
+
+            var gc = LibX11.XCreateGC(display, drawableId, gcValueMask, ref gcValues);
+            try
+            {
+                if (clipRectangles != null)
+                {
+                    LibX11.XSetClipRectangles(display, gc, 0, 0, clipRectangles, clipRectangles.Length, 0);
+                }
+
+                XPoint[] xPoints = new XPoint[points.Length];
+                for (int i = 0; i < points.Length; i++)
+                {
+                    var point = points[i];
+                    xPoints[i] = new XPoint(point.X, point.Y);
+                }
+
+                LibX11.XDrawLines(display, drawableId, gc, xPoints, xPoints.Length, X11CoordinateMode.CoordModeOrigin);
+            }
+            finally
+            {
+                LibX11.XFreeGC(display, gc);
+            }
+        }
+
+        public void FillEllipse(Color color, int x, int y, int width, int height)
+        {
+            if (color.IsFullyOpaque())
+            {
+                FillEllipseXLib(color, x, y, width, height);
+                return;
+            }
+
+            WithTransparentCanvas
+            (
+                new Rectangle(x, y, width, height),
+                color.A,
+                canvas => canvas.FillEllipseXLib(color, 0, 0, width, height)
+            );
+        }
+
+        public void FillEllipseXLib(Color color, int x, int y, int width, int height)
+        {
+            var gcValues = new XGCValues();
+            gcValues.foreground = ToPArgb(color);
+
+            var gcValueMask = XGCValueMask.GCForeground;
+
+            var gc = LibX11.XCreateGC(display, drawableId, gcValueMask, ref gcValues);
+            try
+            {
+                if (clipRectangles != null)
+                {
+                    LibX11.XSetClipRectangles(display, gc, 0, 0, clipRectangles, clipRectangles.Length, 0);
+                }
+
+                LibX11.XDrawArc(display, drawableId, gc, x, y, (uint) width - 1, (uint) height - 1, 0, 360 * 64);
+                LibX11.XFillArc(display, drawableId, gc, x, y, (uint) width - 1, (uint) height - 1, 0, 360 * 64);
+            }
+            finally
+            {
+                LibX11.XFreeGC(display, gc);
+            }
+        }
+
+        private void WithTransparentCanvas(Rectangle rect, byte alpha, Action<X11Canvas> action)
+        {
+            using (X11Image tempImage = X11Image.Create(display, visual, drawableId, rect.Width, rect.Height))
+            {
+                var gcValues = new XGCValues();
+                gcValues.foreground = ToPArgb(Color.Transparent);
+                var gcValueMask = XGCValueMask.GCForeground;
+                var gc = LibX11.XCreateGC(display, drawableId, gcValueMask, ref gcValues);
+                try
+                {
+                    // todo: check int -> uint conversion
+                    LibX11.XFillRectangle(display, tempImage.PixmapId, gc, 0, 0, (uint) rect.Width, (uint) rect.Height);
+                }
+                finally
+                {
+                    LibX11.XFreeGC(display, gc);
+                }
+
+                using (var innerCanvas = X11Canvas.CreateForDrawable(display, screenNum, objectCache, visual, colormap, pictFormatPtr, tempImage.PixmapId))
+                {
+                    action(innerCanvas);
+                    DrawImage(tempImage, rect.X, rect.Y);
+                }
+            }
+        }
+
+        private static ulong ToPArgb(Color color)
+        {
+            int a = color.A;
+            int r = color.R * a / 255;
+            int g = color.G * a / 255;
+            int b = color.B * a / 255;
+            return (ulong) (a << 24 | r << 16 | g << 8 | b);
         }
     }
 }

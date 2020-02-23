@@ -16,7 +16,7 @@ namespace NWindows.Examples
             eventsExampleControl = new EventsExampleControl {PreferredSize = new Size(350, 250)};
 
             var dockPanel = new DockPanel();
-            var menuPanel = new StackPanel {Orientation = StackPanelOrientation.Vertical};
+            var menuPanel = new StackPanel {Orientation = StackPanelOrientation.Vertical, PreferredSize = new Size(150, 25)};
 
             dockPanel.Left = menuPanel;
             var scrollView = new ScrollView();
@@ -25,8 +25,10 @@ namespace NWindows.Examples
             var mainContent = CreateMainContent();
             scrollView.Content = mainContent;
 
+            var performanceTestControl = new PerformanceTestControl();
+
             menuPanel.Add(new Button("Main", (_, __) => scrollView.Content = mainContent));
-            menuPanel.Add(new Button("Button", (_, __) => scrollView.Content = new Button("Button", (___, ____) => {})));
+            menuPanel.Add(new Button("Performance Test", (_, __) => scrollView.Content = performanceTestControl));
 
             Content = dockPanel;
         }

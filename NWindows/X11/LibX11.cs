@@ -213,7 +213,7 @@ namespace NWindows.X11
         public static extern GC XCreateGC(
             DisplayPtr display,
             Drawable d,
-            ulong valuemask,
+            XGCValueMask valuemask,
             [In] ref XGCValues values
         );
 
@@ -240,6 +240,64 @@ namespace NWindows.X11
 
         [DllImport("libX11.so.6")]
         public static extern int XFreePixmap(DisplayPtr display, Pixmap pixmap);
+
+        [DllImport("libX11.so.6")]
+        public static extern int XSetClipRectangles(
+            DisplayPtr display,
+            GC gc,
+            int clip_x_origin,
+            int clip_y_origin,
+            XRectangle[] rectangles,
+            int n,
+            int ordering
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XFillRectangle(
+            DisplayPtr display,
+            Drawable d,
+            GC gc,
+            int x,
+            int y,
+            uint width,
+            uint height
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XDrawLines(
+            DisplayPtr display,
+            Drawable d,
+            GC gc,
+            XPoint[] points,
+            int npoints,
+            X11CoordinateMode mode
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XDrawArc(
+            DisplayPtr display,
+            Drawable d,
+            GC gc,
+            int x,
+            int y,
+            uint width,
+            uint height,
+            int angle1,
+            int angle2
+        );
+
+        [DllImport("libX11.so.6")]
+        public static extern int XFillArc(
+            DisplayPtr display,
+            Drawable d,
+            GC gc,
+            int x,
+            int y,
+            uint width,
+            uint height,
+            int angle1,
+            int angle2
+        );
 
         [DllImport("libX11.so.6")]
         public static extern KeySym XLookupKeysym([In] ref XKeyEvent key_event, int index);
@@ -698,8 +756,8 @@ namespace NWindows.X11
         public ulong background; /* background pixel */
         public int line_width; /* line width (in pixels) */
         public int line_style; /* LineSolid, LineOnOffDash, LineDoubleDash */
-        public int cap_style; /* CapNotLast, CapButt, CapRound, CapProjecting */
-        public int join_style; /* JoinMiter, JoinRound, JoinBevel */
+        public X11CapStyle cap_style; /* CapNotLast, CapButt, CapRound, CapProjecting */
+        public X11JoinStyle join_style; /* JoinMiter, JoinRound, JoinBevel */
         public int fill_style; /* FillSolid, FillTiled, FillStippled FillOpaqueStippled*/
         public int fill_rule; /* EvenOddRule, WindingRule */
         public int arc_mode; /* ArcChord, ArcPieSlice */
@@ -715,6 +773,86 @@ namespace NWindows.X11
         public Pixmap clip_mask; /* bitmap clipping; other calls for rects */
         public int dash_offset; /* patterned/dashed line information */
         public char dashes;
+    }
+
+    [Flags]
+    internal enum XGCValueMask : ulong
+    {
+        GCFunction = (1L << 0),
+        GCPlaneMask = (1L << 1),
+        GCForeground = (1L << 2),
+        GCBackground = (1L << 3),
+        GCLineWidth = (1L << 4),
+        GCLineStyle = (1L << 5),
+        GCCapStyle = (1L << 6),
+        GCJoinStyle = (1L << 7),
+        GCFillStyle = (1L << 8),
+        GCFillRule = (1L << 9),
+        GCTile = (1L << 10),
+        GCStipple = (1L << 11),
+        GCTileStipXOrigin = (1L << 12),
+        GCTileStipYOrigin = (1L << 13),
+        GCFont = (1L << 14),
+        GCSubwindowMode = (1L << 15),
+        GCGraphicsExposures = (1L << 16),
+        GCClipXOrigin = (1L << 17),
+        GCClipYOrigin = (1L << 18),
+        GCClipMask = (1L << 19),
+        GCDashOffset = (1L << 20),
+        GCDashList = (1L << 21),
+        GCArcMode = (1L << 22)
+    }
+
+    internal enum X11CapStyle
+    {
+        CapNotLast = 0,
+        CapButt = 1,
+        CapRound = 2,
+        CapProjecting = 3
+    }
+
+    internal enum X11JoinStyle
+    {
+        JoinMiter = 0,
+        JoinRound = 1,
+        JoinBevel = 2
+    }
+
+    internal enum X11CoordinateMode
+    {
+        /* relative to the origin */
+        CoordModeOrigin = 0,
+
+        /* relative to previous point */
+        CoordModePrevious = 1
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XPoint
+    {
+        public readonly short x;
+        public readonly short y;
+
+        public XPoint(int x, int y)
+        {
+            this.x = ToShort(x);
+            this.y = ToShort(y);
+        }
+
+        private static short ToShort(int val)
+        {
+            if (val < short.MinValue)
+            {
+                return short.MinValue;
+            }
+
+            if (val > short.MaxValue)
+            {
+                return short.MaxValue;
+            }
+
+            return (short) val;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]

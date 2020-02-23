@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using NWindows.NativeApi;
 
@@ -99,9 +100,9 @@ namespace NWindows.Win32
             y += offset.Y;
 
             // todo: choose W32/GDI/GDI+ method
-//            FillRectangleW32(color, x, y, width, height);
+            //            FillRectangleW32(color, x, y, width, height);
             FillRectangleGDI(color, x, y, width, height);
-//            FillRectangleGDIPlus(color, x, y, width, height);
+            //            FillRectangleGDIPlus(color, x, y, width, height);
         }
 
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
@@ -146,6 +147,75 @@ namespace NWindows.Win32
                 Gdi32API.SafeDeleteObject(hdcMem);
                 Gdi32API.DeleteObject(bitmap);
             }
+        }
+
+        public void DrawPath(Color color, int width, Point[] points)
+        {
+            // todo: handle points.Length <= 1
+
+            var relativePoints = new Point[points.Length];
+            for (int i = 0; i < relativePoints.Length; i++)
+            {
+                var point = points[i];
+                relativePoints[i] = new Point(point.X + offset.X, point.Y + offset.Y);
+            }
+
+            if (color.IsFullyOpaque())
+            {
+                DrawOpaquePathGDI(color, width, relativePoints);
+                return;
+            }
+
+            int minX = relativePoints.Min(p => p.X) - width;
+            int minY = relativePoints.Min(p => p.Y) - width;
+            int maxX = relativePoints.Max(p => p.X) + width;
+            int maxY = relativePoints.Max(p => p.Y) + width;
+
+            for (int i = 0; i < relativePoints.Length; i++)
+            {
+                var point = relativePoints[i];
+                relativePoints[i] = new Point(point.X - minX, point.Y - minY);
+            }
+
+            WithTransparentCanvas
+            (
+                new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1),
+                color.A, true,
+                canvas => canvas.DrawOpaquePathGDI(color, width, relativePoints)
+            );
+        }
+
+        private void DrawOpaquePathGDI(Color color, int width, Point[] points)
+        {
+            SelectSolidPen(color, width);
+            // todo: unlike X11, GDI does not paint last pixel
+            Gdi32API.Polyline(hdc, points.Select(p => new POINT(p.X, p.Y)).ToArray(), points.Length);
+        }
+
+        public void FillEllipse(Color color, int x, int y, int width, int height)
+        {
+            x += offset.X;
+            y += offset.Y;
+
+            if (color.IsFullyOpaque())
+            {
+                FillOpaqueEllipseGDI(color, x, y, width, height);
+                return;
+            }
+
+            WithTransparentCanvas
+            (
+                new Rectangle(x, y, width, height),
+                color.A, true,
+                canvas => canvas.FillOpaqueEllipseGDI(color, 0, 0, width, height)
+            );
+        }
+
+        public void FillOpaqueEllipseGDI(Color color, int x, int y, int width, int height)
+        {
+            SelectSolidPen(color, 0);
+            SelectSolidBrush(color);
+            Gdi32API.Ellipse(hdc, x, y, x + width, y + height);
         }
 
         private void DrawStringGDI(Color color, FontConfig font, int x, int y, string text)
@@ -353,9 +423,9 @@ namespace NWindows.Win32
             }
         }
 
-        private void SelectSolidPen(Color color)
+        private void SelectSolidPen(Color color, int width)
         {
-            IntPtr pen = objectCache.GetSolidPen(color);
+            IntPtr pen = objectCache.GetSolidPen(color, width);
             IntPtr oldPen = Gdi32API.SelectObjectChecked(hdc, pen);
             if (originalPen == IntPtr.Zero)
             {

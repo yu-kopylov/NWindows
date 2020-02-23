@@ -280,7 +280,7 @@ namespace NWindows.X11
                     }
                     else if (cevt.message_type == XA_NWINDOWS_REDRAW && pendingRedraw != null)
                     {
-                        using (X11Canvas canvas = X11Canvas.CreateForWindow(
+                        using (X11Canvas canvas = X11Canvas.CreateForDrawable(
                             display,
                             defaultScreen,
                             x11ObjectCache,

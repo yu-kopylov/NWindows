@@ -34,5 +34,15 @@ namespace NWindows.Examples
         {
             canvas.DrawImage(image, x, y);
         }
+
+        public void DrawPath(Color color, int width, Point[] points)
+        {
+            canvas.DrawPath(color, width, points);
+        }
+
+        public void FillEllipse(Color color, int x, int y, int width, int height)
+        {
+            canvas.FillEllipse(color, x, y, width, height);
+        }
     }
 }

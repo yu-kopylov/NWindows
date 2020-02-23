@@ -7,13 +7,13 @@ namespace NWindows.Win32
 {
     internal class Gdi32ObjectCache
     {
-        private readonly Cache<uint, IntPtr> pens;
+        private readonly Cache<(uint, int), IntPtr> pens;
         private readonly Cache<uint, IntPtr> brushes;
         private readonly Cache<FontConfig, IntPtr> fonts;
 
         public Gdi32ObjectCache()
         {
-            pens = new Cache<uint, IntPtr>(64, CreateSolidPen, GdiDeleteObject, EqualityComparer<uint>.Default);
+            pens = new Cache<(uint, int), IntPtr>(64, k => CreateSolidPen(k.Item1, k.Item2), GdiDeleteObject, EqualityComparer<(uint, int)>.Default);
             brushes = new Cache<uint, IntPtr>(64, CreateSolidBrush, GdiDeleteObject, EqualityComparer<uint>.Default);
             fonts = new Cache<FontConfig, IntPtr>(64, CreateFont, GdiDeleteObject, Gdi32FontConfigComparer.Instance);
         }
@@ -30,15 +30,15 @@ namespace NWindows.Win32
             Gdi32API.DeleteObject(ptr);
         }
 
-        public IntPtr GetSolidPen(Color color)
+        public IntPtr GetSolidPen(Color color, int width)
         {
             uint cref = Gdi32API.ToCOLORREF(color);
-            return pens.Get(cref);
+            return pens.Get((cref, width));
         }
 
-        private IntPtr CreateSolidPen(uint color)
+        private IntPtr CreateSolidPen(uint color, int width)
         {
-            return Gdi32API.CreatePen(GdiPenStyle.PS_SOLID, 0, color);
+            return Gdi32API.CreatePen(GdiPenStyle.PS_SOLID, width, color);
         }
 
         public IntPtr GetSolidBrush(Color color)

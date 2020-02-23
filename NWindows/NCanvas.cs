@@ -31,5 +31,15 @@ namespace NWindows
         {
             NativeCanvas.DrawImage(image.NativeImage, x, y);
         }
+
+        public void DrawPath(Color color, int width, Point[] points)
+        {
+            NativeCanvas.DrawPath(color, width, points);
+        }
+
+        public void FillEllipse(Color color, int x, int y, int width, int height)
+        {
+            NativeCanvas.FillEllipse(color, x, y, width, height);
+        }
     }
 }
