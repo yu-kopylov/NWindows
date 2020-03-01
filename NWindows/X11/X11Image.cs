@@ -34,6 +34,8 @@ namespace NWindows.X11
                 throw new ArgumentException($"Image dimensions cannot be negative ({width} x {height}).");
             }
 
+            // todo: handle zero width / height
+
             ulong pixmapId = LibX11.XCreatePixmap(
                 display,
                 drawable,

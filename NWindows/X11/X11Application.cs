@@ -164,7 +164,11 @@ namespace NWindows.X11
                 if (evt.type == XEventType.Expose)
                 {
                     var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
-                    if (pendingRedraw == null)
+                    if (rect.Width <= 0 || rect.Height <= 0)
+                    {
+                        // nothing to invalidate
+                    }
+                    else if (pendingRedraw == null)
                     {
                         pendingRedraw = rect;
                         // todo: does X11 guarantee that event will be delivered?

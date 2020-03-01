@@ -112,7 +112,31 @@ namespace NWindows.Examples.Controls
             {
                 if (Content != null)
                 {
-                    Content.Area = new Rectangle(Area.X + ContentLocation.X, Area.Y + ContentLocation.Y, Content.ContentSize.Width, Content.ContentSize.Height);
+                    int x, y;
+                    int width, height;
+                    if (Content.ContentSize.Width > Area.Width)
+                    {
+                        x = Area.X + ContentLocation.X;
+                        width = Content.ContentSize.Width;
+                    }
+                    else
+                    {
+                        x = Area.X;
+                        width = Area.Width;
+                    }
+
+                    if (Content.ContentSize.Height > Area.Height)
+                    {
+                        y = Area.Y + ContentLocation.Y;
+                        height = Content.ContentSize.Height;
+                    }
+                    else
+                    {
+                        y = Area.Y;
+                        height = Area.Height;
+                    }
+
+                    Content.Area = new Rectangle(x, y, width, height);
                 }
             }
 

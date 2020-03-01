@@ -7,7 +7,7 @@ namespace Test.NWindows.Examples.Controls
     public class TestScrollView
     {
         [Test]
-        public void Test()
+        public void TestResizeScrollView()
         {
             var scrollView = new ScrollView {Area = new Rectangle(0, 0, 100, 100)};
             var content = new TextBox {PreferredSize = new Size(200, 200)};
@@ -27,6 +27,12 @@ namespace Test.NWindows.Examples.Controls
 
             Assert.That(content.Area, Is.EqualTo(new Rectangle(0, 0, 200, 200)));
             Assert.That(content.VisibleArea, Is.EqualTo(new Rectangle(0, 0, 120, 130)));
+
+            scrollView.Area = new Rectangle(0, 0, 400 + xPadding, 300 + yPadding);
+            scrollView.Update();
+
+            Assert.That(content.Area, Is.EqualTo(new Rectangle(0, 0, 400, 300)));
+            Assert.That(content.VisibleArea, Is.EqualTo(new Rectangle(0, 0, 400, 300)));
         }
     }
 }
