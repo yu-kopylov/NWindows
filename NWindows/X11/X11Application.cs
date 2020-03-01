@@ -280,20 +280,22 @@ namespace NWindows.X11
                     }
                     else if (cevt.message_type == XA_NWINDOWS_REDRAW && pendingRedraw != null)
                     {
-                        using (X11Canvas canvas = X11Canvas.CreateForDrawable(
-                            display,
-                            defaultScreen,
-                            x11ObjectCache,
-                            visualInfo.visual,
-                            colormap,
-                            pictFormatPtr,
-                            windowId
-                        ))
-                        {
-                            window.OnPaint(canvas, pendingRedraw.Value);
-                        }
-
+                        Rectangle area = pendingRedraw.Value;
                         pendingRedraw = null;
+
+                        using (X11Image image = X11Image.Create(display, visualInfo.visual, windowId, area.Width, area.Height))
+                        {
+                            using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, image.PixmapId))
+                            {
+                                canvas.SetOrigin(area.X, area.Y);
+                                window.OnPaint(canvas, area);
+                            }
+
+                            using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, windowId))
+                            {
+                                canvas.DrawImage(image, area.X, area.Y);
+                            }
+                        }
                     }
                 }
 

@@ -19,6 +19,7 @@ namespace NWindows.X11
         private readonly ulong pictureId;
         private readonly IntPtr xftDraw;
 
+        private Point origin;
         private XRectangle[] clipRectangles;
 
         private X11Canvas(
@@ -95,8 +96,16 @@ namespace NWindows.X11
             LibXRender.XRenderFreePicture(display, pictureId);
         }
 
+        public void SetOrigin(int x, int y)
+        {
+            origin = new Point(x, y);
+        }
+
         public void SetClipRectangle(int x, int y, int width, int height)
         {
+            x -= origin.X;
+            y -= origin.Y;
+
             clipRectangles = new[] {new XRectangle(x, y, width, height)};
             LibXRender.XRenderSetPictureClipRectangles(display, pictureId, 0, 0, clipRectangles, 1);
             LibXft.XftDrawSetClipRectangles(xftDraw, 0, 0, clipRectangles, 1);
@@ -109,12 +118,18 @@ namespace NWindows.X11
                 return;
             }
 
+            x -= origin.X;
+            y -= origin.Y;
+
             XRenderColor xColor = new XRenderColor(color);
             LibXRender.XRenderFillRectangle(display, PictOp.PictOpOver, pictureId, ref xColor, x, y, (uint) width, (uint) height);
         }
 
         public void DrawString(Color color, FontConfig font, int x, int y, string text)
         {
+            x -= origin.X;
+            y -= origin.Y;
+
             var xftColorPtr = Marshal.AllocHGlobal(Marshal.SizeOf<XftColor>());
             try
             {
@@ -224,6 +239,9 @@ namespace NWindows.X11
 
         public void DrawImage(INativeImage image, int x, int y)
         {
+            x -= origin.X;
+            y -= origin.Y;
+
             // todo: allow null?
             X11Image x11Image = (X11Image) image;
 
@@ -252,6 +270,14 @@ namespace NWindows.X11
 
         public void DrawPath(Color color, int width, Point[] points)
         {
+            if (origin.X != 0 || origin.Y != 0)
+            {
+                for (int i = 0; i < points.Length; i++)
+                {
+                    points[i] = new Point(points[i].X - origin.X, points[i].Y - origin.Y);
+                }
+            }
+
             if (color.IsFullyOpaque())
             {
                 DrawPathXLib(color, width, points);
@@ -272,10 +298,9 @@ namespace NWindows.X11
                 relativePoints[i] = new Point(point.X - minX, point.Y - minY);
             }
 
-            WithTransparentCanvas
+            WithExtraCanvas
             (
                 new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1),
-                color.A,
                 canvas => canvas.DrawPathXLib(color, width, relativePoints)
             );
         }
@@ -315,21 +340,23 @@ namespace NWindows.X11
 
         public void FillEllipse(Color color, int x, int y, int width, int height)
         {
+            x -= origin.X;
+            y -= origin.Y;
+
             if (color.IsFullyOpaque())
             {
                 FillEllipseXLib(color, x, y, width, height);
                 return;
             }
 
-            WithTransparentCanvas
+            WithExtraCanvas
             (
                 new Rectangle(x, y, width, height),
-                color.A,
                 canvas => canvas.FillEllipseXLib(color, 0, 0, width, height)
             );
         }
 
-        public void FillEllipseXLib(Color color, int x, int y, int width, int height)
+        private void FillEllipseXLib(Color color, int x, int y, int width, int height)
         {
             var gcValues = new XGCValues();
             gcValues.foreground = ToPArgb(color);
@@ -353,7 +380,7 @@ namespace NWindows.X11
             }
         }
 
-        private void WithTransparentCanvas(Rectangle rect, byte alpha, Action<X11Canvas> action)
+        private void WithExtraCanvas(Rectangle rect, Action<X11Canvas> action)
         {
             using (X11Image tempImage = X11Image.Create(display, visual, drawableId, rect.Width, rect.Height))
             {
@@ -374,7 +401,7 @@ namespace NWindows.X11
                 using (var innerCanvas = X11Canvas.CreateForDrawable(display, screenNum, objectCache, visual, colormap, pictFormatPtr, tempImage.PixmapId))
                 {
                     action(innerCanvas);
-                    DrawImage(tempImage, rect.X, rect.Y);
+                    DrawImage(tempImage, rect.X + origin.X, rect.Y + origin.Y);
                 }
             }
         }
