@@ -11,7 +11,6 @@ namespace NWindows.Examples
         public BitmapExampleControl()
         {
             RepaintMode = ControlRepaintMode.IncrementalGrowth;
-            PreferredSize = new Size(800, 600);
         }
 
         private NBitmap bitmap;

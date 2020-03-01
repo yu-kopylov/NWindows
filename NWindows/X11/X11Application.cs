@@ -107,6 +107,7 @@ namespace NWindows.X11
 
             WM_PROTOCOLS = LibX11.XInternAtom(display, "WM_PROTOCOLS", 0);
             WM_DELETE_WINDOW = LibX11.XInternAtom(display, "WM_DELETE_WINDOW", 0);
+            XA_NWINDOWS_REDRAW = LibX11.XInternAtom(display, "NWINDOWS_REDRAW", 0);
 
             clipboard = X11Clipboard.Create();
         }
