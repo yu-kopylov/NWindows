@@ -39,7 +39,7 @@ namespace NWindows
                 return;
             }
 
-            if (sourceLocation.X < 0 || sourceLocation.Y < 0 || sourceLocation.X + size.Width > source.Width || sourceLocation.Y + size.Height > source.Width)
+            if (sourceLocation.X < 0 || sourceLocation.Y < 0 || sourceLocation.X + size.Width > source.Width || sourceLocation.Y + size.Height > source.Height)
             {
                 throw new ArgumentException($"Source area is outside of the bitmap: ({new Rectangle(sourceLocation, size)}).");
             }
@@ -61,7 +61,7 @@ namespace NWindows
                 return;
             }
 
-            if (sourceLocation.X < 0 || sourceLocation.Y < 0 || sourceLocation.X + size.Width > Width || sourceLocation.Y + size.Height > Width)
+            if (sourceLocation.X < 0 || sourceLocation.Y < 0 || sourceLocation.X + size.Width > Width || sourceLocation.Y + size.Height > Height)
             {
                 throw new ArgumentException($"Source area is outside of the image: ({new Rectangle(sourceLocation, size)}).");
             }
