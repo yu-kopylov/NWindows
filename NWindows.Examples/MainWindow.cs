@@ -26,9 +26,11 @@ namespace NWindows.Examples
             scrollView.Content = mainContent;
 
             var performanceTestControl = new PerformanceTestControl();
+            var bitmapExampleControl = new BitmapExampleControl();
 
             menuPanel.Add(new Button("Main", (_, __) => scrollView.Content = mainContent));
             menuPanel.Add(new Button("Performance Test", (_, __) => scrollView.Content = performanceTestControl));
+            menuPanel.Add(new Button("Paint To Bitmap", (_, __) => scrollView.Content = bitmapExampleControl));
 
             Content = dockPanel;
         }
