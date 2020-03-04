@@ -103,6 +103,18 @@ namespace NWindows.Examples
 
                 const int labelAreaHeight = 40;
                 canvas.FillRectangle(Color.Black, 0, Area.Height - labelAreaHeight, Area.Width, labelAreaHeight);
+                if (overallTime.IsRunning)
+                {
+                    int barOffset = (int) ((overallTime.ElapsedMilliseconds / 10) % Area.Width);
+                    int barWidth1 = Area.Width / 4;
+                    int barWidth2 = barOffset + barWidth1 - Area.Width;
+                    canvas.FillRectangle(Color.MidnightBlue, barOffset, Area.Height - labelAreaHeight, barWidth1, labelAreaHeight);
+                    if (barWidth2 > 0)
+                    {
+                        canvas.FillRectangle(Color.MidnightBlue, 0, Area.Height - labelAreaHeight, barWidth2, labelAreaHeight);
+                    }
+                }
+
                 canvas.DrawString(Color.White, new FontConfig("Arial", 16), 2, Area.Height - labelAreaHeight + 2, $"Paint: {area}, {sw.ElapsedMilliseconds} ms.");
                 canvas.DrawString(Color.White, new FontConfig("Arial", 16), 2, Area.Height - labelAreaHeight + 22, $"FPS: {frameCount / overallTimeSeconds:#.0}");
 
