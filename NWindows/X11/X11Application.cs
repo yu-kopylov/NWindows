@@ -22,12 +22,12 @@ namespace NWindows.X11
         private X11ObjectCache x11ObjectCache;
         private X11Clipboard clipboard;
 
-        private Rectangle? pendingRedraw;
-        private Rectangle? pendingInvalidate;
+        private Rectangle? invalidatedArea;
+        private bool paintQueued;
 
         private ulong WM_PROTOCOLS;
         private ulong WM_DELETE_WINDOW;
-        private ulong XA_NWINDOWS_REDRAW;
+        private ulong XA_NWINDOWS_PAINT_COMPLETE;
 
         public void Dispose()
         {
@@ -107,7 +107,7 @@ namespace NWindows.X11
 
             WM_PROTOCOLS = LibX11.XInternAtom(display, "WM_PROTOCOLS", 0);
             WM_DELETE_WINDOW = LibX11.XInternAtom(display, "WM_DELETE_WINDOW", 0);
-            XA_NWINDOWS_REDRAW = LibX11.XInternAtom(display, "NWINDOWS_REDRAW", 0);
+            XA_NWINDOWS_PAINT_COMPLETE = LibX11.XInternAtom(display, "NWINDOWS_PAINT_COMPLETE", 0);
 
             clipboard = X11Clipboard.Create();
         }
@@ -165,21 +165,7 @@ namespace NWindows.X11
                 if (evt.type == XEventType.Expose)
                 {
                     var rect = new Rectangle(evt.ExposeEvent.x, evt.ExposeEvent.y, evt.ExposeEvent.width, evt.ExposeEvent.height);
-                    if (rect.Width <= 0 || rect.Height <= 0)
-                    {
-                        // nothing to invalidate
-                    }
-                    else if (pendingRedraw == null)
-                    {
-                        pendingRedraw = rect;
-                        // todo: does X11 guarantee that event will be delivered?
-                        var message = XEvent.CreateClientMessage(windowId, XA_NWINDOWS_REDRAW);
-                        LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref message);
-                    }
-                    else
-                    {
-                        pendingRedraw = Rectangle.Union(pendingRedraw.Value, rect);
-                    }
+                    Invalidate(rect);
                 }
                 else if (evt.type == XEventType.MotionNotify)
                 {
@@ -283,33 +269,34 @@ namespace NWindows.X11
                     {
                         windowClosed = true;
                     }
-                    else if (cevt.message_type == XA_NWINDOWS_REDRAW && pendingRedraw != null)
+                    else if (cevt.message_type == XA_NWINDOWS_PAINT_COMPLETE)
                     {
-                        Rectangle area = pendingRedraw.Value;
-                        pendingRedraw = null;
-
-                        using (X11Image image = X11Image.Create(display, visualInfo.visual, windowId, area.Width, area.Height))
-                        {
-                            using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, image.PixmapId))
-                            {
-                                canvas.SetOrigin(area.X, area.Y);
-                                window.OnPaint(canvas, area);
-                            }
-
-                            using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, windowId))
-                            {
-                                canvas.DrawImage(image, area.X, area.Y);
-                            }
-                        }
+                        paintQueued = false;
                     }
                 }
 
-                if (pendingInvalidate != null)
+                if (invalidatedArea != null && !paintQueued)
                 {
-                    var area = pendingInvalidate.Value;
-                    XEvent invEvt = XEvent.CreateExpose(area.X, area.Y, area.Width, area.Height);
-                    LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref invEvt);
-                    pendingInvalidate = null;
+                    Rectangle area = invalidatedArea.Value;
+                    invalidatedArea = null;
+
+                    using (X11Image image = X11Image.Create(display, visualInfo.visual, windowId, area.Width, area.Height))
+                    {
+                        using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, image.PixmapId))
+                        {
+                            canvas.SetOrigin(area.X, area.Y);
+                            window.OnPaint(canvas, area);
+                        }
+
+                        using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, windowId))
+                        {
+                            canvas.DrawImage(image, area.X, area.Y);
+                        }
+                    }
+
+                    paintQueued = true;
+                    var message = XEvent.CreateClientMessage(windowId, XA_NWINDOWS_PAINT_COMPLETE);
+                    LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref message);
                 }
             }
 
@@ -318,7 +305,10 @@ namespace NWindows.X11
 
         private void Invalidate(Rectangle rect)
         {
-            pendingInvalidate = pendingInvalidate == null ? rect : Rectangle.Union(pendingInvalidate.Value, rect);
+            if (rect.Width > 0 && rect.Height > 0)
+            {
+                invalidatedArea = invalidatedArea == null ? rect : Rectangle.Union(invalidatedArea.Value, rect);
+            }
         }
 
         private static bool IsWindowActivationEvent(FocusNotifyMode mode, FocusNotifyDetail detail)
