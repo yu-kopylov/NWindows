@@ -222,7 +222,7 @@ namespace NWindows.Win32
 
     internal static class Gdi32API
     {
-        private static readonly HGDIOBJ HGDI_ERROR = new IntPtr(0xFFFFFFFFL);
+        private static readonly HGDIOBJ HGDI_ERROR = new IntPtr(-1);
         private static readonly COLORREF CLR_INVALID = 0xFFFFFFFF;
 
         [DllImport("Gdi32.dll")]
