@@ -7,8 +7,8 @@ namespace NWindows.NativeApi
         void Init();
         void Run(INativeWindowStartupInfo startupInfo);
 
-        INativeGraphics CreateGraphics();
-        INativeImageCodec CreateImageCodec();
-        INativeClipboard CreateClipboard();
+        INativeGraphics Graphics { get; }
+        INativeImageCodec ImageCodec { get; }
+        INativeClipboard Clipboard { get; }
     }
 }

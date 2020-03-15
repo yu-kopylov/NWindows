@@ -20,6 +20,8 @@ namespace NWindows.X11
         private ulong colormap;
 
         private X11ObjectCache x11ObjectCache;
+        private X11Graphics graphics;
+        private GdkPixBufImageCodec imageCodec;
         private X11Clipboard clipboard;
 
         private Rectangle? invalidatedArea;
@@ -109,6 +111,8 @@ namespace NWindows.X11
             WM_DELETE_WINDOW = LibX11.XInternAtom(display, "WM_DELETE_WINDOW", 0);
             XA_NWINDOWS_PAINT_COMPLETE = LibX11.XInternAtom(display, "NWINDOWS_PAINT_COMPLETE", 0);
 
+            graphics = new X11Graphics(display, x11ObjectCache);
+            imageCodec = new GdkPixBufImageCodec(display, visualInfo.visual, defaultRootWindow);
             clipboard = X11Clipboard.Create();
         }
 
@@ -378,19 +382,19 @@ namespace NWindows.X11
             return modifierKey;
         }
 
-        public INativeGraphics CreateGraphics()
+        public INativeGraphics Graphics
         {
-            return new X11Graphics(display, x11ObjectCache);
+            get { return graphics; }
         }
 
-        public INativeImageCodec CreateImageCodec()
+        public INativeImageCodec ImageCodec
         {
-            return new GdkPixBufImageCodec(display, visualInfo.visual, defaultRootWindow);
+            get { return imageCodec; }
         }
 
-        public INativeClipboard CreateClipboard()
+        public INativeClipboard Clipboard
         {
-            return clipboard;
+            get { return clipboard; }
         }
     }
 }

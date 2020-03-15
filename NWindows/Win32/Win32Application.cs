@@ -13,6 +13,10 @@ namespace NWindows.Win32
         private readonly Dictionary<IntPtr, Win32Window> windows = new Dictionary<IntPtr, Win32Window>();
         private readonly Gdi32ObjectCache gdiObjectCache = new Gdi32ObjectCache();
 
+        private Win32Graphics graphics;
+        private Win32ImageCodec imageCodec;
+        private Win32Clipboard clipboard;
+
         public void Dispose()
         {
             gdiObjectCache.Clear();
@@ -36,7 +40,12 @@ namespace NWindows.Win32
             }
         }
 
-        public void Init() {}
+        public void Init()
+        {
+            graphics = new Win32Graphics(gdiObjectCache);
+            imageCodec = new Win32ImageCodec();
+            clipboard = new Win32Clipboard();
+        }
 
         public void Run(INativeWindowStartupInfo startupInfo)
         {
@@ -239,19 +248,19 @@ namespace NWindows.Win32
             return Win32EventHandler.HandleWindowEvent(window, uMsg, wParam32, lParam32);
         }
 
-        public INativeGraphics CreateGraphics()
+        public INativeGraphics Graphics
         {
-            return new Win32Graphics(gdiObjectCache);
+            get { return graphics; }
         }
 
-        public INativeImageCodec CreateImageCodec()
+        public INativeImageCodec ImageCodec
         {
-            return new Win32ImageCodec();
+            get { return imageCodec; }
         }
 
-        public INativeClipboard CreateClipboard()
+        public INativeClipboard Clipboard
         {
-            return new Win32Clipboard();
+            get { return clipboard; }
         }
     }
 }

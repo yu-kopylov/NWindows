@@ -40,9 +40,9 @@ namespace NWindows
 
             NativeApp.Init();
 
-            Graphics = new NGraphics(NativeApp.CreateGraphics());
-            ImageCodec = new NImageCodec(NativeApp.CreateImageCodec());
-            Clipboard = new NClipboard(NativeApp.CreateClipboard());
+            Graphics = new NGraphics(NativeApp.Graphics);
+            ImageCodec = new NImageCodec(NativeApp.ImageCodec);
+            Clipboard = new NClipboard(NativeApp.Clipboard);
         }
 
         public void Run(NWindow window)
