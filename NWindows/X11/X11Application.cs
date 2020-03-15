@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using System.Text;
 using NWindows.NativeApi;
 
@@ -12,14 +11,7 @@ namespace NWindows.X11
         public const int RequiredBitsPerChannel = 8;
 
         private IntPtr display;
-        private int defaultScreen;
-        private ulong defaultRootWindow;
-        private IntPtr pictFormatPtr;
-        private XRenderPictFormat pictFormat;
-        private XVisualInfo visualInfo;
-        private ulong colormap;
 
-        private X11ObjectCache x11ObjectCache;
         private X11Graphics graphics;
         private GdkPixBufImageCodec imageCodec;
         private X11Clipboard clipboard;
@@ -34,7 +26,7 @@ namespace NWindows.X11
         public void Dispose()
         {
             clipboard.Stop();
-            x11ObjectCache?.Clear();
+            graphics.Dispose();
             LibX11.XCloseDisplay(display);
         }
 
@@ -71,48 +63,12 @@ namespace NWindows.X11
                 throw new InvalidOperationException("Cannot open display.");
             }
 
-            defaultScreen = LibX11.XDefaultScreen(display);
-            defaultRootWindow = LibX11.XDefaultRootWindow(display);
-
-            //todo: is is safe to keep pictFormatPtr after reading it into XRenderPictFormat
-            pictFormatPtr = LibXRender.XRenderFindStandardFormat(display, StandardPictFormat.PictStandardARGB32);
-
-            if (pictFormatPtr == IntPtr.Zero)
-            {
-                throw new InvalidOperationException("Display does not support 32-bit ARGB.");
-            }
-
-            pictFormat = Marshal.PtrToStructure<XRenderPictFormat>(pictFormatPtr);
-
-            int status = LibX11.XMatchVisualInfo
-            (
-                display,
-                defaultScreen,
-                pictFormat.depth,
-                VisualClass.TrueColor,
-                out visualInfo
-            );
-            if (status == 0)
-            {
-                throw new InvalidOperationException($"TrueColor visual with depth {pictFormat.depth} does not exist.");
-            }
-
-            colormap = LibX11.XCreateColormap
-            (
-                display,
-                defaultRootWindow,
-                visualInfo.visual,
-                CreateColormapOption.AllocNone
-            );
-
-            x11ObjectCache = new X11ObjectCache(display, defaultScreen);
-
             WM_PROTOCOLS = LibX11.XInternAtom(display, "WM_PROTOCOLS", 0);
             WM_DELETE_WINDOW = LibX11.XInternAtom(display, "WM_DELETE_WINDOW", 0);
             XA_NWINDOWS_PAINT_COMPLETE = LibX11.XInternAtom(display, "NWINDOWS_PAINT_COMPLETE", 0);
 
-            graphics = new X11Graphics(display, x11ObjectCache);
-            imageCodec = new GdkPixBufImageCodec(display, visualInfo.visual, defaultRootWindow);
+            graphics = X11Graphics.Create(display);
+            imageCodec = new GdkPixBufImageCodec(display, graphics.Visual, graphics.RootWindow);
             clipboard = X11Clipboard.Create();
         }
 
@@ -129,18 +85,18 @@ namespace NWindows.X11
                               XEventMask.KeyReleaseMask |
                               XEventMask.PointerMotionMask |
                               XEventMask.StructureNotifyMask;
-            attr.colormap = colormap;
+            attr.colormap = graphics.ColorMap;
 
             ulong windowId = LibX11.XCreateWindow
             (
                 display,
-                defaultRootWindow,
+                graphics.RootWindow,
                 0, 0,
                 (uint) window.Width, (uint) window.Height,
                 1,
-                pictFormat.depth,
+                graphics.PictFormat.depth,
                 WindowClass.InputOutput,
-                visualInfo.visual,
+                graphics.Visual,
                 XSetWindowAttributeMask.CWBorderPixel |
                 XSetWindowAttributeMask.CWBitGravity |
                 XSetWindowAttributeMask.CWEventMask |
@@ -284,15 +240,15 @@ namespace NWindows.X11
                     Rectangle area = invalidatedArea.Value;
                     invalidatedArea = null;
 
-                    using (X11Image image = X11Image.Create(display, visualInfo.visual, windowId, area.Width, area.Height))
+                    using (X11Image image = graphics.CreateImage(area.Width, area.Height))
                     {
-                        using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, image.PixmapId))
+                        using (X11Canvas canvas = graphics.CreateCanvas(image.PixmapId))
                         {
                             canvas.SetOrigin(area.X, area.Y);
                             window.OnPaint(canvas, area);
                         }
 
-                        using (X11Canvas canvas = X11Canvas.CreateForDrawable(display, defaultScreen, x11ObjectCache, visualInfo.visual, colormap, pictFormatPtr, windowId))
+                        using (X11Canvas canvas = graphics.CreateCanvas(windowId))
                         {
                             canvas.DrawImage(image, area.X, area.Y);
                         }
@@ -303,8 +259,6 @@ namespace NWindows.X11
                     LibX11.XSendEvent(display, windowId, 0, XEventMask.NoEventMask, ref message);
                 }
             }
-
-            //todo: close window
         }
 
         private void Invalidate(Rectangle rect)
