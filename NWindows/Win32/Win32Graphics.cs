@@ -4,13 +4,13 @@ using NWindows.NativeApi;
 
 namespace NWindows.Win32
 {
-    internal class Win32Graphics : INativeGraphics
+    internal class Win32Graphics : INativeGraphics, IDisposable
     {
-        private readonly Gdi32ObjectCache objectCache;
+        private readonly Gdi32ObjectCache objectCache = new Gdi32ObjectCache();
 
-        public Win32Graphics(Gdi32ObjectCache objectCache)
+        public void Dispose()
         {
-            this.objectCache = objectCache;
+            objectCache.Clear();
         }
 
         public Size MeasureString(FontConfig font, string text)
@@ -37,6 +37,11 @@ namespace NWindows.Win32
             {
                 Win32API.ReleaseDCChecked(IntPtr.Zero, hdc);
             }
+        }
+
+        internal Win32Canvas CreateCanvas(Win32Bitmap bitmap, Point offset)
+        {
+            return bitmap.CreateCanvas(offset, objectCache);
         }
     }
 }

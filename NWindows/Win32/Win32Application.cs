@@ -11,7 +11,6 @@ namespace NWindows.Win32
         private const string WindowClassName = "DEFAULT";
 
         private readonly Dictionary<IntPtr, Win32Window> windows = new Dictionary<IntPtr, Win32Window>();
-        private readonly Gdi32ObjectCache gdiObjectCache = new Gdi32ObjectCache();
 
         private Win32Graphics graphics;
         private Win32ImageCodec imageCodec;
@@ -19,7 +18,7 @@ namespace NWindows.Win32
 
         public void Dispose()
         {
-            gdiObjectCache.Clear();
+            graphics.Dispose();
         }
 
         public static bool IsAvailable()
@@ -42,7 +41,7 @@ namespace NWindows.Win32
 
         public void Init()
         {
-            graphics = new Win32Graphics(gdiObjectCache);
+            graphics = new Win32Graphics();
             imageCodec = new Win32ImageCodec();
             clipboard = new Win32Clipboard();
         }
@@ -202,7 +201,7 @@ namespace NWindows.Win32
                         Rectangle area = new Rectangle(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.Width, ps.rcPaint.Height);
                         using (Win32Bitmap bitmap = Win32Bitmap.Create(hdc, area.Width, area.Height))
                         {
-                            using (Win32Canvas canvas = bitmap.CreateCanvas(new Point(-area.X, -area.Y), gdiObjectCache))
+                            using (Win32Canvas canvas = graphics.CreateCanvas(bitmap, new Point(-area.X, -area.Y)))
                             {
                                 window.StartupInfo.OnPaint(canvas, area);
                             }
