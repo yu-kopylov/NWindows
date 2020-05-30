@@ -5,24 +5,24 @@ namespace NWindows.Examples.Controls
 {
     public class ScrollBar : Control
     {
-        private readonly ScrollBarModel model = new ScrollBarModel();
-        private ScrollBarOrientation orientation = ScrollBarOrientation.Horizontal;
-
         private const int RailWidth = 10;
         private const int MinRailLength = 10;
         private const int Padding = 1;
         private const int BorderWidth = 1;
 
+        private readonly ScrollBarCalculator calculator = new ScrollBarCalculator();
+        private int value;
+        private ScrollBarOrientation orientation = ScrollBarOrientation.Horizontal;
+
         public ScrollBar()
         {
             RepaintMode = ControlRepaintMode.Always;
             // todo: remove defaults
-            model.Min = 0;
-            model.Max = 99;
-            model.SliderValue = 33;
-            model.SliderRange = 10;
-            model.MinSliderSize = 10;
-            model.Padding = BorderWidth + Padding;
+            calculator.MinValue = 0;
+            calculator.MaxValue = 99;
+            calculator.SliderRange = 10;
+            calculator.MinSliderSize = 10;
+            calculator.Padding = BorderWidth + Padding;
         }
 
         public ScrollBarOrientation Orientation
@@ -40,12 +40,12 @@ namespace NWindows.Examples.Controls
 
         public int Value
         {
-            get { return model.SliderValue; }
+            get { return value; }
             set
             {
-                if (model.SliderValue != value)
+                if (this.value != value)
                 {
-                    model.SliderValue = value;
+                    this.value = value;
                     InvalidatePainting();
                     ValueChanged?.Invoke(this, EventArgs.Empty);
                 }
@@ -56,12 +56,12 @@ namespace NWindows.Examples.Controls
 
         public int MinValue
         {
-            get { return model.Min; }
+            get { return calculator.MinValue; }
             set
             {
-                if (model.Min != value)
+                if (calculator.MinValue != value)
                 {
-                    model.Min = value;
+                    calculator.MinValue = value;
                     InvalidatePainting();
                 }
             }
@@ -69,12 +69,12 @@ namespace NWindows.Examples.Controls
 
         public int MaxValue
         {
-            get { return model.Max; }
+            get { return calculator.MaxValue; }
             set
             {
-                if (model.Max != value)
+                if (calculator.MaxValue != value)
                 {
-                    model.Max = value;
+                    calculator.MaxValue = value;
                     InvalidatePainting();
                 }
             }
@@ -82,12 +82,12 @@ namespace NWindows.Examples.Controls
 
         public int SliderRange
         {
-            get { return model.SliderRange; }
+            get { return calculator.SliderRange; }
             set
             {
-                if (model.SliderRange != value)
+                if (calculator.SliderRange != value)
                 {
-                    model.SliderRange = value;
+                    calculator.SliderRange = value;
                     InvalidatePainting();
                 }
             }
@@ -107,18 +107,20 @@ namespace NWindows.Examples.Controls
 
         protected override void OnPaint(ICanvas canvas, Rectangle area)
         {
-            model.Size = orientation == ScrollBarOrientation.Vertical ? Area.Height : Area.Width;
-            model.Calculate();
+            calculator.Size = orientation == ScrollBarOrientation.Vertical ? Area.Height : Area.Width;
+
+            int sliderSize = calculator.GetSliderSize();
+            int sliderOffset = calculator.GetSliderOffsetFromValue(value);
 
             canvas.FillRectangle(Color.Black, 0, 0, Area.Width, Area.Height);
             canvas.FillRectangle(Color.White, BorderWidth, BorderWidth, Area.Width - 2 * BorderWidth, Area.Height - 2 * BorderWidth);
             if (orientation == ScrollBarOrientation.Vertical)
             {
-                canvas.FillRectangle(Color.Blue, BorderWidth + Padding, model.SliderOffset, Area.Width - 2 * (BorderWidth + Padding), model.SliderSize);
+                canvas.FillRectangle(Color.Blue, BorderWidth + Padding, sliderOffset, Area.Width - 2 * (BorderWidth + Padding), sliderSize);
             }
             else
             {
-                canvas.FillRectangle(Color.Blue, model.SliderOffset, BorderWidth + Padding, model.SliderSize, Area.Height - 2 * (BorderWidth + Padding));
+                canvas.FillRectangle(Color.Blue, sliderOffset, BorderWidth + Padding, sliderSize, Area.Height - 2 * (BorderWidth + Padding));
             }
         }
 
@@ -126,8 +128,8 @@ namespace NWindows.Examples.Controls
         {
             if (button == NMouseButton.Left)
             {
-                int offset = GetOffsetFromPoint(point);
-                Value = LimitRange(model.GetValueFromSliderOffset(offset) - model.SliderRange / 2);
+                int offset = GetOffsetFromPoint(point) - calculator.GetSliderSize() / 2;
+                Value = calculator.GetValueFromSliderOffset(offset);
                 CaptureMouse();
             }
         }
@@ -136,8 +138,8 @@ namespace NWindows.Examples.Controls
         {
             if (HasMouseCaptured)
             {
-                int offset = GetOffsetFromPoint(point);
-                Value = LimitRange(model.GetValueFromSliderOffset(offset) - model.SliderRange / 2);
+                int offset = GetOffsetFromPoint(point) - calculator.GetSliderSize() / 2;
+                Value = calculator.GetValueFromSliderOffset(offset);
             }
         }
 
@@ -147,21 +149,6 @@ namespace NWindows.Examples.Controls
             {
                 ReleaseMouse();
             }
-        }
-
-        private int LimitRange(int value)
-        {
-            if (value < MinValue)
-            {
-                return MinValue;
-            }
-
-            if (value > MaxValue)
-            {
-                return MaxValue;
-            }
-
-            return value;
         }
 
         private int GetOffsetFromPoint(Point point)
