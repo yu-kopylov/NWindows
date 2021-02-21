@@ -5,6 +5,8 @@ namespace NWindows.X11
     using System.Runtime.InteropServices;
     using Atom = System.UInt64;
     using Bool = System.Int32;
+    using XFixed = System.Int32;
+    using XDouble = System.Double;
     using Colormap = System.UInt64;
     using Drawable = System.UInt64;
     using PictFormat = System.UInt64;
@@ -36,7 +38,7 @@ namespace NWindows.X11
             Picture picture,
             int xOrigin,
             int yOrigin,
-            XRectangle[] rects,
+            [In] XRectangle[] rects,
             int n
         );
 
@@ -68,6 +70,77 @@ namespace NWindows.X11
             uint width,
             uint height
         );
+
+        [DllImport("libXrender.so.1")]
+        public static extern void XRenderCompositeTrapezoids(
+            DisplayPtr dpy,
+            PictOp op,
+            Picture src,
+            Picture dst,
+            [In] ref XRenderPictFormat maskFormat,
+            int xSrc,
+            int ySrc,
+            [In] XTrapezoid[] traps,
+            int ntrap
+        );
+
+        [DllImport("libXrender.so.1")]
+        public static extern void XRenderCompositeTriangles(
+            DisplayPtr dpy,
+            PictOp op,
+            Picture src,
+            Picture dst,
+            [In] /* XRenderPictFormat */ IntPtr maskFormat,
+            int xSrc,
+            int ySrc,
+            [In] XTriangle[] triangles,
+            int ntriangle
+        );
+
+        [DllImport("libXrender.so.1")]
+        public static extern void XRenderCompositeTriStrip(
+            DisplayPtr dpy,
+            PictOp op,
+            Picture src,
+            Picture dst,
+            [In] /* XRenderPictFormat */ IntPtr maskFormat,
+            int xSrc,
+            int ySrc,
+            [In] XPointFixed[] points,
+            int npoint
+        );
+
+        [DllImport("libXrender.so.1")]
+        public static extern void XRenderCompositeTriFan(
+            DisplayPtr dpy,
+            PictOp op,
+            Picture src,
+            Picture dst,
+            [In] /* XRenderPictFormat */ IntPtr maskFormat,
+            int xSrc,
+            int ySrc,
+            [In] XPointFixed[] points,
+            int npoint
+        );
+
+        [DllImport("libXrender.so.1")]
+        public static extern void XRenderCompositeDoublePoly(
+            DisplayPtr dpy,
+            PictOp op,
+            Picture src,
+            Picture dst,
+            [In] /* XRenderPictFormat */ IntPtr maskFormat,
+            int xSrc,
+            int ySrc,
+            int xDst,
+            int yDst,
+            XPointDouble[] fpoints,
+            int npoints,
+            int winding
+        );
+
+        [DllImport("libXrender.so.1")]
+        public static extern Picture XRenderCreateSolidFill(DisplayPtr dpy, [In] ref XRenderColor color);
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
@@ -169,9 +242,59 @@ namespace NWindows.X11
         public Pixmap clip_mask;
         public Bool graphics_exposures;
         public int subwindow_mode;
-        public int poly_edge;
-        public int poly_mode;
+        public XRenderPolyEdge poly_edge;
+        public XRenderPolyMode poly_mode;
         public Atom dither;
         public Bool component_alpha;
+    }
+
+    internal enum XRenderPolyEdge
+    {
+        Sharp = 0,
+        Smooth = 1
+    }
+
+    internal enum XRenderPolyMode
+    {
+        Precise = 0,
+        Imprecise = 1
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XPointFixed
+    {
+        public XFixed x;
+        public XFixed y;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XLineFixed
+    {
+        public XPointFixed p1;
+        public XPointFixed p2;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XPointDouble
+    {
+        public XDouble x;
+        public XDouble y;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XTrapezoid
+    {
+        public XFixed top;
+        public XFixed bottom;
+        public XLineFixed left;
+        public XLineFixed right;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct XTriangle
+    {
+        public XPointFixed p1;
+        public XPointFixed p2;
+        public XPointFixed p3;
     }
 }

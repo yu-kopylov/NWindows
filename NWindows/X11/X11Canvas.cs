@@ -55,13 +55,22 @@ namespace NWindows.X11
             ulong drawableId
         )
         {
-            XRenderPictureAttributes attr = new XRenderPictureAttributes();
+            const XRenderPictureAttributeMask attrMask =
+                XRenderPictureAttributeMask.CPPolyEdge |
+                XRenderPictureAttributeMask.CPPolyMode;
+
+            XRenderPictureAttributes attr = new XRenderPictureAttributes
+            {
+                poly_edge = XRenderPolyEdge.Smooth,
+                poly_mode = XRenderPolyMode.Imprecise
+            };
+
             ulong pictureId = LibXRender.XRenderCreatePicture
             (
                 display,
                 drawableId,
                 pictFormatPtr,
-                0,
+                attrMask,
                 ref attr
             );
 
@@ -113,6 +122,7 @@ namespace NWindows.X11
 
         public void FillRectangle(Color color, int x, int y, int width, int height)
         {
+            // todo: <= 0 instead?
             if (width < 0 || height < 0)
             {
                 return;
@@ -187,6 +197,7 @@ namespace NWindows.X11
 
         private int DrawString(IntPtr xftDraw, IntPtr xftColorPtr, XftFontExt fontExt, int x, int y, string text)
         {
+            // todo: reuse buffer?
             byte[] utf32Text = Encoding.UTF32.GetBytes(text);
             GCHandle utf32TextHandle = GCHandle.Alloc(utf32Text, GCHandleType.Pinned);
             try
@@ -270,6 +281,11 @@ namespace NWindows.X11
 
         public void DrawPath(Color color, int width, Point[] points)
         {
+            DrawPathWithXRenderCompositeTriangles(color, width, points);
+        }
+
+        private void DrawPathWithXLib(Color color, int width, Point[] points)
+        {
             if (origin.X != 0 || origin.Y != 0)
             {
                 for (int i = 0; i < points.Length; i++)
@@ -280,7 +296,7 @@ namespace NWindows.X11
 
             if (color.IsFullyOpaque())
             {
-                DrawPathXLib(color, width, points);
+                DrawPathWithXLibDirectly(color, width, points);
                 return;
             }
 
@@ -301,11 +317,11 @@ namespace NWindows.X11
             WithExtraCanvas
             (
                 new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1),
-                canvas => canvas.DrawPathXLib(color, width, relativePoints)
+                canvas => canvas.DrawPathWithXLibDirectly(color, width, relativePoints)
             );
         }
 
-        private void DrawPathXLib(Color color, int width, Point[] points)
+        private void DrawPathWithXLibDirectly(Color color, int width, Point[] points)
         {
             var gcValues = new XGCValues();
             gcValues.cap_style = X11CapStyle.CapRound;
@@ -335,6 +351,149 @@ namespace NWindows.X11
             finally
             {
                 LibX11.XFreeGC(display, gc);
+            }
+        }
+
+        private void DrawPathWithXRenderCompositeTriangles(Color color, int width, Point[] points)
+        {
+            if (width == 0)
+            {
+                width = 1;
+            }
+
+            XRenderColor xColor = new XRenderColor(color);
+            // todo: cache brush
+            ulong brush = LibXRender.XRenderCreateSolidFill(display, ref xColor);
+            try
+            {
+                XTriangle[] triangles = new XTriangle[(points.Length - 1) * 2];
+                for (int i = 1, t = 0; i < points.Length; i++)
+                {
+                    Point p1 = points[i - 1];
+                    Point p2 = points[i];
+
+                    p1.Offset(-origin.X, -origin.Y);
+                    p2.Offset(-origin.X, -origin.Y);
+
+                    int dx = p2.X - p1.X;
+                    int dy = p2.Y - p1.Y;
+                    double len = Math.Sqrt(Math.Pow(dx, 2) + Math.Pow(dy, 2));
+                    // todo: handle 0 points and zero-length segments
+                    int ox = Convert.ToInt32(-dy / len * 32768 * width);
+                    int oy = Convert.ToInt32(dx / len * 32768 * width);
+
+                    triangles[t++] = new XTriangle
+                    {
+                        p1 = new XPointFixed {x = (p1.X << 16) + ox, y = (p1.Y << 16) + oy},
+                        p2 = new XPointFixed {x = (p2.X << 16) + ox, y = (p2.Y << 16) + oy},
+                        p3 = new XPointFixed {x = (p1.X << 16) - ox, y = (p1.Y << 16) - oy}
+                    };
+                    triangles[t++] = new XTriangle
+                    {
+                        p1 = new XPointFixed {x = (p2.X << 16) + ox, y = (p2.Y << 16) + oy},
+                        p2 = new XPointFixed {x = (p1.X << 16) - ox, y = (p1.Y << 16) - oy},
+                        p3 = new XPointFixed {x = (p2.X << 16) - ox, y = (p2.Y << 16) - oy}
+                    };
+                }
+
+                LibXRender.XRenderCompositeTriangles(display, PictOp.PictOpOver, brush, pictureId, pictFormatPtr, 0, 0, triangles, triangles.Length);
+            }
+            finally
+            {
+                LibXRender.XRenderFreePicture(display, brush);
+            }
+        }
+
+        private void DrawPathWithXRenderCompositeDoublePoly(Color color, int width, Point[] points)
+        {
+            if (width == 0)
+            {
+                width = 1;
+            }
+
+            XRenderColor xColor = new XRenderColor(color);
+            // todo: cache brush
+            ulong brush = LibXRender.XRenderCreateSolidFill(display, ref xColor);
+            try
+            {
+                XPointDouble[] polyPoints = new XPointDouble[points.Length * 2];
+                for (int i = 1, t = polyPoints.Length - 2; i < points.Length; i++, t--)
+                {
+                    Point p1 = points[i - 1];
+                    Point p2 = points[i];
+
+                    p1.Offset(-origin.X, -origin.Y);
+                    p2.Offset(-origin.X, -origin.Y);
+
+                    int dx = p2.X - p1.X;
+                    int dy = p2.Y - p1.Y;
+                    double len = Math.Sqrt(Math.Pow(dx, 2) + Math.Pow(dy, 2));
+                    double ox = -dy / len * width / 2;
+                    double oy = dx / len * width / 2;
+
+                    polyPoints[i] = new XPointDouble {x = points[i].X + ox, y = points[i].Y + oy};
+                    polyPoints[t] = new XPointDouble {x = points[i].X - ox, y = points[i].Y - oy};
+
+                    if (i == 1)
+                    {
+                        // todo: handle separately without if
+                        polyPoints[0] = new XPointDouble {x = points[0].X + ox, y = points[0].Y + oy};
+                        polyPoints[polyPoints.Length - 1] = new XPointDouble {x = points[0].X - ox, y = points[0].Y - oy};
+                    }
+                }
+
+                LibXRender.XRenderCompositeDoublePoly(display, PictOp.PictOpOver, brush, pictureId, pictFormatPtr, 0, 0, 0, 0, polyPoints, polyPoints.Length, 1);
+            }
+            finally
+            {
+                LibXRender.XRenderFreePicture(display, brush);
+            }
+        }
+
+        private void DrawPathWithXRenderCompositeTriStrip(Color color, int width, Point[] points)
+        {
+            if (width == 0)
+            {
+                width = 1;
+            }
+
+            XRenderColor xColor = new XRenderColor(color);
+            // todo: cache brush
+            ulong brush = LibXRender.XRenderCreateSolidFill(display, ref xColor);
+            try
+            {
+                XPointFixed[] stripPoints = new XPointFixed[(points.Length - 1) * 3 + 1];
+                for (int i = 1, t = 0, m = 1; i < points.Length; i++, m = -m)
+                {
+                    Point p1 = points[i - 1];
+                    Point p2 = points[i];
+
+                    p1.Offset(-origin.X, -origin.Y);
+                    p2.Offset(-origin.X, -origin.Y);
+
+                    int dx = p2.X - p1.X;
+                    int dy = p2.Y - p1.Y;
+                    double len = Math.Sqrt(Math.Pow(dx, 2) + Math.Pow(dy, 2));
+                    // todo: handle 0 points and zero-length segments
+                    int ox = Convert.ToInt32(-dy / len * 32768 * width) * m;
+                    int oy = Convert.ToInt32(dx / len * 32768 * width) * m;
+
+                    if (i == 1)
+                    {
+                        // todo: handle separately without if
+                        stripPoints[t++] = new XPointFixed {x = (p1.X << 16) + ox, y = (p1.Y << 16) + oy};
+                    }
+
+                    stripPoints[t++] = new XPointFixed {x = (p1.X << 16) - ox, y = (p1.Y << 16) - oy};
+                    stripPoints[t++] = new XPointFixed {x = (p2.X << 16) + ox, y = (p2.Y << 16) + oy};
+                    stripPoints[t++] = new XPointFixed {x = (p2.X << 16) - ox, y = (p2.Y << 16) - oy};
+                }
+
+                LibXRender.XRenderCompositeTriStrip(display, PictOp.PictOpOver, brush, pictureId, pictFormatPtr, 0, 0, stripPoints, stripPoints.Length);
+            }
+            finally
+            {
+                LibXRender.XRenderFreePicture(display, brush);
             }
         }
 
