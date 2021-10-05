@@ -7,42 +7,52 @@ namespace NWindows
 {
     public class NApplication : IDisposable
     {
-        private INativeApplication NativeApp { get; set; }
+        private INativeApplication NativeApp { get; }
 
-        public NGraphics Graphics { get; private set; }
-        public NImageCodec ImageCodec { get; private set; }
-        public NClipboard Clipboard { get; private set; }
+        public NGraphics Graphics { get; }
+        public NImageCodec ImageCodec { get; }
+        public NClipboard Clipboard { get; }
+
+        private NApplication(INativeApplication nativeApp)
+        {
+            NativeApp = nativeApp;
+            Graphics = new NGraphics(nativeApp.Graphics);
+            ImageCodec = new NImageCodec(nativeApp.ImageCodec);
+            Clipboard = new NClipboard(nativeApp.Clipboard);
+        }
 
         public void Dispose()
         {
             NativeApp?.Dispose();
         }
 
-        public void Init()
+        public static NApplication Create()
         {
-            if (NativeApp != null)
-            {
-                throw new InvalidOperationException("Application was already initialized.");
-            }
+            INativeApplication nativeApp = null;
 
-            if (X11Application.IsAvailable())
+            try
             {
-                NativeApp = new X11Application();
-            }
-            else if (Win32Application.IsAvailable())
-            {
-                NativeApp = new Win32Application();
-            }
-            else
-            {
-                throw new InvalidOperationException("Cannot determine a suitable API.");
-            }
+                if (X11Application.IsAvailable())
+                {
+                    nativeApp = X11Application.Create();
+                }
+                else if (Win32Application.IsAvailable())
+                {
+                    nativeApp = Win32Application.Create();
+                }
+                else
+                {
+                    throw new InvalidOperationException("Cannot determine a suitable API.");
+                }
 
-            NativeApp.Init();
-
-            Graphics = new NGraphics(NativeApp.Graphics);
-            ImageCodec = new NImageCodec(NativeApp.ImageCodec);
-            Clipboard = new NClipboard(NativeApp.Clipboard);
+                var app = new NApplication(nativeApp);
+                nativeApp = null;
+                return app;
+            }
+            finally
+            {
+                nativeApp?.Dispose();
+            }
         }
 
         public void Run(NWindow window)

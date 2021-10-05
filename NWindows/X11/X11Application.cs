@@ -8,20 +8,32 @@ namespace NWindows.X11
     internal class X11Application : INativeApplication
     {
         public const int RequiredColorDepth = 32;
-        public const int RequiredBitsPerChannel = 8;
 
-        private IntPtr display;
+        private readonly IntPtr display;
 
-        private X11Graphics graphics;
-        private GdkPixBufImageCodec imageCodec;
-        private X11Clipboard clipboard;
+        private readonly X11Graphics graphics;
+        private readonly GdkPixBufImageCodec imageCodec;
+        private readonly X11Clipboard clipboard;
+
+        private readonly ulong WM_PROTOCOLS;
+        private readonly ulong WM_DELETE_WINDOW;
+        private readonly ulong XA_NWINDOWS_PAINT_COMPLETE;
 
         private Rectangle? invalidatedArea;
         private bool paintQueued;
 
-        private ulong WM_PROTOCOLS;
-        private ulong WM_DELETE_WINDOW;
-        private ulong XA_NWINDOWS_PAINT_COMPLETE;
+        private X11Application(IntPtr display, X11Graphics graphics, X11Clipboard clipboard)
+        {
+            this.display = display;
+            this.graphics = graphics;
+            this.clipboard = clipboard;
+
+            imageCodec = new GdkPixBufImageCodec(display, graphics.Visual, graphics.RootWindow);
+
+            WM_PROTOCOLS = LibX11.XInternAtom(display, "WM_PROTOCOLS", 0);
+            WM_DELETE_WINDOW = LibX11.XInternAtom(display, "WM_DELETE_WINDOW", 0);
+            XA_NWINDOWS_PAINT_COMPLETE = LibX11.XInternAtom(display, "NWINDOWS_PAINT_COMPLETE", 0);
+        }
 
         public void Dispose()
         {
@@ -54,22 +66,39 @@ namespace NWindows.X11
             }
         }
 
-        public void Init()
+        public static X11Application Create()
         {
-            LibX11.XInitThreads();
-            display = LibX11.XOpenDisplay(null);
-            if (display == IntPtr.Zero)
+            IntPtr display = IntPtr.Zero;
+            X11Graphics graphics = null;
+            X11Clipboard clipboard = null;
+
+            try
             {
-                throw new InvalidOperationException("Cannot open display.");
+                LibX11.XInitThreads();
+                display = LibX11.XOpenDisplay(null);
+                if (display == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException("Cannot open display.");
+                }
+
+                graphics = X11Graphics.Create(display);
+                clipboard = X11Clipboard.Create();
+
+                var app = new X11Application(display, graphics, clipboard);
+                display = IntPtr.Zero;
+                graphics = null;
+                clipboard = null;
+                return app;
             }
-
-            WM_PROTOCOLS = LibX11.XInternAtom(display, "WM_PROTOCOLS", 0);
-            WM_DELETE_WINDOW = LibX11.XInternAtom(display, "WM_DELETE_WINDOW", 0);
-            XA_NWINDOWS_PAINT_COMPLETE = LibX11.XInternAtom(display, "NWINDOWS_PAINT_COMPLETE", 0);
-
-            graphics = X11Graphics.Create(display);
-            imageCodec = new GdkPixBufImageCodec(display, graphics.Visual, graphics.RootWindow);
-            clipboard = X11Clipboard.Create();
+            finally
+            {
+                clipboard?.Stop();
+                graphics?.Dispose();
+                if (display != IntPtr.Zero)
+                {
+                    LibX11.XCloseDisplay(display);
+                }
+            }
         }
 
         public void Run(INativeWindowStartupInfo window)

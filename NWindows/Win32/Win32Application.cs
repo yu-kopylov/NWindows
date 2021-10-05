@@ -12,9 +12,16 @@ namespace NWindows.Win32
 
         private readonly Dictionary<IntPtr, Win32Window> windows = new Dictionary<IntPtr, Win32Window>();
 
-        private Win32Graphics graphics;
-        private Win32ImageCodec imageCodec;
-        private Win32Clipboard clipboard;
+        private readonly Win32Graphics graphics;
+        private readonly Win32ImageCodec imageCodec;
+        private readonly Win32Clipboard clipboard;
+
+        private Win32Application(Win32Graphics graphics)
+        {
+            this.graphics = graphics;
+            this.imageCodec = new Win32ImageCodec();
+            this.clipboard = new Win32Clipboard();
+        }
 
         public void Dispose()
         {
@@ -39,11 +46,22 @@ namespace NWindows.Win32
             }
         }
 
-        public void Init()
+        public static Win32Application Create()
         {
-            graphics = new Win32Graphics();
-            imageCodec = new Win32ImageCodec();
-            clipboard = new Win32Clipboard();
+            Win32Graphics graphics = null;
+
+            try
+            {
+                graphics = new Win32Graphics();
+
+                var app = new Win32Application(graphics);
+                graphics = null;
+                return app;
+            }
+            finally
+            {
+                graphics?.Dispose();
+            }
         }
 
         public void Run(INativeWindowStartupInfo startupInfo)

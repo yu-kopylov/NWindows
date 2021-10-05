@@ -15,8 +15,7 @@ namespace Test.NWindows
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
-            app = new NApplication();
-            app.Init();
+            app = NApplication.Create();
         }
 
         [OneTimeTearDown]
